@@ -1,0 +1,6 @@
+@AgileTaskManagerAPI_HostAddress = http://localhost:5279
+
+GET {{AgileTaskManagerAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
