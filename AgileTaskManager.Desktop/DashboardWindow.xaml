@@ -98,110 +98,71 @@
 
         <!-- MAIN CONTENT (CỘT PHẢI) -->
         <Border Grid.Column="1" Padding="50,40,50,40">
-            <StackPanel>
-                <TextBlock Text="Hello, Sir" FontSize="34" FontWeight="ExtraBlack" Foreground="#091E42" Margin="0,0,0,20"/>
-                <Rectangle Height="1" Fill="#DFE1E6" Margin="0,0,0,30"/>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <StackPanel Orientation="Horizontal">
+                <!-- Tiêu đề -->
+                <TextBlock Grid.Row="0" Text="Hello, Sir" FontSize="34" FontWeight="ExtraBlack" Foreground="#091E42" Margin="0,0,0,20"/>
 
-                        <!-- CỘT KANBAN THÔNG MINH -->
-                        <Border Background="#EBECF0" CornerRadius="8" Width="280" Padding="10" Margin="0,0,15,0" VerticalAlignment="Top">
-                            <StackPanel>
+                <!-- Đường kẻ mảnh -->
+                <Rectangle Grid.Row="1" Height="1" Fill="#DFE1E6" Margin="0,0,0,30"/>
 
-                                <!-- NƠI CHỨA DỮ LIỆU (Ban đầu trống) -->
-                                <StackPanel x:Name="spTaskList">
+                <!-- KHU VỰC BẢNG KANBAN -->
+                <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <!-- BẢNG KANBAN TỔNG (spBoard) -->
+                    <StackPanel x:Name="spBoard" Orientation="Horizontal">
+
+                        <!-- NƠI ĐÂY SẼ LÀ CHỖ CÁC CỘT ĐƯỢC C# ĐÚC VÀ BƠM VÀO -->
+
+                        <!-- KHU VỰC NHẬP TẠO DANH SÁCH MỚI (Luôn nằm ở cuối cùng bên phải) -->
+                        <StackPanel VerticalAlignment="Top" Margin="0,0,15,0">
+
+                            <!-- Nút Thêm Danh Sách Khác -->
+                            <Border x:Name="btnShowAddList" Background="#14000000" CornerRadius="8" Width="280" Height="45" Cursor="Hand" MouseLeftButtonDown="BtnShowAddList_Click">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0,0,0">
+                                    <TextBlock Text="+" FontSize="18" FontWeight="SemiBold" Foreground="#172B4D" Margin="0,-2,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Thêm danh sách khác" FontSize="14" FontWeight="SemiBold" Foreground="#172B4D" Margin="0,1,0,0" VerticalAlignment="Center"/>
                                 </StackPanel>
+                            </Border>
 
-                                <!-- FORM NHẬP LIỆU ẢO THUẬT -->
-                                <Grid Margin="0,5,0,0">
-                                    <Button x:Name="btnShowAddCard" Click="BtnShowAddCard_Click"
-                                            Background="Transparent" Foreground="#5E6C84" BorderThickness="0" 
-                                            HorizontalContentAlignment="Left" Padding="8,8" Cursor="Hand" Margin="0,-5,0,5">
-
-                                        <Button.Resources>
-                                            <Style TargetType="Button">
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <ControlTemplate TargetType="Button">
-                                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                                                                <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                                                            </Border>
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#D9DCE2"/>
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Resources>
-
-                                        <!-- Đã canh tâm tuyệt đối chữ và dấu + -->
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="2,0,0,0">
-                                            <TextBlock Text="+" FontSize="18" FontWeight="SemiBold" Margin="0,-2,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="lblShowBtnText" Text="Thêm danh sách" FontSize="14" FontWeight="SemiBold" Margin="0,1,0,0" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <!-- Form Nhập (Ẩn) -->
-                                    <StackPanel x:Name="panelAddCardInput" Visibility="Collapsed">
-                                        <!-- BỌC TEXTBOX BẰNG BORDER BÊN NGOÀI ĐỂ BO GÓC & ĐỔ BÓNG -->
-                                        <Border Background="White" CornerRadius="6" Margin="0,0,0,10">
-                                            <Border.Effect>
-                                                <!-- Bóng đổ nhạt và mịn -->
-                                                <DropShadowEffect BlurRadius="6" ShadowDepth="1" Color="#091E42" Opacity="0.15"/>
-                                            </Border.Effect>
-
-                                            <!-- TEXTBOX TRONG SUỐT VỚI PADDING CHUẨN -->
-                                            <TextBox x:Name="txtNewTaskName" MinHeight="60" TextWrapping="Wrap" AcceptsReturn="True"
-                 Padding="10" BorderThickness="0" Background="Transparent" 
-                 VerticalContentAlignment="Center"
-                 PreviewKeyDown="TxtNewTaskName_PreviewKeyDown"/>
-                                        </Border>
-
-                                        <StackPanel Orientation="Horizontal">
-                                            <!-- Nút Lưu -->
-                                            <Button x:Name="btnConfirmAdd" Content="Thêm danh sách" Click="BtnConfirmAddCard_Click"
-                                                    Background="#0052CC" Foreground="White" FontWeight="SemiBold"
-                                                    BorderThickness="0" Padding="12,6" Cursor="Hand">
-                                                <Button.Template>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                                                            <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </Button.Template>
-                                            </Button>
-
-                                            <!-- Nút Hủy -->
-                                            <Button Content="✕" Click="BtnCancelAddCard_Click" FontSize="16"
-                                                    Background="Transparent" Foreground="#5E6C84" BorderThickness="0"
-                                                    Margin="10,0,0,0" Cursor="Hand" VerticalAlignment="Center">
-                                                <Button.Template>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                                    </ControlTemplate>
-                                                </Button.Template>
-                                            </Button>
-                                        </StackPanel>
+                            <!-- Form Nhập Tên Danh Sách -->
+                            <Border x:Name="panelAddListInput" Visibility="Collapsed" Background="#EBECF0" CornerRadius="8" Width="280" Padding="10">
+                                <StackPanel>
+                                    <Border Background="White" CornerRadius="6" Margin="0,0,0,10">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="6" ShadowDepth="1" Color="#091E42" Opacity="0.15"/>
+                                        </Border.Effect>
+                                        <TextBox x:Name="txtNewListName" MinHeight="40" Padding="10" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" PreviewKeyDown="TxtNewListName_PreviewKeyDown"/>
+                                    </Border>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="Thêm danh sách" Click="BtnConfirmAddList_Click" Background="#0052CC" Foreground="White" FontWeight="SemiBold" BorderThickness="0" Padding="12,6" Cursor="Hand">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Button Content="✕" Click="BtnCancelAddList_Click" FontSize="16" Background="Transparent" Foreground="#5E6C84" BorderThickness="0" Margin="10,0,0,0" Cursor="Hand">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
                                     </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- NÚT TẠO CỘT MỚI ĐÃ ĐƯỢC CANH TÂM CHUẨN -->
-                        <Border x:Name="btnAddNewColumn" Visibility="Collapsed" Background="#EBECF0" CornerRadius="8" Width="280" Height="45" Cursor="Hand" VerticalAlignment="Top">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0,0,0">
-                                <TextBlock Text="+" FontSize="18" FontWeight="SemiBold" Foreground="#172B4D" Margin="0,-2,8,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Thêm danh sách" FontSize="14" FontWeight="SemiBold" Foreground="#172B4D" Margin="0,1,0,0" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
 
                     </StackPanel>
                 </ScrollViewer>
-            </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </Window>
