@@ -28,7 +28,7 @@ namespace AgileTaskManager.Desktop
         private void BtnCreate_Click(object sender, RoutedEventArgs e)
         {
             // Khởi tạo cửa sổ MainWindow (cửa sổ chứa 3 cột Tạo User/Project/Task của bạn)
-            MainWindow createWindow = new MainWindow();
+            CreateWindow createWindow = new CreateWindow();
 
             // Hiển thị nó lên mà không tắt cửa sổ Dashboard hiện tại
             createWindow.Show();

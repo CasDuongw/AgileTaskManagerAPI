@@ -1,0 +1,103 @@
+﻿<Window x:Class="AgileTaskManager.Desktop.CreateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Thêm mới dữ liệu" Height="500" Width="900" 
+        Background="#F4F5F7"
+        WindowStartupLocation="CenterScreen">
+
+    <!-- ĐỊNH NGHĨA PHONG CÁCH (STYLE) -->
+    <Window.Resources>
+        <Style TargetType="Button" x:Key="TrelloBtn">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="0,10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="Background" Value="#FAFBFC"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+
+    <!-- BỐ CỤC CHÍNH (3 CỘT) -->
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- CARD 1: Tạo User -->
+        <Border Grid.Column="0" Background="White" CornerRadius="12" Margin="10" Padding="20">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="15" ShadowDepth="2" Color="#B3B3B3" Opacity="0.4"/>
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="👤 TẠO USER" FontSize="16" FontWeight="Bold" Margin="0,0,0,20" Foreground="#172B4D"/>
+
+                <TextBlock Text="Tên người dùng" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                <TextBox x:Name="txtUserName"/>
+
+                <TextBlock Text="Email" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                <TextBox x:Name="txtEmail" Margin="0,0,0,15"/>
+
+                <TextBlock Text="Mật khẩu" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                <PasswordBox x:Name="txtPassword" Margin="0,0,0,25" Padding="10,8" Background="#FAFBFC" BorderBrush="#DFE1E6" BorderThickness="2" VerticalContentAlignment="Center"/>
+
+                <Button Content="LƯU USER" Click="BtnCreateUser_Click" Style="{StaticResource TrelloBtn}" Background="#0052CC"/>
+                <TextBlock x:Name="lblUserResult" Foreground="#36B37E" Margin="0,15,0,0" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+
+        <!-- CARD 2: Tạo Dự Án -->
+        <Border Grid.Column="1" Background="White" CornerRadius="12" Margin="10" Padding="20">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="15" ShadowDepth="2" Color="#B3B3B3" Opacity="0.4"/>
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="📁 TẠO DỰ ÁN" FontSize="16" FontWeight="Bold" Margin="0,0,0,20" Foreground="#172B4D"/>
+
+                <TextBlock Text="Tên dự án" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                <TextBox x:Name="txtProjectName"/>
+
+                <TextBlock Text="ID User Quản lý" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                <TextBox x:Name="txtOwnerId" Margin="0,0,0,25"/>
+
+                <Button Content="LƯU DỰ ÁN" Click="BtnCreateProject_Click" Style="{StaticResource TrelloBtn}" Background="#0052CC"/>
+                <TextBlock x:Name="lblProjectResult" Foreground="#36B37E" Margin="0,15,0,0" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+
+        <!-- CARD 3: Tạo Task -->
+        <Border Grid.Column="2" Background="White" CornerRadius="12" Margin="10" Padding="20">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="15" ShadowDepth="2" Color="#B3B3B3" Opacity="0.4"/>
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="📝 THÊM TASK MỚI" FontSize="16" FontWeight="Bold" Margin="0,0,0,20" Foreground="#172B4D"/>
+
+                <TextBlock Text="Nội dung công việc" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                <TextBox x:Name="txtTaskName"/>
+
+                <TextBlock Text="Thuộc ID Dự án nào?" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                <TextBox x:Name="txtProjectId" Margin="0,0,0,25"/>
+
+                <Button Content="THÊM TASK" Click="BtnCreateTask_Click" Style="{StaticResource TrelloBtn}" Background="#5AAC44"/>
+                <TextBlock x:Name="lblTaskResult" Foreground="#36B37E" Margin="0,15,0,0" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
