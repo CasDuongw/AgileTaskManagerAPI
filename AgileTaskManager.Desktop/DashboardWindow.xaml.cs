@@ -71,7 +71,9 @@ namespace AgileTaskManager.Desktop
                     Cursor = Cursors.Hand,
                     Visibility = Visibility.Hidden,
                     VerticalAlignment = VerticalAlignment.Center,
-                    Padding = new Thickness(5, 0, 0, 0)
+                    HorizontalAlignment = HorizontalAlignment.Right, // Ép về bên phải
+                    Margin = new Thickness(0, 0, 10, 0), // Đẩy lùi vào trong 10 pixel để cách viền
+                    Padding = new Thickness(5)
                 };
                 Grid.SetColumn(btnDeleteList, 1);
 

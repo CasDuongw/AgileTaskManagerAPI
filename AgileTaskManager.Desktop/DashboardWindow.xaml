@@ -115,14 +115,10 @@
 
                                 <!-- FORM NHẬP LIỆU ẢO THUẬT -->
                                 <Grid Margin="0,5,0,0">
-                                    <!-- Nút Mở Form -->
-                                    <!-- Nút Mở Form (Đã sửa lại cấu trúc chuẩn để không bị mất giao diện) -->
                                     <Button x:Name="btnShowAddCard" Click="BtnShowAddCard_Click"
-        Background="Transparent" Foreground="#5E6C84" BorderThickness="0" 
-        HorizontalContentAlignment="Left" Padding="10,8" Cursor="Hand" Margin="0,-10,0,10">
+                                            Background="Transparent" Foreground="#5E6C84" BorderThickness="0" 
+                                            HorizontalContentAlignment="Left" Padding="8,8" Cursor="Hand" Margin="0,-5,0,5">
 
-                                        <!-- KHAI BÁO STYLE VÀ TEMPLATE BÊN TRONG THẺ <Button.Resources> -->
-                                        <!-- Điều này giúp Designer không bị lú lẫn -->
                                         <Button.Resources>
                                             <Style TargetType="Button">
                                                 <Setter Property="Template">
@@ -142,27 +138,28 @@
                                             </Style>
                                         </Button.Resources>
 
-                                        <!-- NỘI DUNG CHÍNH CỦA NÚT ĐẶT TRỰC TIẾP Ở ĐÂY -->
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="+" FontSize="18" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="lblShowBtnText" Text="Thêm danh sách" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <!-- Đã canh tâm tuyệt đối chữ và dấu + -->
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="2,0,0,0">
+                                            <TextBlock Text="+" FontSize="18" FontWeight="SemiBold" Margin="0,-2,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="lblShowBtnText" Text="Thêm danh sách" FontSize="14" FontWeight="SemiBold" Margin="0,1,0,0" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
 
                                     <!-- Form Nhập (Ẩn) -->
                                     <StackPanel x:Name="panelAddCardInput" Visibility="Collapsed">
-                                        <TextBox x:Name="txtNewTaskName" Height="60" TextWrapping="Wrap" AcceptsReturn="True"
-                                                 Padding="10" BorderThickness="0" Background="White" Margin="0,0,0,10"
-                                                 PreviewKeyDown="TxtNewTaskName_PreviewKeyDown">
-                                            <TextBox.Resources>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="CornerRadius" Value="6"/>
-                                                </Style>
-                                            </TextBox.Resources>
-                                            <TextBox.Effect>
-                                                <DropShadowEffect BlurRadius="4" ShadowDepth="1" Color="#0052CC" Opacity="0.3"/>
-                                            </TextBox.Effect>
-                                        </TextBox>
+                                        <!-- BỌC TEXTBOX BẰNG BORDER BÊN NGOÀI ĐỂ BO GÓC & ĐỔ BÓNG -->
+                                        <Border Background="White" CornerRadius="6" Margin="0,0,0,10">
+                                            <Border.Effect>
+                                                <!-- Bóng đổ nhạt và mịn -->
+                                                <DropShadowEffect BlurRadius="6" ShadowDepth="1" Color="#091E42" Opacity="0.15"/>
+                                            </Border.Effect>
+
+                                            <!-- TEXTBOX TRONG SUỐT VỚI PADDING CHUẨN -->
+                                            <TextBox x:Name="txtNewTaskName" MinHeight="60" TextWrapping="Wrap" AcceptsReturn="True"
+                 Padding="10" BorderThickness="0" Background="Transparent" 
+                 VerticalContentAlignment="Center"
+                 PreviewKeyDown="TxtNewTaskName_PreviewKeyDown"/>
+                                        </Border>
 
                                         <StackPanel Orientation="Horizontal">
                                             <!-- Nút Lưu -->
@@ -194,11 +191,11 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- NÚT TẠO CỘT MỚI (Mặc định ẩn, sẽ hiện ra bên phải sau khi tạo Title) -->
-                        <Border x:Name="btnAddNewColumn" Visibility="Collapsed" Background="#EBECF0" CornerRadius="8" Width="280" Height="45" Padding="15,0" VerticalAlignment="Top" Cursor="Hand">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="+" FontSize="18" FontWeight="Bold" Foreground="#172B4D" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Thêm danh sách" FontSize="14" FontWeight="SemiBold" Foreground="#172B4D" VerticalAlignment="Center"/>
+                        <!-- NÚT TẠO CỘT MỚI ĐÃ ĐƯỢC CANH TÂM CHUẨN -->
+                        <Border x:Name="btnAddNewColumn" Visibility="Collapsed" Background="#EBECF0" CornerRadius="8" Width="280" Height="45" Cursor="Hand" VerticalAlignment="Top">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0,0,0">
+                                <TextBlock Text="+" FontSize="18" FontWeight="SemiBold" Foreground="#172B4D" Margin="0,-2,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Thêm danh sách" FontSize="14" FontWeight="SemiBold" Foreground="#172B4D" Margin="0,1,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
 
