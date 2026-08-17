@@ -21,6 +21,17 @@ namespace AgileTaskManagerAPI
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            // Mở khóa CORS cho phép mọi nguồn truy cập (Chỉ dùng khi làm MVP/Test)
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -29,9 +40,12 @@ namespace AgileTaskManagerAPI
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            app.UseHttpsRedirection();
+            app.UseStaticFiles();
 
+            app.UseCors("AllowAll"); // <-- Thêm dòng này
+            
             app.UseAuthorization();
-
 
             app.MapControllers();
 

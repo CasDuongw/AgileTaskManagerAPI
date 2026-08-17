@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+
+        .box {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+
+        input {
+            width: 90%;
+            padding: 8px;
+            margin: 5px 0 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+            button:hover {
+                background: #0056b3;
+            }
+
+        .success {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>⚙️ Bảng Điều Khiển (Tạo Dữ Liệu Nhanh)</h2>
+
+    <div class="box">
+        <h3>1. Tạo User Mới</h3>
+        <input type="text" id="userName" placeholder="Tên người dùng (VD: TruongNhom)">
+        <input type="text" id="email" placeholder="Email">
+        <button onclick="createUser()">Tạo User</button>
+        <div id="msgUser" class="success"></div>
+    </div>
+
+    <div class="box">
+        <h3>2. Tạo Dự Án Mới</h3>
+        <input type="text" id="projName" placeholder="Tên dự án (VD: Làm App Mobile)">
+        <input type="number" id="ownerId" placeholder="ID của User làm chủ (VD: 1)">
+        <button onclick="createProject()">Tạo Dự Án</button>
+        <div id="msgProj" class="success"></div>
+    </div>
+
+    <div class="box">
+        <h3>3. Tạo Task Mới</h3>
+        <input type="text" id="taskName" placeholder="Tên công việc (VD: Thiết kế Database)">
+        <input type="number" id="projectId" placeholder="ID của Dự án (VD: 1)">
+        <button onclick="createTask()">Tạo Task</button>
+        <div id="msgTask" class="success"></div>
+    </div>
+
+    <script>
+        // NHỚ ĐỔI PORT TƯƠNG ỨNG VỚI MÁY BẠN
+        const BASE_URL = 'http://localhost:5279/api';
+
+        async function createUser() {
+            const data = { username: document.getElementById('userName').value, email: document.getElementById('email').value, passwordHash: "123" };
+            const res = await fetch(`${BASE_URL}/Users/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            const result = await res.json();
+            document.getElementById('msgUser').innerText = `✅ Thành công! ID User của bạn là: ${result.userId}`;
+        }
+
+        async function createProject() {
+            const data = { projectName: document.getElementById('projName').value, ownerId: document.getElementById('ownerId').value };
+            const res = await fetch(`${BASE_URL}/Projects`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            const result = await res.json();
+            document.getElementById('msgProj').innerText = `✅ Thành công! ID Dự án là: ${result.projectId}`;
+        }
+
+        async function createTask() {
+            const data = { taskName: document.getElementById('taskName').value, projectId: document.getElementById('projectId').value };
+            await fetch(`${BASE_URL}/Tasks`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            document.getElementById('msgTask').innerText = `✅ Đã tạo Task thành công! (Hãy mở file index.html để xem Bảng Kanban)`;
+        }
+    </script>
+</body>
+</html>

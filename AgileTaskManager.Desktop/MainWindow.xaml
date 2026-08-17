@@ -1,0 +1,29 @@
+﻿<Window x:Class="AgileTaskManager.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Agile Manager - Bảng Điều Khiển" Height="515" Width="400" Background="#F0F2F5">
+    <StackPanel Margin="20">
+
+        <!-- Phần Tạo User -->
+        <TextBlock Text="1. Tạo User Mới" FontWeight="Bold" Margin="0,0,0,5"/>
+        <TextBox x:Name="txtUserName" Margin="0,0,0,5" Padding="5" ToolTip="Tên người dùng"/>
+        <TextBox x:Name="txtEmail" Margin="0,0,0,10" Padding="5" ToolTip="Email"/>
+        <Button Content="Tạo User" Padding="5" Background="#007BFF" Foreground="White" Click="BtnCreateUser_Click"/>
+        <TextBlock x:Name="lblUserResult" Foreground="Green" Margin="0,5,0,20"/>
+
+        <!-- Phần Tạo Dự án -->
+        <TextBlock Text="2. Tạo Dự Án Mới" FontWeight="Bold" Margin="0,0,0,5"/>
+        <TextBox x:Name="txtProjectName" Margin="0,0,0,5" Padding="5"/>
+        <TextBox x:Name="txtOwnerId" Margin="0,0,0,10" Padding="5" ToolTip="Nhập ID User vào đây"/>
+        <Button Content="Tạo Dự Án" Padding="5" Background="#007BFF" Foreground="White" Click="BtnCreateProject_Click"/>
+        <TextBlock x:Name="lblProjectResult" Foreground="Green" Margin="0,5,0,20"/>
+
+        <!-- Phần Tạo Task -->
+        <TextBlock Text="3. Tạo Task Mới" FontWeight="Bold" Margin="0,0,0,5"/>
+        <TextBox x:Name="txtTaskName" Margin="0,0,0,5" Padding="5"/>
+        <TextBox x:Name="txtProjectId" Margin="0,0,0,10" Padding="5" ToolTip="Nhập ID Dự án vào đây"/>
+        <Button Content="Tạo Task" Padding="5" Background="#007BFF" Foreground="White" Click="BtnCreateTask_Click"/>
+        <TextBlock x:Name="lblTaskResult" Foreground="Green" Margin="0,5,0,0"/>
+
+    </StackPanel>
+</Window>
