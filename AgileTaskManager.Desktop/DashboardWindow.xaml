@@ -18,16 +18,13 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <!-- THÊM DÒNG NÀY Ở ĐÂY -->
                     <ControlTemplate TargetType="Button">
-                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                    </Border>
-                </ControlTemplate>
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
                 </Setter.Value>
-                <!-- VÀ THÊM DÒNG NÀY Ở ĐÂY -->
             </Setter>
-            <!-- Hiệu ứng di chuột (Hover) -->
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#EBECF0"/>
@@ -35,7 +32,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Style cho Menu Button đang được chọn (Dashboard) -->
+        <!-- Style cho Menu Button đang được chọn -->
         <Style TargetType="Button" x:Key="ActiveMenuBtn" BasedOn="{StaticResource MenuBtn}">
             <Setter Property="Background" Value="#E9F2FF"/>
             <Setter Property="Foreground" Value="#0052CC"/>
@@ -50,60 +47,46 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="260"/>
-            <!-- Mở rộng Sidebar một chút cho cân đối -->
             <ColumnDefinition Width="*"/>
-            <!-- Main Content -->
         </Grid.ColumnDefinitions>
 
         <!-- SIDEBAR (CỘT TRÁI) -->
         <Border Grid.Column="0" Background="White">
-            <!-- Đổ bóng nhẹ để tách biệt Sidebar và Nội dung -->
             <Border.Effect>
                 <DropShadowEffect BlurRadius="15" ShadowDepth="1" Color="#D9D9D9" Opacity="0.4" Direction="0"/>
             </Border.Effect>
 
             <StackPanel Margin="0,40,0,0">
-                <!-- Dashboard -->
                 <Button Style="{StaticResource ActiveMenuBtn}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="❖" Width="30" FontSize="16" TextAlignment="Center"/>
                         <TextBlock Text="Dashboard" Margin="10,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-
-                <!-- Projects -->
                 <Button Style="{StaticResource MenuBtn}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="|||" Width="30" FontSize="14" FontWeight="Bold" TextAlignment="Center"/>
                         <TextBlock Text="Projects" Margin="10,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-
-                <!-- Team Directory -->
                 <Button Style="{StaticResource MenuBtn}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="👥" Width="30" FontSize="14" TextAlignment="Center"/>
                         <TextBlock Text="Team Directory" Margin="10,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-
-                <!-- Nút Create (Đã chuyển về màu trung tính, giữ icon biểu đồ) -->
                 <Button Style="{StaticResource MenuBtn}" Click="BtnCreate_Click">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="📊" Width="30" FontSize="14" TextAlignment="Center"/>
                         <TextBlock Text="Create" Margin="10,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-
-                <!-- Files -->
                 <Button Style="{StaticResource MenuBtn}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="📁" Width="30" FontSize="14" TextAlignment="Center"/>
                         <TextBlock Text="Files" Margin="10,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-
-                <!-- Settings -->
                 <Button Style="{StaticResource MenuBtn}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="⚙️" Width="30" FontSize="14" TextAlignment="Center"/>
@@ -116,19 +99,111 @@
         <!-- MAIN CONTENT (CỘT PHẢI) -->
         <Border Grid.Column="1" Padding="50,40,50,40">
             <StackPanel>
-                <!-- Tiêu đề -->
                 <TextBlock Text="Hello, Sir" FontSize="34" FontWeight="ExtraBlack" Foreground="#091E42" Margin="0,0,0,20"/>
-
-                <!-- Đường kẻ mảnh -->
                 <Rectangle Height="1" Fill="#DFE1E6" Margin="0,0,0,30"/>
 
-                <!-- Nút + Thêm thẻ mới -->
-                <Border Background="#EBECF0" CornerRadius="8" Width="200" Padding="15,12" HorizontalAlignment="Left" Cursor="Hand">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="+" FontSize="18" FontWeight="Bold" Foreground="#172B4D" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Thêm thẻ mới" FontSize="15" FontWeight="SemiBold" Foreground="#172B4D" VerticalAlignment="Center"/>
+
+                        <!-- CỘT KANBAN THÔNG MINH -->
+                        <Border Background="#EBECF0" CornerRadius="8" Width="280" Padding="10" Margin="0,0,15,0" VerticalAlignment="Top">
+                            <StackPanel>
+
+                                <!-- NƠI CHỨA DỮ LIỆU (Ban đầu trống) -->
+                                <StackPanel x:Name="spTaskList">
+                                </StackPanel>
+
+                                <!-- FORM NHẬP LIỆU ẢO THUẬT -->
+                                <Grid Margin="0,5,0,0">
+                                    <!-- Nút Mở Form -->
+                                    <!-- Nút Mở Form (Đã sửa lại cấu trúc chuẩn để không bị mất giao diện) -->
+                                    <Button x:Name="btnShowAddCard" Click="BtnShowAddCard_Click"
+        Background="Transparent" Foreground="#5E6C84" BorderThickness="0" 
+        HorizontalContentAlignment="Left" Padding="10,8" Cursor="Hand" Margin="0,-10,0,10">
+
+                                        <!-- KHAI BÁO STYLE VÀ TEMPLATE BÊN TRONG THẺ <Button.Resources> -->
+                                        <!-- Điều này giúp Designer không bị lú lẫn -->
+                                        <Button.Resources>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                                                <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#D9DCE2"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Resources>
+
+                                        <!-- NỘI DUNG CHÍNH CỦA NÚT ĐẶT TRỰC TIẾP Ở ĐÂY -->
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="+" FontSize="18" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="lblShowBtnText" Text="Thêm danh sách" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- Form Nhập (Ẩn) -->
+                                    <StackPanel x:Name="panelAddCardInput" Visibility="Collapsed">
+                                        <TextBox x:Name="txtNewTaskName" Height="60" TextWrapping="Wrap" AcceptsReturn="True"
+                                                 Padding="10" BorderThickness="0" Background="White" Margin="0,0,0,10"
+                                                 PreviewKeyDown="TxtNewTaskName_PreviewKeyDown">
+                                            <TextBox.Resources>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="CornerRadius" Value="6"/>
+                                                </Style>
+                                            </TextBox.Resources>
+                                            <TextBox.Effect>
+                                                <DropShadowEffect BlurRadius="4" ShadowDepth="1" Color="#0052CC" Opacity="0.3"/>
+                                            </TextBox.Effect>
+                                        </TextBox>
+
+                                        <StackPanel Orientation="Horizontal">
+                                            <!-- Nút Lưu -->
+                                            <Button x:Name="btnConfirmAdd" Content="Thêm danh sách" Click="BtnConfirmAddCard_Click"
+                                                    Background="#0052CC" Foreground="White" FontWeight="SemiBold"
+                                                    BorderThickness="0" Padding="12,6" Cursor="Hand">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                                            <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+
+                                            <!-- Nút Hủy -->
+                                            <Button Content="✕" Click="BtnCancelAddCard_Click" FontSize="16"
+                                                    Background="Transparent" Foreground="#5E6C84" BorderThickness="0"
+                                                    Margin="10,0,0,0" Cursor="Hand" VerticalAlignment="Center">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- NÚT TẠO CỘT MỚI (Mặc định ẩn, sẽ hiện ra bên phải sau khi tạo Title) -->
+                        <Border x:Name="btnAddNewColumn" Visibility="Collapsed" Background="#EBECF0" CornerRadius="8" Width="280" Height="45" Padding="15,0" VerticalAlignment="Top" Cursor="Hand">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="+" FontSize="18" FontWeight="Bold" Foreground="#172B4D" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Thêm danh sách" FontSize="14" FontWeight="SemiBold" Foreground="#172B4D" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
                     </StackPanel>
-                </Border>
+                </ScrollViewer>
             </StackPanel>
         </Border>
     </Grid>
