@@ -109,7 +109,7 @@ namespace AgileTaskManager.Desktop
         {
             AddNewTask();
         }
-
+        
         private void TxtNewTaskName_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
