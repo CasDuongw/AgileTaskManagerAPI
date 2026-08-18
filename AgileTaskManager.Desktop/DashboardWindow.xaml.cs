@@ -22,7 +22,10 @@ namespace AgileTaskManager.Desktop
         {
             btnShowAddList.Visibility = Visibility.Collapsed;
             panelAddListInput.Visibility = Visibility.Visible;
-            txtNewListName.Focus();
+
+
+            // [GIẢI QUYẾT VẤN ĐỀ 2] Đợi UI vẽ xong form mới ép Focus
+            Dispatcher.BeginInvoke(new System.Action(() => txtNewListName.Focus()));
         }
 
         // 2. Hủy tạo danh sách
@@ -52,6 +55,23 @@ namespace AgileTaskManager.Desktop
 
             // Ép tiêu điểm bay về nút "Thêm danh sách khác" để triệt tiêu hoàn toàn khung nét đứt
             btnShowAddList.Focus();
+
+            // Cập nhật lại chữ sau khi thêm cột thành công
+            UpdateAddListButtonText();
+        }
+
+        // [CODE MỚI]: Hàm kiểm tra và đổi chữ tự động
+        public void UpdateAddListButtonText()
+        {
+            // Nếu có nhiều hơn 1 phần tử (Nghĩa là có cột + cái form thêm list)
+            if (spBoard.Children.Count > 1)
+            {
+                lblAddListText.Text = "Thêm danh sách khác";
+            }
+            else
+            {
+                lblAddListText.Text = "Thêm danh sách";
+            }
         }
 
         // 4. Bấm nút Lưu
@@ -63,11 +83,20 @@ namespace AgileTaskManager.Desktop
         // 5. Bấm Enter để Lưu
         private void TxtNewListName_PreviewKeyDown(object sender, KeyEventArgs e)
         {
+            // [GIẢI QUYẾT VẤN ĐỀ 3] Bấm ESC -> Hủy tạo danh sách
+            if (e.Key == Key.Escape)
+            {
+                BtnCancelAddList_Click(null, null);
+                e.Handled = true;
+                return;
+            }
+
+            // Bấm Enter -> Lưu danh sách
             if (e.Key == Key.Enter)
             {
                 AddNewList();
                 e.Handled = true;
-                Keyboard.ClearFocus();
+                // (Vì tạo cột xong thì cái form Thêm danh sách sẽ tự trượt sang phải và đóng lại, nên không cần ép Focus lại vào đây)
             }
         }
     }

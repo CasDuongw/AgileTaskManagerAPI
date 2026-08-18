@@ -31,6 +31,13 @@ namespace AgileTaskManager.Desktop
             if (this.Parent is Panel parentPanel)
             {
                 parentPanel.Children.Remove(this);
+
+                // Tìm màn hình Dashboard và ra lệnh cập nhật lại chữ
+                Window window = Window.GetWindow(this);
+                if (window is DashboardWindow dashboard)
+                {
+                    dashboard.UpdateAddListButtonText();
+                }
             }
         }
 
@@ -39,7 +46,9 @@ namespace AgileTaskManager.Desktop
         {
             btnShowAddCard.Visibility = Visibility.Collapsed;
             panelAddCardInput.Visibility = Visibility.Visible;
-            txtNewTaskName.Focus();
+            
+            // [GIẢI QUYẾT VẤN ĐỀ 2] Đợi UI vẽ xong mới ép Focus vào ô nhập liệu
+            Dispatcher.BeginInvoke(new System.Action(() => txtNewTaskName.Focus()));
         }
 
         private void BtnCancelAddCard_Click(object sender, RoutedEventArgs e)
@@ -112,12 +121,24 @@ namespace AgileTaskManager.Desktop
         
         private void TxtNewTaskName_PreviewKeyDown(object sender, KeyEventArgs e)
         {
+            // [GIẢI QUYẾT VẤN ĐỀ 3] Nếu bấm ESC -> Tự động gọi hàm Hủy (đóng form)
+            if (e.Key == Key.Escape)
+            {
+                BtnCancelAddCard_Click(null, null);
+                e.Handled = true;
+                return;
+            }
+
+            // Nếu bấm Enter -> Lưu thẻ
             if (e.Key == Key.Enter)
             {
-                if (Keyboard.Modifiers == ModifierKeys.Shift) return;
+                if (Keyboard.Modifiers == ModifierKeys.Shift) return; // Shift+Enter thì xuống dòng
+
                 AddNewTask();
                 e.Handled = true;
-                Keyboard.ClearFocus();
+
+                // [GIẢI QUYẾT VẤN ĐỀ 1] Ép con trỏ chuột quay lại ô nhập liệu ngay lập tức để gõ liên tục
+                Dispatcher.BeginInvoke(new System.Action(() => txtNewTaskName.Focus()));
             }
         }
     }

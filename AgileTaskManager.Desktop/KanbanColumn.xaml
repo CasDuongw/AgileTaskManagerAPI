@@ -1,17 +1,14 @@
 ﻿<UserControl x:Class="AgileTaskManager.Desktop.KanbanColumn"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             FocusVisualStyle="{x:Null}">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Border Background="#EBECF0" CornerRadius="8" Width="280" Padding="10" Margin="0,0,15,0" VerticalAlignment="Top"
-            >
-
+    <!-- THẺ BORDER BỌC NGOÀI (Đã triệt tiêu viền nét đứt từ trước) -->
+    <Border Background="#EBECF0" CornerRadius="8" Width="280" Padding="10" Margin="0,0,15,0" VerticalAlignment="Top">
         <Border.FocusVisualStyle>
             <Style TargetType="Control">
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate>
-                            <!-- Trả về một template rỗng để triệt tiêu hoàn toàn viền nét đứt -->
                             <Border BorderThickness="0"/>
                         </ControlTemplate>
                     </Setter.Value>
@@ -19,10 +16,19 @@
             </Style>
         </Border.FocusVisualStyle>
 
-        <StackPanel>
+        <!-- [CODE MỚI ĐƯỢC THÊM VÀO]: THAY THẾ STACKPANEL THÀNH GRID CHIA 3 TẦNG -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <!-- Dòng 0: Dành cho Tiêu đề (Bao nhiêu chữ lấy bấy nhiêu cao) -->
+                <RowDefinition Height="Auto"/>
+                <!-- Dòng 1: Dành cho Danh sách Task (Dấu * ép nó lấp đầy phần trống và tự sinh thanh cuộn nếu quá dài) -->
+                <RowDefinition Height="*"/>
+                <!-- Dòng 2: Dành cho Nút/Form thêm thẻ mới -->
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-            <!-- 1. Tiêu đề cột & Nút Xóa Cột -->
-            <Grid x:Name="titleGrid" Margin="5,5,5,15" Background="Transparent">
+            <!-- TẦNG 0: Tiêu đề cột & Nút Xóa Cột -->
+            <Grid x:Name="titleGrid" Grid.Row="0" Margin="5,5,5,15" Background="Transparent">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -31,13 +37,15 @@
                 <Button x:Name="btnDeleteColumn" Content="✕" Click="BtnDeleteColumn_Click" Grid.Column="1" Foreground="Gray" Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Visibility="Hidden" Padding="5,0,0,0"/>
             </Grid>
 
-            <!-- 2. Danh sách các Thẻ Task -->
-            <StackPanel x:Name="spTaskList"/>
+            <!-- TẦNG 1 [CODE MỚI]: spTaskList nay đã được bảo kê bởi ScrollViewer -->
+            <!-- Thuộc tính VerticalScrollBarVisibility="Auto" sẽ tự động hiện thanh cuộn khi task tràn viền -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,5,0" Margin="0,0,0,5">
+                <StackPanel x:Name="spTaskList"/>
+            </ScrollViewer>
 
-            <!-- 3. Khu vực Thêm Thẻ (Ảo thuật ẩn/hiện) -->
-            <Grid Margin="0,5,0,0">
-                <Button x:Name="btnShowAddCard" Click="BtnShowAddCard_Click" Background="Transparent" Foreground="#5E6C84" BorderThickness="0" HorizontalContentAlignment="Left" Padding="8,8" Cursor="Hand" Margin="0,-5,0,5"
-                        FocusVisualStyle="{x:Null}">
+            <!-- TẦNG 2: Khu vực Thêm Thẻ -->
+            <Grid Grid.Row="2" Margin="0,5,0,0">
+                <Button x:Name="btnShowAddCard" Click="BtnShowAddCard_Click" Background="Transparent" Foreground="#5E6C84" BorderThickness="0" HorizontalContentAlignment="Left" Padding="8,8" Cursor="Hand" Margin="0,-5,0,5" FocusVisualStyle="{x:Null}">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border Background="{TemplateBinding Background}" CornerRadius="6">
@@ -68,8 +76,7 @@
                         <TextBox x:Name="txtNewTaskName" MinHeight="60" TextWrapping="Wrap" AcceptsReturn="True" Padding="10" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Top" PreviewKeyDown="TxtNewTaskName_PreviewKeyDown"/>
                     </Border>
                     <StackPanel Orientation="Horizontal">
-                        <Button Content="Thêm thẻ" Click="BtnConfirmAddCard_Click" Background="#0052CC" Foreground="White" FontWeight="SemiBold" BorderThickness="0" Padding="12,6" Cursor="Hand"
-                                FocusVisualStyle="{x:Null}">
+                        <Button Content="Thêm thẻ" Click="BtnConfirmAddCard_Click" Background="#0052CC" Foreground="White" FontWeight="SemiBold" BorderThickness="0" Padding="12,6" Cursor="Hand" FocusVisualStyle="{x:Null}">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border Background="{TemplateBinding Background}" CornerRadius="4">
@@ -78,8 +85,7 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
-                        <Button Content="✕" Click="BtnCancelAddCard_Click" FontSize="16" Background="Transparent" Foreground="#5E6C84" BorderThickness="0" Margin="10,0,0,0" Cursor="Hand"
-                                FocusVisualStyle="{x:Null}">
+                        <Button Content="✕" Click="BtnCancelAddCard_Click" FontSize="16" Background="Transparent" Foreground="#5E6C84" BorderThickness="0" Margin="10,0,0,0" Cursor="Hand" FocusVisualStyle="{x:Null}">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -89,6 +95,6 @@
                     </StackPanel>
                 </StackPanel>
             </Grid>
-        </StackPanel>
+        </Grid>
     </Border>
 </UserControl>
