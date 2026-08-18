@@ -106,8 +106,8 @@ namespace AgileTaskManager.Desktop
             // Đăng ký các sự kiện kéo thả cho thẻ Task
             newCard.PreviewMouseLeftButtonDown += Card_PreviewMouseLeftButtonDown;
             newCard.PreviewMouseMove += Card_PreviewMouseMove;
-            newCard.DragOver += Card_DragOver;
-            newCard.Drop += Card_Drop;
+            //newCard.DragOver += Card_DragOver;
+            //newCard.Drop += Card_Drop;
 
             newCard.MouseEnter += (s, e) => btnDelete.Visibility = Visibility.Visible;
             newCard.MouseLeave += (s, e) => btnDelete.Visibility = Visibility.Hidden;
@@ -263,54 +263,54 @@ namespace AgileTaskManager.Desktop
             }
         }
 
-        // 3. Khi thẻ Task lơ lửng trên một thẻ Task khác (Chủ nhà)
-        private void Card_DragOver(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(typeof(Border)) && e.Data.GetData(typeof(Border)) != sender)
-            {
-                e.Effects = DragDropEffects.Move;
-            }
-            else
-            {
-                e.Effects = DragDropEffects.None;
-            }
-            e.Handled = true;
-        }
+        //// 3. Khi thẻ Task lơ lửng trên một thẻ Task khác (Chủ nhà)
+        //private void Card_DragOver(object sender, DragEventArgs e)
+        //{
+        //    if (e.Data.GetDataPresent(typeof(Border)) && e.Data.GetData(typeof(Border)) != sender)
+        //    {
+        //        e.Effects = DragDropEffects.Move;
+        //    }
+        //    else
+        //    {
+        //        e.Effects = DragDropEffects.None;
+        //    }
+        //    e.Handled = true;
+        //}
 
-        // 4. TRƯỜNG HỢP A: Thả thẻ Task đè lên một thẻ Task khác
-        private void Card_Drop(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(typeof(Border)))
-            {
-                Border droppedCard = e.Data.GetData(typeof(Border)) as Border;
-                Border targetCard = sender as Border;
+        //// 4. TRƯỜNG HỢP A: Thả thẻ Task đè lên một thẻ Task khác
+        //private void Card_Drop(object sender, DragEventArgs e)
+        //{
+        //    if (e.Data.GetDataPresent(typeof(Border)))
+        //    {
+        //        Border droppedCard = e.Data.GetData(typeof(Border)) as Border;
+        //        Border targetCard = sender as Border;
 
-                if (droppedCard != null && droppedCard != targetCard)
-                {
-                    Panel oldParent = droppedCard.Parent as Panel;
-                    if (oldParent != null) oldParent.Children.Remove(droppedCard);
+        //        if (droppedCard != null && droppedCard != targetCard)
+        //        {
+        //            Panel oldParent = droppedCard.Parent as Panel;
+        //            if (oldParent != null) oldParent.Children.Remove(droppedCard);
 
-                    Panel newParent = targetCard.Parent as Panel;
-                    if (newParent != null)
-                    {
-                        int targetIndex = newParent.Children.IndexOf(targetCard);
+        //            Panel newParent = targetCard.Parent as Panel;
+        //            if (newParent != null)
+        //            {
+        //                int targetIndex = newParent.Children.IndexOf(targetCard);
 
-                        // [CODE MỚI]: TÍNH TOÁN VỊ TRÍ CHUỘT
-                        // Lấy tọa độ Y của chuột so với chiều cao của thẻ bị thả đè lên
-                        Point mousePos = e.GetPosition(targetCard);
+        //                // [CODE MỚI]: TÍNH TOÁN VỊ TRÍ CHUỘT
+        //                // Lấy tọa độ Y của chuột so với chiều cao của thẻ bị thả đè lên
+        //                Point mousePos = e.GetPosition(targetCard);
 
-                        // Nếu chuột đang nằm ở nửa dưới của thẻ mục tiêu -> Tăng Index lên 1 để chèn vào phía dưới
-                        if (mousePos.Y >= targetCard.ActualHeight / 2)
-                        {
-                            targetIndex++;
-                        }
+        //                // Nếu chuột đang nằm ở nửa dưới của thẻ mục tiêu -> Tăng Index lên 1 để chèn vào phía dưới
+        //                if (mousePos.Y >= targetCard.ActualHeight / 2)
+        //                {
+        //                    targetIndex++;
+        //                }
 
-                        newParent.Children.Insert(targetIndex, droppedCard);
-                    }
-                }
-            }
-            e.Handled = true; // Báo hiệu đã xử lý xong, ngắt sự kiện không cho lan truyền tiếp
-        }
+        //                newParent.Children.Insert(targetIndex, droppedCard);
+        //            }
+        //        }
+        //    }
+        //    e.Handled = true; // Báo hiệu đã xử lý xong, ngắt sự kiện không cho lan truyền tiếp
+        //}
 
         // 5. TRƯỜNG HỢP B [MỚI]: Thả vào khoảng trống bất kỳ trên Cột (Do Border gánh)
         private void ColumnBorder_DragOver(object sender, DragEventArgs e)
@@ -330,16 +330,51 @@ namespace AgileTaskManager.Desktop
                 Border droppedCard = e.Data.GetData(typeof(Border)) as Border;
                 if (droppedCard != null)
                 {
+                    // 1. LẤY TỌA ĐỘ CHUỘT: Đo xem chuột đang nằm ở đâu so với toàn bộ danh sách Task
+                    Point mousePos = e.GetPosition(spTaskList);
+
+                    // Mặc định Index sẽ là ở cuối danh sách
+                    int targetIndex = spTaskList.Children.Count;
+
+                    // 2. DÙNG TOÁN HỌC TÌM VỊ TRÍ CHUẨN XÁC
+                    // Quét qua từng thẻ Task đang có sẵn trong cột
+                    for (int i = 0; i < spTaskList.Children.Count; i++)
+                    {
+                        UIElement child = spTaskList.Children[i];
+
+                        // Bỏ qua chính cái thẻ mình đang cầm trên tay (Tránh tính toán sai lệch khi kéo trong cùng 1 cột)
+                        if (child == droppedCard) continue;
+
+                        // Tính tọa độ Y của thẻ này so với danh sách
+                        Point childPos = child.TranslatePoint(new Point(0, 0), spTaskList);
+
+                        // Nếu mũi tên chuột nằm cao hơn ĐIỂM GIỮA của thẻ hiện tại
+                        // Nghĩa là người dùng muốn chèn lên trên thẻ này!
+                        if (mousePos.Y < childPos.Y + (((FrameworkElement)child).ActualHeight / 2))
+                        {
+                            targetIndex = i; // Chốt hạ vị trí
+                            break; // Dừng vòng lặp
+                        }
+                    }
+
+                    // 3. TIẾN HÀNH RÚT - CẮM
                     Panel oldParent = droppedCard.Parent as Panel;
+                    if (oldParent != null)
+                    {
+                        // Xử lý một cú lừa của Logic: Nếu bạn kéo thả trong CÙNG 1 CỘT, 
+                        // khi rút thẻ cũ ra, các thẻ bên dưới sẽ bị giật lên 1 bậc làm sai số Index.
+                        // Ta cần trừ đi 1 nấc nếu vị trí cũ nằm cao hơn vị trí mới.
+                        if (oldParent == spTaskList && oldParent.Children.IndexOf(droppedCard) < targetIndex)
+                        {
+                            targetIndex--;
+                        }
 
-                    // Nếu thả trúng vào chính cột hiện tại đang chứa nó thì không xử lý nữa
-                    if (oldParent == spTaskList) return;
+                        // Rút khỏi cột cũ (hoặc vị trí cũ)
+                        oldParent.Children.Remove(droppedCard);
+                    }
 
-                    // Nhổ cỏ tận gốc: Rút thẻ khỏi cột cũ
-                    if (oldParent != null) oldParent.Children.Remove(droppedCard);
-
-                    // Thêm thẳng vào cuối danh sách của cột mới (Giải quyết dứt điểm cột trống)
-                    spTaskList.Children.Add(droppedCard);
+                    // Cắm thẻ vào vị trí chuẩn không cần chỉnh
+                    spTaskList.Children.Insert(targetIndex, droppedCard);
                 }
             }
             e.Handled = true;
