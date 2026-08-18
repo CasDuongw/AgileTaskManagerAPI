@@ -1,6 +1,7 @@
 ﻿using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace AgileTaskManager.Desktop
@@ -12,12 +13,18 @@ namespace AgileTaskManager.Desktop
         private bool _isLoadingProjects;
 
         public int SelectedProjectId =>
-            cboProject.SelectedValue is int id ? id : 0;
+            cboProjects.SelectedValue is int id ? id : 0;
 
         public DashboardWindow()
         {
             InitializeComponent();
-            Loaded += DashboardWindow_Loaded;
+            this.Loaded += DashboardWindow_Loaded;
+        }
+
+        public class ProjectDto
+        {
+            public int projectId { get; set; }
+            public string projectName { get; set; }
         }
 
         private async void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
@@ -25,34 +32,38 @@ namespace AgileTaskManager.Desktop
             await LoadProjectsAsync();
         }
 
+        // [MỚI] Hàm gọi API lấy danh sách tất cả Project thả vào ComboBox
         private async Task LoadProjectsAsync()
         {
             try
             {
-                var projects = await client.GetFromJsonAsync<List<ProjectItem>>($"{ApiBaseUrl}/Projects");
-                if (projects == null || projects.Count == 0)
+                var projects = await client.GetFromJsonAsync<List<ProjectDto>>($"{ApiBaseUrl}/Projects");
+                if (projects != null && projects.Count > 0)
                 {
-                    MessageBox.Show("Chưa có dự án nào. Hãy tạo dự án trước.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
+                    cboProjects.ItemsSource = projects;
+                    cboProjects.SelectedIndex = 0; // Tự động chọn dự án đầu tiên trong danh sách
                 }
-
-                _isLoadingProjects = true;
-                cboProject.ItemsSource = projects;
-                cboProject.SelectedIndex = 0;
-                _isLoadingProjects = false;
-
-                await LoadProjectBoardAsync(SelectedProjectId);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Không tải được danh sách dự án: {ex.Message}\nBạn đã chạy backend chưa?", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Lỗi tải danh sách dự án: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private async void CboProject_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        // [MỚI] Khi người dùng đổi qua đổi lại giữa các Dự án
+        private void CboProjects_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_isLoadingProjects || SelectedProjectId <= 0) return;
-            await LoadProjectBoardAsync(SelectedProjectId);
+            // Tạm thời: Quét dọn toàn bộ các Cột Kanban cũ trên bảng (trừ nút Thêm danh sách)
+            for (int i = spBoard.Children.Count - 1; i >= 0; i--)
+            {
+                if (spBoard.Children[i] is KanbanColumn)
+                {
+                    spBoard.Children.RemoveAt(i);
+                }
+            }
+            UpdateAddListButtonText();
+
+            // (Bước tiếp theo chúng ta sẽ gọi API load Task của dự án mới vào đây)
         }
 
         private async Task LoadProjectBoardAsync(int projectId)
@@ -124,21 +135,26 @@ namespace AgileTaskManager.Desktop
         // 3. BỘ NÃO ĐÚC CỘT KANBAN:
         private void AddNewList()
         {
-            if (SelectedProjectId <= 0)
-            {
-                MessageBox.Show("Vui lòng chọn dự án trước khi thêm danh sách.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
             string title = txtNewListName.Text.Trim();
             if (string.IsNullOrEmpty(title)) return;
 
-            KanbanColumn newColumn = new KanbanColumn(title, SelectedProjectId);
+            // [MỚI] Lấy ID của dự án đang được hiển thị trên ComboBox
+            if (cboProjects.SelectedValue == null)
+            {
+                MessageBox.Show("Vui lòng chọn một dự án trước khi tạo danh sách!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            int selectedProjectId = (int)cboProjects.SelectedValue;
+
+            // [SỬA] Đúc Cột mới và bơm đúng cái ID đang chọn vào trong Cột đó
+            KanbanColumn newColumn = new KanbanColumn(title, selectedProjectId);
+
             spBoard.Children.Insert(spBoard.Children.Count - 1, newColumn);
 
             txtNewListName.Text = "";
             panelAddListInput.Visibility = Visibility.Collapsed;
             btnShowAddList.Visibility = Visibility.Visible;
+
             btnShowAddList.Focus();
             UpdateAddListButtonText();
         }
@@ -177,5 +193,6 @@ namespace AgileTaskManager.Desktop
             public int ProjectId { get; set; }
             public string ProjectName { get; set; } = string.Empty;
         }
+
     }
 }

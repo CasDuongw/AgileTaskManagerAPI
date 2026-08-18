@@ -188,6 +188,72 @@ namespace AgileTaskManager.Desktop
             }
         }
 
+        // ==============================================================================
+        // [MỚI] HÀM CÔNG KHAI ĐỂ DASHBOARD "BƠM" TASK TỪ DATABASE VÀO CỘT
+        // ==============================================================================
+        public void AddTaskCard(int taskId, string taskContent)
+        {
+            Border newCard = new Border
+            {
+                Background = Brushes.White,
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(10),
+                Margin = new Thickness(0, 0, 0, 10),
+                FocusVisualStyle = null,
+                Effect = new DropShadowEffect { BlurRadius = 4, ShadowDepth = 1, Color = (Color)ColorConverter.ConvertFromString("#000000"), Opacity = 0.1, Direction = 270 },
+                AllowDrop = true,
+
+                // Cực kỳ quan trọng: Gắn TaskId từ Database vào túi bí mật (Tag) của thẻ
+                // Để sau này kéo thả mình biết đang kéo cái thẻ nào!
+                Tag = taskId
+            };
+
+            Grid cardGrid = new Grid();
+            cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            CheckBox chk = new CheckBox
+            {
+                Foreground = (SolidColorBrush)new BrushConverter().ConvertFromString("#172B4D"),
+                FontWeight = FontWeights.SemiBold,
+                VerticalContentAlignment = VerticalAlignment.Center,
+                Content = new TextBlock { Text = taskContent, TextWrapping = TextWrapping.Wrap }
+            };
+            Grid.SetColumn(chk, 0);
+
+            Button btnDelete = new Button
+            {
+                Content = "✕",
+                Foreground = Brushes.Gray,
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                FontSize = 14,
+                Cursor = Cursors.Hand,
+                Visibility = Visibility.Hidden,
+                VerticalAlignment = VerticalAlignment.Top,
+                Padding = new Thickness(5, 0, 0, 0)
+            };
+            Grid.SetColumn(btnDelete, 1);
+
+            // Gắn sự kiện kéo thả cho thẻ
+            newCard.PreviewMouseLeftButtonDown += Card_PreviewMouseLeftButtonDown;
+            newCard.PreviewMouseMove += Card_PreviewMouseMove;
+
+            // Sự kiện hiện nút xóa khi hover
+            newCard.MouseEnter += (s, e) => btnDelete.Visibility = Visibility.Visible;
+            newCard.MouseLeave += (s, e) => btnDelete.Visibility = Visibility.Hidden;
+
+            // Xóa UI khi bấm nút (Bước sau sẽ cập nhật xóa DB sau)
+            btnDelete.Click += (s, e) => spTaskList.Children.Remove(newCard);
+
+            cardGrid.Children.Add(chk);
+            cardGrid.Children.Add(btnDelete);
+            newCard.Child = cardGrid;
+
+            // Bơm thẻ vào giao diện cột
+            spTaskList.Children.Add(newCard);
+        }
+
         private void BtnConfirmAddCard_Click(object sender, RoutedEventArgs e)
         {
             AddNewTask();
@@ -329,56 +395,7 @@ namespace AgileTaskManager.Desktop
             }
         }
 
-        //// 3. Khi thẻ Task lơ lửng trên một thẻ Task khác (Chủ nhà)
-        //private void Card_DragOver(object sender, DragEventArgs e)
-        //{
-        //    if (e.Data.GetDataPresent(typeof(Border)) && e.Data.GetData(typeof(Border)) != sender)
-        //    {
-        //        e.Effects = DragDropEffects.Move;
-        //    }
-        //    else
-        //    {
-        //        e.Effects = DragDropEffects.None;
-        //    }
-        //    e.Handled = true;
-        //}
-
-        //// 4. TRƯỜNG HỢP A: Thả thẻ Task đè lên một thẻ Task khác
-        //private void Card_Drop(object sender, DragEventArgs e)
-        //{
-        //    if (e.Data.GetDataPresent(typeof(Border)))
-        //    {
-        //        Border droppedCard = e.Data.GetData(typeof(Border)) as Border;
-        //        Border targetCard = sender as Border;
-
-        //        if (droppedCard != null && droppedCard != targetCard)
-        //        {
-        //            Panel oldParent = droppedCard.Parent as Panel;
-        //            if (oldParent != null) oldParent.Children.Remove(droppedCard);
-
-        //            Panel newParent = targetCard.Parent as Panel;
-        //            if (newParent != null)
-        //            {
-        //                int targetIndex = newParent.Children.IndexOf(targetCard);
-
-        //                // [CODE MỚI]: TÍNH TOÁN VỊ TRÍ CHUỘT
-        //                // Lấy tọa độ Y của chuột so với chiều cao của thẻ bị thả đè lên
-        //                Point mousePos = e.GetPosition(targetCard);
-
-        //                // Nếu chuột đang nằm ở nửa dưới của thẻ mục tiêu -> Tăng Index lên 1 để chèn vào phía dưới
-        //                if (mousePos.Y >= targetCard.ActualHeight / 2)
-        //                {
-        //                    targetIndex++;
-        //                }
-
-        //                newParent.Children.Insert(targetIndex, droppedCard);
-        //            }
-        //        }
-        //    }
-        //    e.Handled = true; // Báo hiệu đã xử lý xong, ngắt sự kiện không cho lan truyền tiếp
-        //}
-
-        // 5. TRƯỜNG HỢP B [MỚI]: Thả vào khoảng trống bất kỳ trên Cột (Do Border gánh)
+      
         private void ColumnBorder_DragOver(object sender, DragEventArgs e)
         {
             // Nếu vật thể đang kéo là một thẻ Task (thẻ Border) thì cho phép thả

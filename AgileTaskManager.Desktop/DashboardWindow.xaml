@@ -106,19 +106,26 @@
                 </Grid.RowDefinitions>
 
                 <!-- Tiêu đề + chọn dự án -->
+                <!-- Tiêu đề & Chọn Project -->
                 <Grid Grid.Row="0" Margin="0,0,0,20">
-                    <TextBlock Text="Hello, Sir" FontSize="34" FontWeight="ExtraBlack" Foreground="#091E42" VerticalAlignment="Center"/>
-                    <ComboBox x:Name="cboProject"
-                              HorizontalAlignment="Right"
-                              VerticalAlignment="Center"
-                              Width="280"
-                              Padding="12,8"
-                              FontSize="14"
-                              FontWeight="SemiBold"
-                              Foreground="#172B4D"
-                              DisplayMemberPath="ProjectName"
-                              SelectedValuePath="ProjectId"
-                              SelectionChanged="CboProject_SelectionChanged"/>
+                    <Grid.ColumnDefinitions>
+                        <!-- Cột trái chứa chữ Hello (Tự động đẩy ra) -->
+                        <ColumnDefinition Width="*"/>
+                        <!-- Cột phải chứa ComboBox (Vừa khít nội dung) -->
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="Hello, Sir" FontSize="34" FontWeight="ExtraBlack" Foreground="#091E42" VerticalAlignment="Center"/>
+
+                    <!-- [MỚI] ComboBox chọn Dự án nằm sát lề phải -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="📁 Dự án:" FontSize="16" FontWeight="SemiBold" Foreground="#5E6C84" Margin="0,0,10,0" VerticalAlignment="Center"/>
+
+                        <ComboBox x:Name="cboProjects" Width="220" Height="40" FontSize="15" Padding="10,8" 
+                                  DisplayMemberPath="projectName" SelectedValuePath="projectId" 
+                                  SelectionChanged="CboProjects_SelectionChanged"
+                                  Background="White" BorderBrush="#DFE1E6" BorderThickness="2" Cursor="Hand"/>
+                    </StackPanel>
                 </Grid>
 
                 <!-- Đường kẻ mảnh -->
