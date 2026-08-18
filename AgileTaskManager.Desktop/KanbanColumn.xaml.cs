@@ -70,7 +70,10 @@ namespace AgileTaskManager.Desktop
                 Padding = new Thickness(10),
                 Margin = new Thickness(0, 0, 0, 10),
                 FocusVisualStyle = null,
-                Effect = new DropShadowEffect { BlurRadius = 4, ShadowDepth = 1, Color = (Color)ColorConverter.ConvertFromString("#000000"), Opacity = 0.1, Direction = 270 }
+                Effect = new DropShadowEffect { BlurRadius = 4, ShadowDepth = 1, Color = (Color)ColorConverter.ConvertFromString("#000000"), Opacity = 0.1, Direction = 270 },
+
+                // Cho phép bản thân thẻ này có thể bị kéo và có thể bị thẻ khác thả đè lên
+                AllowDrop = true
             };
 
             Grid cardGrid = new Grid();
@@ -99,6 +102,12 @@ namespace AgileTaskManager.Desktop
                 Padding = new Thickness(5, 0, 0, 0)
             };
             Grid.SetColumn(btnDelete, 1);
+
+            // Đăng ký các sự kiện kéo thả cho thẻ Task
+            newCard.PreviewMouseLeftButtonDown += Card_PreviewMouseLeftButtonDown;
+            newCard.PreviewMouseMove += Card_PreviewMouseMove;
+            newCard.DragOver += Card_DragOver;
+            newCard.Drop += Card_Drop;
 
             newCard.MouseEnter += (s, e) => btnDelete.Visibility = Visibility.Visible;
             newCard.MouseLeave += (s, e) => btnDelete.Visibility = Visibility.Hidden;
@@ -140,6 +149,231 @@ namespace AgileTaskManager.Desktop
                 // [GIẢI QUYẾT VẤN ĐỀ 1] Ép con trỏ chuột quay lại ô nhập liệu ngay lập tức để gõ liên tục
                 Dispatcher.BeginInvoke(new System.Action(() => txtNewTaskName.Focus()));
             }
+        }
+
+        // ==============================================================================
+        // TÍNH NĂNG DRAG & DROP (KÉO THẢ CỘT)
+        // ==============================================================================
+
+        // Biến lưu trữ tọa độ ban đầu khi click chuột xuống
+        private Point _dragStartPoint;
+
+        // 1. Khi nhấn chuột trái vào Tiêu đề
+        private void TitleGrid_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Lưu lại vị trí chính xác của con trỏ chuột lúc vừa nhấn
+            _dragStartPoint = e.GetPosition(null);
+        }
+
+        // 2. Khi di chuyển chuột (Trong lúc vẫn đang giữ chuột trái)
+        private void TitleGrid_PreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            // Nếu không giữ chuột trái thì thôi, không làm gì cả
+            if (e.LeftButton != MouseButtonState.Pressed) return;
+
+            // Tính toán xem chuột đã kéo đi được một quãng bao xa so với lúc nhấn
+            Point mousePos = e.GetPosition(null);
+            Vector diff = _dragStartPoint - mousePos;
+
+            // Nếu kéo đủ xa (vượt qua mức chống rung tay mặc định của Windows)
+            if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+            {
+                // Bắt đầu gói cái cột này (this) lại và kích hoạt chế độ Kéo (DragDropEffects.Move)
+                DragDrop.DoDragDrop(this, this, DragDropEffects.Move);
+            }
+        }
+
+        // 3. Khi có một vật thể đang lơ lửng bay ngang qua cái Cột này
+        private void UserControl_DragOver(object sender, DragEventArgs e)
+        {
+            // Kiểm tra: Nếu vật đang bay tới ĐÚNG LÀ MỘT CỘT KANBAN, và KHÔNG PHẢI CHÍNH NÓ
+            if (e.Data.GetDataPresent(typeof(KanbanColumn)) && e.Data.GetData(typeof(KanbanColumn)) != this)
+            {
+                e.Effects = DragDropEffects.Move; // Bật đèn xanh, cho phép thả
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None; // Bật đèn đỏ, cấm thả
+            }
+            e.Handled = true;
+        }
+
+        // 4. Khi người dùng buông tay THẢ cái cột kia xuống cái cột này
+        private void UserControl_Drop(object sender, DragEventArgs e)
+        {
+            // Bắt lấy cái Cột đang bị thả xuống
+            if (e.Data.GetDataPresent(typeof(KanbanColumn)))
+            {
+                KanbanColumn droppedColumn = e.Data.GetData(typeof(KanbanColumn)) as KanbanColumn; // Kẻ xâm nhập
+                KanbanColumn targetColumn = this; // Chủ nhà (cột đang bị đè lên)
+
+                // Đảm bảo không tự thả lên chính mình
+                if (droppedColumn != null && droppedColumn != targetColumn)
+                {
+                    // Tìm cái "Bảng" (StackPanel) đang chứa cả 2 anh em
+                    if (this.Parent is Panel parentPanel)
+                    {
+                        // Tìm số thứ tự (Index) của cả 2
+                        int targetIndex = parentPanel.Children.IndexOf(targetColumn);
+
+                        // Rút cái cột đang kéo ra khỏi Bảng
+                        parentPanel.Children.Remove(droppedColumn);
+
+                        // Chèn nó lại vào đúng vị trí của Chủ nhà
+                        parentPanel.Children.Insert(targetIndex, droppedColumn);
+                    }
+                }
+            }
+        }
+
+        // ==============================================================================
+        // TÍNH NĂNG DRAG & DROP CHO CÁC THẺ TASK NHỎ
+        // ==============================================================================
+
+        private Point _cardDragStartPoint;
+
+        // 1. Khi nhấn chuột vào một thẻ Task
+        private void Card_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Nếu bấm trúng nút Xóa (Button) thì không kích hoạt kéo, để người dùng còn kịp bấm xóa
+            if (e.OriginalSource is Button || e.OriginalSource is DependencyObject obj && FindParent<Button>(obj) != null)
+                return;
+
+            _cardDragStartPoint = e.GetPosition(null);
+        }
+
+        // 2. Khi di chuột để nhấc thẻ Task lên
+        private void Card_PreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton != MouseButtonState.Pressed) return;
+
+            Point mousePos = e.GetPosition(null);
+            Vector diff = _cardDragStartPoint - mousePos;
+
+            if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+            {
+                Border draggedCard = sender as Border;
+                if (draggedCard != null)
+                {
+                    // Đóng gói thẻ Task lại và kích hoạt lệnh kéo xuyên màn hình
+                    DragDrop.DoDragDrop(draggedCard, draggedCard, DragDropEffects.Move);
+                }
+            }
+        }
+
+        // 3. Khi thẻ Task lơ lửng trên một thẻ Task khác (Chủ nhà)
+        private void Card_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(typeof(Border)) && e.Data.GetData(typeof(Border)) != sender)
+            {
+                e.Effects = DragDropEffects.Move;
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None;
+            }
+            e.Handled = true;
+        }
+
+        // 4. TRƯỜNG HỢP A: Thả thẻ Task đè lên một thẻ Task khác
+        private void Card_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(typeof(Border)))
+            {
+                Border droppedCard = e.Data.GetData(typeof(Border)) as Border;
+                Border targetCard = sender as Border;
+
+                if (droppedCard != null && droppedCard != targetCard)
+                {
+                    Panel oldParent = droppedCard.Parent as Panel;
+                    if (oldParent != null) oldParent.Children.Remove(droppedCard);
+
+                    Panel newParent = targetCard.Parent as Panel;
+                    if (newParent != null)
+                    {
+                        int targetIndex = newParent.Children.IndexOf(targetCard);
+
+                        // [CODE MỚI]: TÍNH TOÁN VỊ TRÍ CHUỘT
+                        // Lấy tọa độ Y của chuột so với chiều cao của thẻ bị thả đè lên
+                        Point mousePos = e.GetPosition(targetCard);
+
+                        // Nếu chuột đang nằm ở nửa dưới của thẻ mục tiêu -> Tăng Index lên 1 để chèn vào phía dưới
+                        if (mousePos.Y >= targetCard.ActualHeight / 2)
+                        {
+                            targetIndex++;
+                        }
+
+                        newParent.Children.Insert(targetIndex, droppedCard);
+                    }
+                }
+            }
+            e.Handled = true; // Báo hiệu đã xử lý xong, ngắt sự kiện không cho lan truyền tiếp
+        }
+
+        // 5. TRƯỜNG HỢP B [MỚI]: Thả vào khoảng trống bất kỳ trên Cột (Do Border gánh)
+        private void ColumnBorder_DragOver(object sender, DragEventArgs e)
+        {
+            // Nếu vật thể đang kéo là một thẻ Task (thẻ Border) thì cho phép thả
+            if (e.Data.GetDataPresent(typeof(Border)))
+            {
+                e.Effects = DragDropEffects.Move;
+            }
+            e.Handled = true;
+        }
+
+        private void ColumnBorder_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(typeof(Border)))
+            {
+                Border droppedCard = e.Data.GetData(typeof(Border)) as Border;
+                if (droppedCard != null)
+                {
+                    Panel oldParent = droppedCard.Parent as Panel;
+
+                    // Nếu thả trúng vào chính cột hiện tại đang chứa nó thì không xử lý nữa
+                    if (oldParent == spTaskList) return;
+
+                    // Nhổ cỏ tận gốc: Rút thẻ khỏi cột cũ
+                    if (oldParent != null) oldParent.Children.Remove(droppedCard);
+
+                    // Thêm thẳng vào cuối danh sách của cột mới (Giải quyết dứt điểm cột trống)
+                    spTaskList.Children.Add(droppedCard);
+                }
+            }
+            e.Handled = true;
+        }
+
+        private void SpTaskList_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(typeof(Border)))
+            {
+                Border droppedCard = e.Data.GetData(typeof(Border)) as Border;
+                if (droppedCard != null)
+                {
+                    Panel oldParent = droppedCard.Parent as Panel;
+
+                    // Nếu thả vào khoảng không của chính cột đó thì không cần làm gì, hoặc rớt xuống cuối
+                    if (oldParent == spTaskList) return;
+
+                    // Rút khỏi cột cũ
+                    if (oldParent != null) oldParent.Children.Remove(droppedCard);
+
+                    // Thêm thẳng vào cuối danh sách của cột mới
+                    spTaskList.Children.Add(droppedCard);
+                }
+            }
+            e.Handled = true;
+        }
+
+        // Hàm phụ trợ dùng để kiểm tra xem người dùng có đang bấm hụt vào nút bấm hay không
+        private T FindParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+            if (parentObject == null) return null;
+            if (parentObject is T parent) return parent;
+            return FindParent<T>(parentObject);
         }
     }
 }
