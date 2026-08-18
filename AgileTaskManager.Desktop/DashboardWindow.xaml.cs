@@ -1,13 +1,94 @@
-﻿using System.Windows;
+﻿using System.Net.Http;
+using System.Net.Http.Json;
+using System.Windows;
 using System.Windows.Input;
 
 namespace AgileTaskManager.Desktop
 {
     public partial class DashboardWindow : Window
     {
+        private readonly string ApiBaseUrl = "http://localhost:5279/api";
+        private static readonly HttpClient client = new HttpClient();
+        private bool _isLoadingProjects;
+
+        public int SelectedProjectId =>
+            cboProject.SelectedValue is int id ? id : 0;
+
         public DashboardWindow()
         {
             InitializeComponent();
+            Loaded += DashboardWindow_Loaded;
+        }
+
+        private async void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            await LoadProjectsAsync();
+        }
+
+        private async Task LoadProjectsAsync()
+        {
+            try
+            {
+                var projects = await client.GetFromJsonAsync<List<ProjectItem>>($"{ApiBaseUrl}/Projects");
+                if (projects == null || projects.Count == 0)
+                {
+                    MessageBox.Show("Chưa có dự án nào. Hãy tạo dự án trước.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                _isLoadingProjects = true;
+                cboProject.ItemsSource = projects;
+                cboProject.SelectedIndex = 0;
+                _isLoadingProjects = false;
+
+                await LoadProjectBoardAsync(SelectedProjectId);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Không tải được danh sách dự án: {ex.Message}\nBạn đã chạy backend chưa?", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async void CboProject_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (_isLoadingProjects || SelectedProjectId <= 0) return;
+            await LoadProjectBoardAsync(SelectedProjectId);
+        }
+
+        private async Task LoadProjectBoardAsync(int projectId)
+        {
+            ClearKanbanColumns();
+
+            try
+            {
+                var tasks = await client.GetFromJsonAsync<List<KanbanColumn.TaskResponse>>($"{ApiBaseUrl}/Tasks/project/{projectId}");
+                if (tasks == null) return;
+
+                foreach (var group in tasks.GroupBy(t => t.status))
+                {
+                    var column = new KanbanColumn(group.Key, projectId);
+                    spBoard.Children.Insert(spBoard.Children.Count - 1, column);
+
+                    foreach (var task in group)
+                        column.AddTaskCard(task.taskId, task.taskName);
+                }
+
+                UpdateAddListButtonText();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Không tải được task của dự án: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ClearKanbanColumns()
+        {
+            for (int i = spBoard.Children.Count - 2; i >= 0; i--)
+            {
+                if (spBoard.Children[i] is KanbanColumn)
+                    spBoard.Children.RemoveAt(i);
+            }
+            UpdateAddListButtonText();
         }
 
         // Mở cửa sổ tạo mới (Nút Menu bên trái)
@@ -20,11 +101,15 @@ namespace AgileTaskManager.Desktop
         // 1. Ẩn nút, hiện ô nhập Title
         private void BtnShowAddList_Click(object sender, MouseButtonEventArgs e)
         {
+            if (SelectedProjectId <= 0)
+            {
+                MessageBox.Show("Vui lòng chọn dự án trước khi thêm danh sách.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             btnShowAddList.Visibility = Visibility.Collapsed;
             panelAddListInput.Visibility = Visibility.Visible;
 
-
-            // [GIẢI QUYẾT VẤN ĐỀ 2] Đợi UI vẽ xong form mới ép Focus
             Dispatcher.BeginInvoke(new System.Action(() => txtNewListName.Focus()));
         }
 
@@ -39,65 +124,58 @@ namespace AgileTaskManager.Desktop
         // 3. BỘ NÃO ĐÚC CỘT KANBAN:
         private void AddNewList()
         {
+            if (SelectedProjectId <= 0)
+            {
+                MessageBox.Show("Vui lòng chọn dự án trước khi thêm danh sách.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             string title = txtNewListName.Text.Trim();
             if (string.IsNullOrEmpty(title)) return;
 
-            // Đúc 1 cái Cột mới toanh từ Khuôn (UserControl) và truyền Title vào
-            KanbanColumn newColumn = new KanbanColumn(title);
-
-            // Chèn cột mới này vào vị trí kế cuối (Ngay đằng trước khu vực nhập list mới)
+            KanbanColumn newColumn = new KanbanColumn(title, SelectedProjectId);
             spBoard.Children.Insert(spBoard.Children.Count - 1, newColumn);
 
-            // Xóa trắng chữ và đóng Form lại
             txtNewListName.Text = "";
             panelAddListInput.Visibility = Visibility.Collapsed;
             btnShowAddList.Visibility = Visibility.Visible;
-
-            // Ép tiêu điểm bay về nút "Thêm danh sách khác" để triệt tiêu hoàn toàn khung nét đứt
             btnShowAddList.Focus();
-
-            // Cập nhật lại chữ sau khi thêm cột thành công
             UpdateAddListButtonText();
         }
 
-        // [CODE MỚI]: Hàm kiểm tra và đổi chữ tự động
         public void UpdateAddListButtonText()
         {
-            // Nếu có nhiều hơn 1 phần tử (Nghĩa là có cột + cái form thêm list)
             if (spBoard.Children.Count > 1)
-            {
                 lblAddListText.Text = "Thêm danh sách khác";
-            }
             else
-            {
                 lblAddListText.Text = "Thêm danh sách";
-            }
         }
 
-        // 4. Bấm nút Lưu
         private void BtnConfirmAddList_Click(object sender, RoutedEventArgs e)
         {
             AddNewList();
         }
 
-        // 5. Bấm Enter để Lưu
         private void TxtNewListName_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            // [GIẢI QUYẾT VẤN ĐỀ 3] Bấm ESC -> Hủy tạo danh sách
             if (e.Key == Key.Escape)
             {
-                BtnCancelAddList_Click(null, null);
+                BtnCancelAddList_Click(null!, null!);
                 e.Handled = true;
                 return;
             }
 
-            // Bấm Enter -> Lưu danh sách
             if (e.Key == Key.Enter)
             {
                 AddNewList();
                 e.Handled = true;
-                // (Vì tạo cột xong thì cái form Thêm danh sách sẽ tự trượt sang phải và đóng lại, nên không cần ép Focus lại vào đây)
             }
+        }
+
+        private class ProjectItem
+        {
+            public int ProjectId { get; set; }
+            public string ProjectName { get; set; } = string.Empty;
         }
     }
 }

@@ -27,8 +27,9 @@ namespace AgileTaskManagerAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<AppTask>> CreateTask(AppTask task)
         {
-            // Ép trạng thái mặc định luôn là ToDo khi mới tạo
-            task.Status = "ToDo";
+            // Cho phép cột Kanban tùy chỉnh (vd: "day 1"); mặc định ToDo nếu client không gửi
+            if (string.IsNullOrWhiteSpace(task.Status))
+                task.Status = "ToDo";
 
             _context.Tasks.Add(task);
             await _context.SaveChangesAsync();
@@ -43,11 +44,10 @@ namespace AgileTaskManagerAPI.Controllers
             var task = await _context.Tasks.FindAsync(id);
             if (task == null) return NotFound("Không tìm thấy Task");
 
-            // Chỉ cho phép 3 trạng thái chuẩn
-            if (newStatus != "ToDo" && newStatus != "InProgress" && newStatus != "Done")
-                return BadRequest("Trạng thái không hợp lệ!");
+            if (string.IsNullOrWhiteSpace(newStatus))
+                return BadRequest("Trạng thái không được để trống!");
 
-            task.Status = newStatus;
+            task.Status = newStatus.Trim();
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Cập nhật thành công", task });

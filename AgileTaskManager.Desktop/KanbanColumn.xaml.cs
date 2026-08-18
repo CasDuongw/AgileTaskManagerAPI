@@ -4,16 +4,26 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
+using System.Net.Http;
+using System.Net.Http.Json;
 
 namespace AgileTaskManager.Desktop
 {
     public partial class KanbanColumn : UserControl
     {
-        // Khi một cột được tạo ra, nó yêu cầu phải truyền Tiêu đề vào
-        public KanbanColumn(string title)
+        // Khai báo kết nối API giống hệt bên CreateWindow
+        private readonly string ApiBaseUrl = "http://localhost:5279/api";
+        private static readonly HttpClient client = new HttpClient();
+
+        // [MỚI] Biến lưu trữ ID của dự án cho cột này
+        private int _currentProjectId;
+
+        // Khi một cột được tạo ra, nó yêu cầu phải truyền Tiêu đề và ID dự án
+        public KanbanColumn(string title, int projectId)
         {
             InitializeComponent();
             lblTitle.Text = title;
+            _currentProjectId = projectId;
 
             // Chặn việc UserControl tự bắt tiêu điểm bàn phím/chuột gây ra viền nét đứt
             IsTabStop = false;
@@ -22,7 +32,18 @@ namespace AgileTaskManager.Desktop
             // Hover chuột vào tiêu đề -> Hiện nút Xóa cột
             titleGrid.MouseEnter += (s, e) => btnDeleteColumn.Visibility = Visibility.Visible;
             titleGrid.MouseLeave += (s, e) => btnDeleteColumn.Visibility = Visibility.Hidden;
+
+
+
         }
+        public class TaskResponse
+        {
+            public int taskId { get; set; }
+            public string taskName { get; set; }
+            public string status { get; set; }
+            public int projectId { get; set; }
+        }
+
 
         // Lệnh xóa nguyên cái Cột Kanban này khỏi bảng
         private void BtnDeleteColumn_Click(object sender, RoutedEventArgs e)
@@ -58,69 +79,113 @@ namespace AgileTaskManager.Desktop
             btnShowAddCard.Visibility = Visibility.Visible;
         }
 
-        private void AddNewTask()
+        // [CŨ] Khai báo hàm lúc trước là: private void AddNewTask()
+        // [MỚI] Đổi thành async void để hỗ trợ chờ phản hồi từ API
+        private async void AddNewTask()
         {
             string taskContent = txtNewTaskName.Text.Trim();
             if (string.IsNullOrEmpty(taskContent)) return;
 
-            Border newCard = new Border
+            // ==========================================
+            // [MỚI] BƯỚC 1: CHUẨN BỊ VÀ GỬI DỮ LIỆU LÊN API
+            // ==========================================
+            var newTask = new
             {
-                Background = Brushes.White,
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(10),
-                Margin = new Thickness(0, 0, 0, 10),
-                FocusVisualStyle = null,
-                Effect = new DropShadowEffect { BlurRadius = 4, ShadowDepth = 1, Color = (Color)ColorConverter.ConvertFromString("#000000"), Opacity = 0.1, Direction = 270 },
+                taskName = taskContent,
+                projectId = 8, // Tạm gán cứng vào Project số 1 để test luồng
 
-                // Cho phép bản thân thẻ này có thể bị kéo và có thể bị thẻ khác thả đè lên
-                AllowDrop = true
+
+                // Lấy trạng thái dựa vào tên cột (Ví dụ: "ToDo", "InProgress", "Done")
+                // Lưu ý: Tên cột trên UI phải khớp với quy định trong Database
+                status = this.lblTitle.Text
             };
 
-            Grid cardGrid = new Grid();
-            cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            CheckBox chk = new CheckBox
+            try
             {
-                Foreground = (SolidColorBrush)new BrushConverter().ConvertFromString("#172B4D"),
-                FontWeight = FontWeights.SemiBold,
-                VerticalContentAlignment = VerticalAlignment.Center,
-                Content = new TextBlock { Text = taskContent, TextWrapping = TextWrapping.Wrap }
-            };
-            Grid.SetColumn(chk, 0);
+                // Gọi API POST để lưu dữ liệu thẳng vào SQL Server
+                var response = await client.PostAsJsonAsync($"{ApiBaseUrl}/Tasks", newTask);
 
-            Button btnDelete = new Button
+                // Nếu API trả về thành công (HTTP 200/201) -> Tiến hành vẽ Task lên màn hình
+                if (response.IsSuccessStatusCode)
+                {
+                    var createdTask = await response.Content.ReadFromJsonAsync<TaskResponse>();
+
+                    // ==========================================
+                    // [CŨ] BƯỚC 2: VẼ GIAO DIỆN (Nằm trọn trong khối thành công)
+                    // (Đây là toàn bộ đoạn code cũ của bạn, giữ nguyên không đổi 1 chữ)
+                    // ==========================================
+                    Border newCard = new Border
+                    {
+                        Background = Brushes.White,
+                        CornerRadius = new CornerRadius(8),
+                        Padding = new Thickness(10),
+                        Margin = new Thickness(0, 0, 0, 10),
+                        FocusVisualStyle = null,
+                        Effect = new DropShadowEffect { BlurRadius = 4, ShadowDepth = 1, Color = (Color)ColorConverter.ConvertFromString("#000000"), Opacity = 0.1, Direction = 270 },
+                        AllowDrop = true,
+                        Tag = createdTask?.taskId
+                    };
+
+                    Grid cardGrid = new Grid();
+                    cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                    cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                    CheckBox chk = new CheckBox
+                    {
+                        Foreground = (SolidColorBrush)new BrushConverter().ConvertFromString("#172B4D"),
+                        FontWeight = FontWeights.SemiBold,
+                        VerticalContentAlignment = VerticalAlignment.Center,
+                        Content = new TextBlock { Text = taskContent, TextWrapping = TextWrapping.Wrap }
+                    };
+                    Grid.SetColumn(chk, 0);
+
+                    Button btnDelete = new Button
+                    {
+                        Content = "✕",
+                        Foreground = Brushes.Gray,
+                        Background = Brushes.Transparent,
+                        BorderThickness = new Thickness(0),
+                        FontSize = 14,
+                        Cursor = Cursors.Hand,
+                        Visibility = Visibility.Hidden,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Padding = new Thickness(5, 0, 0, 0)
+                    };
+                    Grid.SetColumn(btnDelete, 1);
+
+                    newCard.PreviewMouseLeftButtonDown += Card_PreviewMouseLeftButtonDown;
+                    newCard.PreviewMouseMove += Card_PreviewMouseMove;
+
+                    newCard.MouseEnter += (s, e) => btnDelete.Visibility = Visibility.Visible;
+                    newCard.MouseLeave += (s, e) => btnDelete.Visibility = Visibility.Hidden;
+
+                    // Nút xóa UI (Lưu ý: Tạm thời mới chỉ xóa giao diện, chưa xóa dưới DB)
+                    btnDelete.Click += (s, e) => spTaskList.Children.Remove(newCard);
+
+                    cardGrid.Children.Add(chk);
+                    cardGrid.Children.Add(btnDelete);
+                    newCard.Child = cardGrid;
+
+                    spTaskList.Children.Add(newCard);
+
+                    // ==========================================
+                    // [CŨ] BƯỚC 3: DỌN DẸP Ô NHẬP LIỆU
+                    // ==========================================
+                    txtNewTaskName.Text = "";
+                    txtNewTaskName.Focus();
+                }
+                else
+                {
+                    // [MỚI] Xử lý khi API báo lỗi (VD: sai ID, sai cấu trúc)
+                    string errorMsg = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show($"Lỗi khi lưu Task vào Database!\nChi tiết: {errorMsg}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
             {
-                Content = "✕",
-                Foreground = Brushes.Gray,
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-                FontSize = 14,
-                Cursor = Cursors.Hand,
-                Visibility = Visibility.Hidden,
-                VerticalAlignment = VerticalAlignment.Top,
-                Padding = new Thickness(5, 0, 0, 0)
-            };
-            Grid.SetColumn(btnDelete, 1);
-
-            // Đăng ký các sự kiện kéo thả cho thẻ Task
-            newCard.PreviewMouseLeftButtonDown += Card_PreviewMouseLeftButtonDown;
-            newCard.PreviewMouseMove += Card_PreviewMouseMove;
-            //newCard.DragOver += Card_DragOver;
-            //newCard.Drop += Card_Drop;
-
-            newCard.MouseEnter += (s, e) => btnDelete.Visibility = Visibility.Visible;
-            newCard.MouseLeave += (s, e) => btnDelete.Visibility = Visibility.Hidden;
-            btnDelete.Click += (s, e) => spTaskList.Children.Remove(newCard);
-
-            cardGrid.Children.Add(chk);
-            cardGrid.Children.Add(btnDelete);
-            newCard.Child = cardGrid;
-
-            spTaskList.Children.Add(newCard);
-
-            txtNewTaskName.Text = "";
-            txtNewTaskName.Focus();
+                // [MỚI] Xử lý khi API không phản hồi (chưa bật backend)
+                MessageBox.Show($"Lỗi kết nối API: {ex.Message}\nBạn đã chạy backend chưa?", "Lỗi hệ thống", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void BtnConfirmAddCard_Click(object sender, RoutedEventArgs e)
@@ -232,6 +297,7 @@ namespace AgileTaskManager.Desktop
         // ==============================================================================
 
         private Point _cardDragStartPoint;
+        private int projectId;
 
         // 1. Khi nhấn chuột vào một thẻ Task
         private void Card_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -375,9 +441,31 @@ namespace AgileTaskManager.Desktop
 
                     // Cắm thẻ vào vị trí chuẩn không cần chỉnh
                     spTaskList.Children.Insert(targetIndex, droppedCard);
+
+                    if (oldParent != spTaskList)
+                        SyncCardStatusToServer(droppedCard);
                 }
             }
             e.Handled = true;
+        }
+
+        private async void SyncCardStatusToServer(Border card)
+        {
+            if (card?.Tag is not int taskId) return;
+
+            try
+            {
+                var response = await client.PatchAsJsonAsync($"{ApiBaseUrl}/Tasks/{taskId}/status", lblTitle.Text);
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMsg = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show($"Không cập nhật được trạng thái!\nChi tiết: {errorMsg}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi kết nối API khi cập nhật trạng thái: {ex.Message}", "Lỗi hệ thống", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void SpTaskList_Drop(object sender, DragEventArgs e)
@@ -397,6 +485,8 @@ namespace AgileTaskManager.Desktop
 
                     // Thêm thẳng vào cuối danh sách của cột mới
                     spTaskList.Children.Add(droppedCard);
+
+                    SyncCardStatusToServer(droppedCard);
                 }
             }
             e.Handled = true;
