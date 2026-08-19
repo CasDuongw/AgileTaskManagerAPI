@@ -17,13 +17,15 @@ namespace AgileTaskManager.Desktop
 
         // [MỚI] Biến lưu trữ ID của dự án cho cột này
         private int _currentProjectId;
+        public int ColumnId { get; private set; }
 
-        // Khi một cột được tạo ra, nó yêu cầu phải truyền Tiêu đề và ID dự án
-        public KanbanColumn(string title, int projectId)
+        // Khi một cột được tạo ra, nó yêu cầu phải truyền Tiêu đề, ID dự án và ID cột
+        public KanbanColumn(string title, int projectId, int columnId)
         {
             InitializeComponent();
             lblTitle.Text = title;
             _currentProjectId = projectId;
+            ColumnId = columnId;
 
             // Chặn việc UserControl tự bắt tiêu điểm bàn phím/chuột gây ra viền nét đứt
             IsTabStop = false;
@@ -40,7 +42,7 @@ namespace AgileTaskManager.Desktop
         {
             public int taskId { get; set; }
             public string taskName { get; set; }
-            public string status { get; set; }
+            public int columnId { get; set; }
             public int projectId { get; set; }
         }
 
@@ -92,12 +94,9 @@ namespace AgileTaskManager.Desktop
             var newTask = new
             {
                 taskName = taskContent,
-                projectId = 8, // Tạm gán cứng vào Project số 1 để test luồng
+                projectId = this._currentProjectId, // Đã sửa: Lấy ID thật của project đang mở thay vì gán cứng số 8
 
-
-                // Lấy trạng thái dựa vào tên cột (Ví dụ: "ToDo", "InProgress", "Done")
-                // Lưu ý: Tên cột trên UI phải khớp với quy định trong Database
-                status = this.lblTitle.Text
+                columnId = this.ColumnId // Đã sửa: Sử dụng ColumnId thay cho string Status
             };
 
             try
@@ -353,8 +352,35 @@ namespace AgileTaskManager.Desktop
 
                         // Chèn nó lại vào đúng vị trí của Chủ nhà
                         parentPanel.Children.Insert(targetIndex, droppedColumn);
+
+                        // [MỚI] Đồng bộ thứ tự mới lên Server
+                        SyncColumnOrderToServer(parentPanel);
                     }
                 }
+            }
+        }
+
+        private async void SyncColumnOrderToServer(Panel parentPanel)
+        {
+            var reorderList = new List<object>();
+            int order = 0;
+
+            foreach (UIElement child in parentPanel.Children)
+            {
+                if (child is KanbanColumn col)
+                {
+                    reorderList.Add(new { ColumnId = col.ColumnId, OrderIndex = order });
+                    order++;
+                }
+            }
+
+            try
+            {
+                await client.PutAsJsonAsync($"{AppConfig.ApiBaseUrl}/Columns/reorder", reorderList);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi đồng bộ thứ tự cột: {ex.Message}", "Lỗi hệ thống", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -402,8 +428,8 @@ namespace AgileTaskManager.Desktop
             if (e.Data.GetDataPresent(typeof(Border)))
             {
                 e.Effects = DragDropEffects.Move;
+                e.Handled = true;
             }
-            e.Handled = true;
         }
 
         private void ColumnBorder_Drop(object sender, DragEventArgs e)
@@ -465,8 +491,8 @@ namespace AgileTaskManager.Desktop
                     if (oldParent != spTaskList)
                         SyncCardStatusToServer(droppedCard, oldParent, oldIndex);
                 }
+                e.Handled = true;
             }
-            e.Handled = true;
         }
 
         private async void SyncCardStatusToServer(Border card, Panel oldParent, int oldIndex)
@@ -475,7 +501,7 @@ namespace AgileTaskManager.Desktop
 
             try
             {
-                var response = await client.PatchAsJsonAsync($"{AppConfig.ApiBaseUrl}/Tasks/{taskId}/status", lblTitle.Text);
+                var response = await client.PatchAsJsonAsync($"{AppConfig.ApiBaseUrl}/Tasks/{taskId}/column", this.ColumnId);
                 if (!response.IsSuccessStatusCode)
                 {
                     string errorMsg = await response.Content.ReadAsStringAsync();
@@ -539,8 +565,8 @@ namespace AgileTaskManager.Desktop
 
                     SyncCardStatusToServer(droppedCard, oldParent, oldIndex);
                 }
+                e.Handled = true;
             }
-            e.Handled = true;
         }
 
         // Hàm phụ trợ dùng để kiểm tra xem người dùng có đang bấm hụt vào nút bấm hay không

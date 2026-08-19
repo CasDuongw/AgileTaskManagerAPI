@@ -1,4 +1,4 @@
-﻿using AgileTaskManagerAPI.Model;
+using AgileTaskManagerAPI.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgileTaskManagerAPI.Data
@@ -11,5 +11,6 @@ namespace AgileTaskManagerAPI.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<AppTask> Tasks { get; set; }
+        public DbSet<KanbanColumn> KanbanColumns { get; set; }
     }
 }

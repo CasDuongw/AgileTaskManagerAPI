@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AgileTaskManagerAPI.Model
@@ -9,7 +9,10 @@ namespace AgileTaskManagerAPI.Model
         public int TaskId { get; set; }
         public string TaskName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string Status { get; set; } = "ToDo";
+        public int ColumnId { get; set; }
+
+        [ForeignKey("ColumnId")]
+        public KanbanColumn? Column { get; set; }
 
         // --- KHÓA NGOẠI 1: Liên kết với Project ---
         public int ProjectId { get; set; }

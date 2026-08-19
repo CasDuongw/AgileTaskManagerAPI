@@ -28,6 +28,15 @@ namespace AgileTaskManager.Desktop
             public string projectName { get; set; }
         }
 
+        // [MỚI] DTO cho Cột
+        public class ColumnResponse
+        {
+            public int columnId { get; set; }
+            public string columnName { get; set; }
+            public int orderIndex { get; set; }
+            public int projectId { get; set; }
+        }
+
         private async void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
         {
             await LoadProjectsAsync();
@@ -73,23 +82,31 @@ namespace AgileTaskManager.Desktop
 
             try
             {
+                // 1. Lấy danh sách cột
+                var columns = await client.GetFromJsonAsync<List<ColumnResponse>>($"{AppConfig.ApiBaseUrl}/Columns/project/{projectId}");
+                if (columns == null) return;
+
+                // 2. Lấy danh sách task
                 var tasks = await client.GetFromJsonAsync<List<KanbanColumn.TaskResponse>>($"{AppConfig.ApiBaseUrl}/Tasks/project/{projectId}");
-                if (tasks == null) return;
+                var taskList = tasks ?? new List<KanbanColumn.TaskResponse>();
 
-                foreach (var group in tasks.GroupBy(t => t.status))
+                // 3. Vẽ cột và nạp task
+                foreach (var col in columns.OrderBy(c => c.orderIndex))
                 {
-                    var column = new KanbanColumn(group.Key, projectId);
-                    spBoard.Children.Insert(spBoard.Children.Count - 1, column);
+                    // Sửa constructor để truyền thêm ColumnId
+                    var columnUi = new KanbanColumn(col.columnName, projectId, col.columnId);
+                    spBoard.Children.Insert(spBoard.Children.Count - 1, columnUi);
 
-                    foreach (var task in group)
-                        column.AddTaskCard(task.taskId, task.taskName);
+                    var colTasks = taskList.Where(t => t.columnId == col.columnId);
+                    foreach (var task in colTasks)
+                        columnUi.AddTaskCard(task.taskId, task.taskName);
                 }
 
                 UpdateAddListButtonText();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Không tải được task của dự án: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Không tải được dữ liệu bảng: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -134,7 +151,7 @@ namespace AgileTaskManager.Desktop
         }
 
         // 3. BỘ NÃO ĐÚC CỘT KANBAN:
-        private void AddNewList()
+        private async void AddNewList()
         {
             string title = txtNewListName.Text.Trim();
             if (string.IsNullOrEmpty(title)) return;
@@ -147,17 +164,39 @@ namespace AgileTaskManager.Desktop
             }
             int selectedProjectId = (int)cboProjects.SelectedValue;
 
-            // [SỬA] Đúc Cột mới và bơm đúng cái ID đang chọn vào trong Cột đó
-            KanbanColumn newColumn = new KanbanColumn(title, selectedProjectId);
+            try
+            {
+                // [MỚI] Gọi API để lưu cột xuống Database trước
+                var newCol = new { columnName = title, projectId = selectedProjectId };
+                var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/Columns", newCol);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var createdCol = await response.Content.ReadFromJsonAsync<ColumnResponse>();
+                    if (createdCol != null)
+                    {
+                        // Đúc Cột mới và truyền thêm ID thực của Cột từ Database
+                        KanbanColumn newColumn = new KanbanColumn(createdCol.columnName, selectedProjectId, createdCol.columnId);
 
-            spBoard.Children.Insert(spBoard.Children.Count - 1, newColumn);
+                        spBoard.Children.Insert(spBoard.Children.Count - 1, newColumn);
 
-            txtNewListName.Text = "";
-            panelAddListInput.Visibility = Visibility.Collapsed;
-            btnShowAddList.Visibility = Visibility.Visible;
+                        txtNewListName.Text = "";
+                        panelAddListInput.Visibility = Visibility.Collapsed;
+                        btnShowAddList.Visibility = Visibility.Visible;
 
-            btnShowAddList.Focus();
-            UpdateAddListButtonText();
+                        btnShowAddList.Focus();
+                        UpdateAddListButtonText();
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Lỗi khi tạo danh sách trên Server!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi kết nối: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public void UpdateAddListButtonText()
