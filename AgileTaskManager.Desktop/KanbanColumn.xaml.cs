@@ -1,4 +1,4 @@
-﻿using ControlzEx.Standard;
+using ControlzEx.Standard;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,8 +11,8 @@ namespace AgileTaskManager.Desktop
 {
     public partial class KanbanColumn : UserControl
     {
-        // Khai báo kết nối API giống hệt bên CreateWindow
-        private readonly string ApiBaseUrl = "http://localhost:5279/api";
+        // Lấy URL cấu hình từ AppConfig
+        // Đã xóa biến local ApiBaseUrl hardcode
         private static readonly HttpClient client = new HttpClient();
 
         // [MỚI] Biến lưu trữ ID của dự án cho cột này
@@ -103,7 +103,7 @@ namespace AgileTaskManager.Desktop
             try
             {
                 // Gọi API POST để lưu dữ liệu thẳng vào SQL Server
-                var response = await client.PostAsJsonAsync($"{ApiBaseUrl}/Tasks", newTask);
+                var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/Tasks", newTask);
 
                 // Nếu API trả về thành công (HTTP 200/201) -> Tiến hành vẽ Task lên màn hình
                 if (response.IsSuccessStatusCode)
@@ -442,12 +442,15 @@ namespace AgileTaskManager.Desktop
 
                     // 3. TIẾN HÀNH RÚT - CẮM
                     Panel oldParent = droppedCard.Parent as Panel;
+                    int oldIndex = -1; // [MỚI] Lưu lại vị trí cũ để phòng hờ rollback (Làm như một Senior lười)
                     if (oldParent != null)
                     {
+                        oldIndex = oldParent.Children.IndexOf(droppedCard);
+
                         // Xử lý một cú lừa của Logic: Nếu bạn kéo thả trong CÙNG 1 CỘT, 
                         // khi rút thẻ cũ ra, các thẻ bên dưới sẽ bị giật lên 1 bậc làm sai số Index.
                         // Ta cần trừ đi 1 nấc nếu vị trí cũ nằm cao hơn vị trí mới.
-                        if (oldParent == spTaskList && oldParent.Children.IndexOf(droppedCard) < targetIndex)
+                        if (oldParent == spTaskList && oldIndex < targetIndex)
                         {
                             targetIndex--;
                         }
@@ -460,28 +463,54 @@ namespace AgileTaskManager.Desktop
                     spTaskList.Children.Insert(targetIndex, droppedCard);
 
                     if (oldParent != spTaskList)
-                        SyncCardStatusToServer(droppedCard);
+                        SyncCardStatusToServer(droppedCard, oldParent, oldIndex);
                 }
             }
             e.Handled = true;
         }
 
-        private async void SyncCardStatusToServer(Border card)
+        private async void SyncCardStatusToServer(Border card, Panel oldParent, int oldIndex)
         {
             if (card?.Tag is not int taskId) return;
 
             try
             {
-                var response = await client.PatchAsJsonAsync($"{ApiBaseUrl}/Tasks/{taskId}/status", lblTitle.Text);
+                var response = await client.PatchAsJsonAsync($"{AppConfig.ApiBaseUrl}/Tasks/{taskId}/status", lblTitle.Text);
                 if (!response.IsSuccessStatusCode)
                 {
                     string errorMsg = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show($"Không cập nhật được trạng thái!\nChi tiết: {errorMsg}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Kéo thả xịt rồi (Server từ chối)!\nChi tiết: {errorMsg}\nThẻ sẽ được bế về chỗ cũ.", "Lỗi Optimistic UI", MessageBoxButton.OK, MessageBoxImage.Error);
+                    RollbackCardMove(card, oldParent, oldIndex);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi kết nối API khi cập nhật trạng thái: {ex.Message}", "Lỗi hệ thống", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Rớt mạng hoặc Server sập rồi!\nChi tiết: {ex.Message}\nThẻ sẽ được bế về chỗ cũ cho chắc cú.", "Lỗi Mạng/Hệ thống", MessageBoxButton.OK, MessageBoxImage.Error);
+                RollbackCardMove(card, oldParent, oldIndex);
+            }
+        }
+
+        // [MỚI] Bùa chú phục hồi nhân phẩm: Gọi khi API sập để kéo thẻ về nhà cũ
+        private void RollbackCardMove(Border card, Panel oldParent, int oldIndex)
+        {
+            // 1. Nhổ thẻ ra khỏi chỗ vừa thả nhầm (ui giả dối)
+            if (card.Parent is Panel currentParent)
+            {
+                currentParent.Children.Remove(card);
+            }
+            
+            // 2. Tống nó về lại nhà cũ
+            if (oldParent != null)
+            {
+                // Nhét lại đúng khe hở cũ
+                if (oldIndex >= 0 && oldIndex <= oldParent.Children.Count)
+                {
+                    oldParent.Children.Insert(oldIndex, card);
+                }
+                else
+                {
+                    oldParent.Children.Add(card); // Backup nếu lỡ có gì đó kì quặc xảy ra
+                }
             }
         }
 
@@ -493,6 +522,11 @@ namespace AgileTaskManager.Desktop
                 if (droppedCard != null)
                 {
                     Panel oldParent = droppedCard.Parent as Panel;
+                    int oldIndex = -1; // [MỚI] Nhớ vị trí cũ trước khi nhổ thẻ lên
+                    if (oldParent != null) 
+                    {
+                        oldIndex = oldParent.Children.IndexOf(droppedCard);
+                    }
 
                     // Nếu thả vào khoảng không của chính cột đó thì không cần làm gì, hoặc rớt xuống cuối
                     if (oldParent == spTaskList) return;
@@ -503,7 +537,7 @@ namespace AgileTaskManager.Desktop
                     // Thêm thẳng vào cuối danh sách của cột mới
                     spTaskList.Children.Add(droppedCard);
 
-                    SyncCardStatusToServer(droppedCard);
+                    SyncCardStatusToServer(droppedCard, oldParent, oldIndex);
                 }
             }
             e.Handled = true;

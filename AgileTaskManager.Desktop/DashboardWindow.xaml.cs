@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,7 +8,8 @@ namespace AgileTaskManager.Desktop
 {
     public partial class DashboardWindow : Window
     {
-        private readonly string ApiBaseUrl = "http://localhost:5279/api";
+        // Lấy URL cấu hình từ AppConfig
+        // Đã xóa biến local ApiBaseUrl hardcode
         private static readonly HttpClient client = new HttpClient();
         private bool _isLoadingProjects;
 
@@ -37,7 +38,7 @@ namespace AgileTaskManager.Desktop
         {
             try
             {
-                var projects = await client.GetFromJsonAsync<List<ProjectDto>>($"{ApiBaseUrl}/Projects");
+                var projects = await client.GetFromJsonAsync<List<ProjectDto>>($"{AppConfig.ApiBaseUrl}/Projects");
                 if (projects != null && projects.Count > 0)
                 {
                     cboProjects.ItemsSource = projects;
@@ -51,19 +52,19 @@ namespace AgileTaskManager.Desktop
         }
 
         // [MỚI] Khi người dùng đổi qua đổi lại giữa các Dự án
-        private void CboProjects_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        // [ĐÃ SỬA] Thêm từ khóa 'async' để có thể gọi hàm API (await) bên trong
+        private async void CboProjects_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Tạm thời: Quét dọn toàn bộ các Cột Kanban cũ trên bảng (trừ nút Thêm danh sách)
-            for (int i = spBoard.Children.Count - 1; i >= 0; i--)
-            {
-                if (spBoard.Children[i] is KanbanColumn)
-                {
-                    spBoard.Children.RemoveAt(i);
-                }
-            }
-            UpdateAddListButtonText();
+            // 1. Sử dụng biến SelectedProjectId đã được khai báo ở đầu file để lấy ID dự án
+            int projectId = SelectedProjectId;
 
-            // (Bước tiếp theo chúng ta sẽ gọi API load Task của dự án mới vào đây)
+            // 2. Chỉ tiếp tục nếu ID hợp lệ (lớn hơn 0)
+            if (projectId > 0)
+            {
+                // 3. Gọi hàm tải toàn bộ dữ liệu (Cột và Task) từ API lên màn hình.
+                // Hàm này đã tự động bao gồm chức năng dọn dẹp (ClearKanbanColumns) ở bên trong.
+                await LoadProjectBoardAsync(projectId);
+            }
         }
 
         private async Task LoadProjectBoardAsync(int projectId)
@@ -72,7 +73,7 @@ namespace AgileTaskManager.Desktop
 
             try
             {
-                var tasks = await client.GetFromJsonAsync<List<KanbanColumn.TaskResponse>>($"{ApiBaseUrl}/Tasks/project/{projectId}");
+                var tasks = await client.GetFromJsonAsync<List<KanbanColumn.TaskResponse>>($"{AppConfig.ApiBaseUrl}/Tasks/project/{projectId}");
                 if (tasks == null) return;
 
                 foreach (var group in tasks.GroupBy(t => t.status))
