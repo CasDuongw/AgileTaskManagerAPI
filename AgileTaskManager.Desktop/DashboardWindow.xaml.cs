@@ -120,11 +120,65 @@ namespace AgileTaskManager.Desktop
             UpdateAddListButtonText();
         }
 
-        // Mở cửa sổ tạo mới (Nút Menu bên trái)
-        private void BtnCreate_Click(object sender, RoutedEventArgs e)
+        private void btnMenuDashboard_Click(object sender, RoutedEventArgs e)
         {
-            CreateWindow createWindow = new CreateWindow();
-            createWindow.Show();
+            viewDashboard.Visibility = Visibility.Visible;
+            viewCreate.Visibility = Visibility.Collapsed;
+            btnMenuDashboard.Style = (Style)FindResource("ActiveMenuBtn");
+            btnMenuCreate.Style = (Style)FindResource("MenuBtn");
+        }
+
+        private void btnMenuCreate_Click(object sender, RoutedEventArgs e)
+        {
+            viewCreate.Visibility = Visibility.Visible;
+            viewDashboard.Visibility = Visibility.Collapsed;
+            btnMenuCreate.Style = (Style)FindResource("ActiveMenuBtn");
+            btnMenuDashboard.Style = (Style)FindResource("MenuBtn");
+        }
+
+        private async void BtnCreateUser_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtUserName.Text)) return;
+            var user = new { username = txtUserName.Text, email = txtEmail.Text, passwordHash = txtPassword.Password };
+            var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/Users/register", user);
+            if (response.IsSuccessStatusCode)
+            {
+                MessageBox.Show("Tạo User thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                txtUserName.Clear();
+                txtEmail.Clear();
+                txtPassword.Clear();
+            }
+            else MessageBox.Show("Lỗi: " + await response.Content.ReadAsStringAsync(), "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        private async void BtnCreateProject_Click(object sender, RoutedEventArgs e)
+        {
+            if (!int.TryParse(txtOwnerId.Text, out int ownerId)) return;
+            var project = new { projectName = txtProjectName.Text, ownerId = ownerId };
+            var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/Projects", project);
+            if (response.IsSuccessStatusCode)
+            {
+                MessageBox.Show("Tạo Dự án thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                txtProjectName.Clear();
+                txtOwnerId.Clear();
+                _ = LoadProjectsAsync(); // Reload combobox
+            }
+            else MessageBox.Show("Lỗi: Kiểm tra lại ID User.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        private async void BtnCreateTask_Click(object sender, RoutedEventArgs e)
+        {
+            if (!int.TryParse(txtProjectId.Text, out int projectId)) return;
+            var task = new { taskName = txtTaskName.Text, projectId = projectId };
+            var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/Tasks", task);
+            if (response.IsSuccessStatusCode)
+            {
+                MessageBox.Show("Tạo Task thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                txtTaskName.Clear();
+                txtProjectId.Clear();
+                if (SelectedProjectId == projectId) _ = LoadProjectBoardAsync(projectId); // Reload board
+            }
+            else MessageBox.Show("Lỗi: Kiểm tra lại ID Dự án.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
         // 1. Ẩn nút, hiện ô nhập Title

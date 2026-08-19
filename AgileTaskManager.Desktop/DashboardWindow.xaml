@@ -1,4 +1,4 @@
-﻿<Window x:Class="AgileTaskManager.Desktop.DashboardWindow"
+<Window x:Class="AgileTaskManager.Desktop.DashboardWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Agile Manager - Dashboard" Height="700" Width="1200"
@@ -42,6 +42,37 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Style cho các textbox trong màn Create -->
+        <Style x:Key="CreateTextBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="Background" Value="#FAFBFC"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Style cho các form trong màn Create -->
+        <Style TargetType="StackPanel" x:Key="FormPanel">
+            <Setter Property="Margin" Value="20"/>
+            <Setter Property="Background" Value="#F8F9FA"/>
+        </Style>
+
+        <Style TargetType="Button" x:Key="TrelloBtn">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="0,10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -57,7 +88,7 @@
             </Border.Effect>
 
             <StackPanel Margin="0,40,0,0">
-                <Button Style="{StaticResource ActiveMenuBtn}">
+                <Button x:Name="btnMenuDashboard" Style="{StaticResource ActiveMenuBtn}" Click="btnMenuDashboard_Click">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="❖" Width="30" FontSize="16" TextAlignment="Center"/>
                         <TextBlock Text="Dashboard" Margin="10,0,0,0" VerticalAlignment="Center"/>
@@ -75,7 +106,7 @@
                         <TextBlock Text="Team Directory" Margin="10,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                <Button Style="{StaticResource MenuBtn}" Click="BtnCreate_Click">
+                <Button x:Name="btnMenuCreate" Style="{StaticResource MenuBtn}" Click="btnMenuCreate_Click">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="📊" Width="30" FontSize="14" TextAlignment="Center"/>
                         <TextBlock Text="Create" Margin="10,0,0,0" VerticalAlignment="Center"/>
@@ -99,8 +130,10 @@
         <!-- MAIN CONTENT (CỘT PHẢI) -->
         <Border Grid.Column="1" Padding="50,40,50,40">
             <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
+                <!-- VIEW 1: KANBAN DASHBOARD (Mặc định hiện) -->
+                <Grid x:Name="viewDashboard" Visibility="Visible">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
@@ -181,7 +214,49 @@
                         </StackPanel>
 
                     </StackPanel>
-                </ScrollViewer>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- VIEW 2: CREATE FORMS (Mặc định ẩn) -->
+                <Grid x:Name="viewCreate" Visibility="Collapsed" Background="White">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Form Create User -->
+                    <StackPanel Grid.Column="0" Style="{StaticResource FormPanel}">
+                        <TextBlock Text="👤 TẠO USER" FontSize="16" FontWeight="Bold" Margin="0,0,0,20" Foreground="#172B4D"/>
+                        <TextBlock Text="Tên người dùng:" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtUserName" Style="{StaticResource CreateTextBox}"/>
+                        <TextBlock Text="Email:" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtEmail" Style="{StaticResource CreateTextBox}"/>
+                        <TextBlock Text="Mật khẩu:" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                        <PasswordBox x:Name="txtPassword" Margin="0,0,0,25" Padding="10,8" Background="#FAFBFC" BorderBrush="#DFE1E6" BorderThickness="2" VerticalContentAlignment="Center"/>
+                        <Button Content="LƯU USER" Click="BtnCreateUser_Click" Style="{StaticResource TrelloBtn}" Background="#0052CC"/>
+                    </StackPanel>
+
+                    <!-- Form Create Project -->
+                    <StackPanel Grid.Column="1" Style="{StaticResource FormPanel}">
+                        <TextBlock Text="📁 TẠO DỰ ÁN" FontSize="16" FontWeight="Bold" Margin="0,0,0,20" Foreground="#172B4D"/>
+                        <TextBlock Text="Tên dự án:" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtProjectName" Style="{StaticResource CreateTextBox}"/>
+                        <TextBlock Text="ID User Quản lý:" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtOwnerId" Style="{StaticResource CreateTextBox}"/>
+                        <Button Content="LƯU DỰ ÁN" Click="BtnCreateProject_Click" Style="{StaticResource TrelloBtn}" Background="#0052CC"/>
+                    </StackPanel>
+
+                    <!-- Form Create Task -->
+                    <StackPanel Grid.Column="2" Style="{StaticResource FormPanel}">
+                        <TextBlock Text="📝 THÊM TASK MỚI" FontSize="16" FontWeight="Bold" Margin="0,0,0,20" Foreground="#172B4D"/>
+                        <TextBlock Text="Nội dung công việc:" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtTaskName" Style="{StaticResource CreateTextBox}"/>
+                        <TextBlock Text="Thuộc ID Dự án nào?:" Foreground="#5E6C84" Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtProjectId" Style="{StaticResource CreateTextBox}"/>
+                        <Button Content="THÊM TASK" Click="BtnCreateTask_Click" Style="{StaticResource TrelloBtn}" Background="#5AAC44"/>
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Border>
     </Grid>
