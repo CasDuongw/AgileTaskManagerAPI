@@ -56,7 +56,7 @@
 
         <!-- Style cho các textbox trong màn Create -->
         <Style x:Key="CreateTextBox" TargetType="TextBox">
-            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Padding" Value="12,10"/>
             <Setter Property="Margin" Value="0,0,0,16"/>
             <Setter Property="Background" Value="{StaticResource ColorSurface}"/>
             <Setter Property="BorderBrush" Value="{StaticResource ColorBorder}"/>
@@ -248,61 +248,82 @@
 
                     <!-- Form Create User -->
                     <Border Grid.Column="0" Style="{StaticResource FormCard}">
-                        <StackPanel Margin="24">
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
-                                <TextBlock Text="&#xE77B;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="18" Foreground="{StaticResource ColorPrimary}" VerticalAlignment="Center"/>
-                                <TextBlock Text="CREATE USER" FontSize="16" FontWeight="Bold" Margin="12,0,0,0" Foreground="{StaticResource ColorTextPrimary}" VerticalAlignment="Center"/>
+                        <Grid Margin="24">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <StackPanel Grid.Row="0">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                                    <TextBlock Text="&#xE77B;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="18" Foreground="{StaticResource ColorPrimary}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="CREATE USER" FontSize="16" FontWeight="Bold" Margin="12,0,0,0" Foreground="{StaticResource ColorTextPrimary}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Username" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
+                                <TextBox x:Name="txtUserName" Style="{StaticResource CreateTextBox}"/>
+                                
+                                <TextBlock Text="Email Address" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
+                                <TextBox x:Name="txtEmail" Style="{StaticResource CreateTextBox}"/>
+                                
+                                <TextBlock Text="Password" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
+                                <Border Background="{StaticResource ColorSurface}" BorderBrush="{StaticResource ColorBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,16">
+                                    <PasswordBox x:Name="txtPassword" Padding="12,10" Background="Transparent" Foreground="{StaticResource ColorTextPrimary}" BorderThickness="0" VerticalContentAlignment="Center"/>
+                                </Border>
                             </StackPanel>
                             
-                            <TextBlock Text="Username" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
-                            <TextBox x:Name="txtUserName" Style="{StaticResource CreateTextBox}"/>
-                            
-                            <TextBlock Text="Email Address" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
-                            <TextBox x:Name="txtEmail" Style="{StaticResource CreateTextBox}"/>
-                            
-                            <TextBlock Text="Password" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
-                            <Border Background="{StaticResource ColorSurface}" BorderBrush="{StaticResource ColorBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,32">
-                                <PasswordBox x:Name="txtPassword" Padding="16,12" Background="Transparent" Foreground="{StaticResource ColorTextPrimary}" BorderThickness="0" VerticalContentAlignment="Center"/>
-                            </Border>
-                            
-                            <Button Content="Create User" Click="BtnCreateUser_Click" Style="{StaticResource PrimaryBtn}" Background="{StaticResource ColorPrimary}"/>
-                        </StackPanel>
+                            <Button Grid.Row="1" Content="Create User" Click="BtnCreateUser_Click" Style="{StaticResource PrimaryBtn}" Background="{StaticResource ColorPrimary}"/>
+                        </Grid>
                     </Border>
 
                     <!-- Form Create Project -->
                     <Border Grid.Column="1" Style="{StaticResource FormCard}">
-                        <StackPanel Margin="24">
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
-                                <TextBlock Text="&#xE8B7;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="18" Foreground="{StaticResource ColorPrimary}" VerticalAlignment="Center"/>
-                                <TextBlock Text="CREATE PROJECT" FontSize="16" FontWeight="Bold" Margin="12,0,0,0" Foreground="{StaticResource ColorTextPrimary}" VerticalAlignment="Center"/>
+                        <Grid Margin="24">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                                    <TextBlock Text="&#xE8B7;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="18" Foreground="{StaticResource ColorPrimary}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="CREATE PROJECT" FontSize="16" FontWeight="Bold" Margin="12,0,0,0" Foreground="{StaticResource ColorTextPrimary}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Project Name" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
+                                <TextBox x:Name="txtProjectName" Style="{StaticResource CreateTextBox}"/>
+                                
+                                <TextBlock Text="Owner ID" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
+                                <TextBox x:Name="txtOwnerId" Style="{StaticResource CreateTextBox}"/>
                             </StackPanel>
                             
-                            <TextBlock Text="Project Name" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
-                            <TextBox x:Name="txtProjectName" Style="{StaticResource CreateTextBox}"/>
-                            
-                            <TextBlock Text="Owner ID" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
-                            <TextBox x:Name="txtOwnerId" Style="{StaticResource CreateTextBox}"/>
-                            
-                            <Button Content="Create Project" Click="BtnCreateProject_Click" Style="{StaticResource PrimaryBtn}" Background="{StaticResource ColorPrimary}" Margin="0,91,0,0"/>
-                        </StackPanel>
+                            <Button Grid.Row="1" Content="Create Project" Click="BtnCreateProject_Click" Style="{StaticResource PrimaryBtn}" Background="{StaticResource ColorPrimary}"/>
+                        </Grid>
                     </Border>
 
                     <!-- Form Create Task -->
                     <Border Grid.Column="2" Style="{StaticResource FormCard}">
-                        <StackPanel Margin="24">
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
-                                <TextBlock Text="&#xE70F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="18" Foreground="{StaticResource ColorSuccess}" VerticalAlignment="Center"/>
-                                <TextBlock Text="CREATE TASK" FontSize="16" FontWeight="Bold" Margin="12,0,0,0" Foreground="{StaticResource ColorTextPrimary}" VerticalAlignment="Center"/>
+                        <Grid Margin="24">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                                    <TextBlock Text="&#xE70F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="18" Foreground="{StaticResource ColorSuccess}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="CREATE TASK" FontSize="16" FontWeight="Bold" Margin="12,0,0,0" Foreground="{StaticResource ColorTextPrimary}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Task Description" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
+                                <TextBox x:Name="txtTaskName" Style="{StaticResource CreateTextBox}"/>
+                                
+                                <TextBlock Text="Project ID" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
+                                <TextBox x:Name="txtProjectId" Style="{StaticResource CreateTextBox}"/>
                             </StackPanel>
                             
-                            <TextBlock Text="Task Description" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
-                            <TextBox x:Name="txtTaskName" Style="{StaticResource CreateTextBox}"/>
-                            
-                            <TextBlock Text="Project ID" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,8" FontSize="13" FontWeight="SemiBold"/>
-                            <TextBox x:Name="txtProjectId" Style="{StaticResource CreateTextBox}"/>
-                            
-                            <Button Content="Create Task" Click="BtnCreateTask_Click" Style="{StaticResource PrimaryBtn}" Background="{StaticResource ColorSuccess}" Margin="0,91,0,0"/>
-                        </StackPanel>
+                            <Button Grid.Row="1" Content="Create Task" Click="BtnCreateTask_Click" Style="{StaticResource PrimaryBtn}" Background="{StaticResource ColorSuccess}"/>
+                        </Grid>
                     </Border>
                 </Grid>
             </Grid>

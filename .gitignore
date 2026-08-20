@@ -363,3 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 
 AgileTaskManagerAPI/appsettings.Development.json
+
+# Bỏ qua cấu hình AI Agent Skills
+.agents/
