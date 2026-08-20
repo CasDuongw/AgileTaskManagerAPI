@@ -117,10 +117,11 @@ namespace AgileTaskManager.Desktop
                     {
                         Background = Brushes.White,
                         CornerRadius = new CornerRadius(8),
-                        Padding = new Thickness(10),
-                        Margin = new Thickness(0, 0, 0, 10),
+                        Padding = new Thickness(12),
+                        Margin = new Thickness(0, 0, 0, 8),
+                        BorderThickness = new Thickness(1),
+                        BorderBrush = (SolidColorBrush)new BrushConverter().ConvertFromString("#E2E8F0"),
                         FocusVisualStyle = null,
-                        Effect = new DropShadowEffect { BlurRadius = 4, ShadowDepth = 1, Color = (Color)ColorConverter.ConvertFromString("#000000"), Opacity = 0.1, Direction = 270 },
                         AllowDrop = true,
                         Tag = createdTask?.taskId
                     };
@@ -131,7 +132,7 @@ namespace AgileTaskManager.Desktop
 
                     CheckBox chk = new CheckBox
                     {
-                        Foreground = (SolidColorBrush)new BrushConverter().ConvertFromString("#172B4D"),
+                        Foreground = (SolidColorBrush)new BrushConverter().ConvertFromString("#111827"),
                         FontWeight = FontWeights.SemiBold,
                         VerticalContentAlignment = VerticalAlignment.Center,
                         Content = new TextBlock { Text = taskContent, TextWrapping = TextWrapping.Wrap }
@@ -140,8 +141,9 @@ namespace AgileTaskManager.Desktop
 
                     Button btnDelete = new Button
                     {
-                        Content = "✕",
-                        Foreground = Brushes.Gray,
+                        Content = "\xE711",
+                        FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),
+                        Foreground = (SolidColorBrush)new BrushConverter().ConvertFromString("#64748B"),
                         Background = Brushes.Transparent,
                         BorderThickness = new Thickness(0),
                         FontSize = 14,
@@ -196,10 +198,11 @@ namespace AgileTaskManager.Desktop
             {
                 Background = Brushes.White,
                 CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(10),
-                Margin = new Thickness(0, 0, 0, 10),
+                Padding = new Thickness(12),
+                Margin = new Thickness(0, 0, 0, 8),
+                BorderThickness = new Thickness(1),
+                BorderBrush = (SolidColorBrush)new BrushConverter().ConvertFromString("#E2E8F0"),
                 FocusVisualStyle = null,
-                Effect = new DropShadowEffect { BlurRadius = 4, ShadowDepth = 1, Color = (Color)ColorConverter.ConvertFromString("#000000"), Opacity = 0.1, Direction = 270 },
                 AllowDrop = true,
 
                 // Cực kỳ quan trọng: Gắn TaskId từ Database vào túi bí mật (Tag) của thẻ
@@ -213,7 +216,7 @@ namespace AgileTaskManager.Desktop
 
             CheckBox chk = new CheckBox
             {
-                Foreground = (SolidColorBrush)new BrushConverter().ConvertFromString("#172B4D"),
+                Foreground = (SolidColorBrush)new BrushConverter().ConvertFromString("#111827"),
                 FontWeight = FontWeights.SemiBold,
                 VerticalContentAlignment = VerticalAlignment.Center,
                 Content = new TextBlock { Text = taskContent, TextWrapping = TextWrapping.Wrap }
@@ -222,8 +225,9 @@ namespace AgileTaskManager.Desktop
 
             Button btnDelete = new Button
             {
-                Content = "✕",
-                Foreground = Brushes.Gray,
+                Content = "\xE711",
+                FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),
+                Foreground = (SolidColorBrush)new BrushConverter().ConvertFromString("#64748B"),
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
                 FontSize = 14,
