@@ -2,55 +2,65 @@
 
 Ứng dụng quản lý công việc theo mô hình Kanban, gồm 2 phần tách biệt:
 
-- **AgileTaskManagerAPI** — Backend REST API viết bằng **ASP.NET Core 8** + **Entity Framework Core** (SQL Server).
-- **AgileTaskManager.Desktop** — Ứng dụng desktop **WPF (.NET 8)** dùng **MahApps.Metro** + **MaterialDesignInXaml** làm giao diện, gọi trực tiếp vào API ở trên qua `HttpClient`.
+- **AgileTaskManagerAPI** — Backend REST API viết bằng **ASP.NET Core 8** + **Entity Framework Core** (SQL Server). Đã tích hợp bảo mật toàn diện với xác thực JWT và mã hóa BCrypt.
+- **AgileTaskManager.Desktop** — Ứng dụng desktop **WPF (.NET 8)** gọi trực tiếp API. Cung cấp giao diện bảng Kanban mượt mà với chức năng Drag & Drop tuỳ chỉnh (Custom Animation Canvas).
 
-## ✨ Tính năng
+## ✨ Tính năng nổi bật
 
-- **Quản lý User**: đăng ký tài khoản (`POST /api/Users/register`), xem danh sách user (`GET /api/Users`)
-- **Quản lý Project**: tạo dự án mới, xem danh sách dự án (gắn với `OwnerId`)
-- **Quản lý Task theo bảng Kanban**:
-  - Tạo task gắn với một Project, có thể giao (`Assignee`) cho một User
-  - Task mặc định ở trạng thái `ToDo`
-  - Cập nhật trạng thái task qua `PATCH /api/Tasks/{id}/status` (`ToDo` → `InProgress` → `Done`) — dùng cho thao tác kéo-thả thẻ
-  - Lấy danh sách task theo từng Project
+- **Bảo mật (Security & Auth):**
+  - Đăng ký và Đăng nhập với mật khẩu được mã hóa an toàn bằng thuật toán `BCrypt`.
+  - Cấp phát và xác thực bằng `JSON Web Token (JWT)`.
+  - Giới hạn quyền truy cập API khắt khe bằng `[Authorize]`.
+  - Chính sách CORS bảo mật (chỉ cho phép các Origin chỉ định).
+- **Quản lý User & Project**:
+  - Tạo user mới và tạo dự án gắn với `OwnerId`.
+- **Bảng Kanban tuỳ chỉnh (Desktop App)**:
+  - Hiển thị công việc theo từng cột trạng thái.
+  - Hỗ trợ thao tác kéo-thả (Drag & Drop) mượt mà bằng kỹ thuật Overlay Canvas tự code (nghiêng thẻ, đổ bóng, dịch chuyển mượt mà thẻ bị lướt qua).
 - **Giao diện Desktop**:
-  - `MainWindow` — màn hình đăng nhập/khởi động
-  - `DashboardWindow` — bảng Kanban: thêm/xoá cột (danh sách), thêm thẻ task vào từng cột
-  - `CreateWindow` — form tạo nhanh User / Project / Task
-  - `KanbanColumn` — UserControl đại diện cho một cột Kanban
-- **Trang admin web tối giản** (`wwwroot/admin.html`, `wwwroot/index.html`) phục vụ test nhanh API mà không cần mở app desktop
+  - `LoginWindow` — màn hình đăng nhập nhận Token JWT.
+  - `DashboardWindow` — bảng Kanban chính.
+  - `KanbanColumn` — UserControl đại diện cho một cột Kanban và xử lý logic Animation.
+  - Tự động đính kèm `Bearer Token` vào mọi request qua `AppConfig.Client`.
+- **Trang Admin Web (`wwwroot/admin.html`)**:
+  - Công cụ web tối giản giúp Dev tạo nhanh Dữ liệu (User, Project, Task).
+  - Tích hợp đăng nhập JWT và hiển thị toàn bộ Database dưới dạng 3 bảng Data Tables tiện dụng.
 
 ## 🛠 Công nghệ sử dụng
 
 | Thành phần | Công nghệ |
 |---|---|
-| Backend | ASP.NET Core 8 Web API, Entity Framework Core 8 (SQL Server), Swagger/Swashbuckle |
-| Desktop | WPF (.NET 8), MahApps.Metro, MaterialDesignThemes |
-| CORS | Mở toàn bộ (`AllowAnyOrigin`) — chỉ dùng cho giai đoạn MVP/test |
+| Backend | ASP.NET Core 8 Web API, EF Core 8 (SQL Server), BCrypt.Net-Next, JWT Bearer |
+| Desktop | WPF (.NET 8), Custom Canvas Animation, HttpClient |
+| API Docs | Swagger/Swashbuckle |
 
 ## 📁 Cấu trúc thư mục
 
 ```
 AgileTaskManagerAPI/
 ├── AgileTaskManager.Desktop/       # Ứng dụng WPF
-│   ├── MainWindow.xaml(.cs)        # Màn hình chính
-│   ├── DashboardWindow.xaml(.cs)   # Bảng Kanban
-│   ├── CreateWindow.xaml(.cs)      # Form tạo User/Project/Task
-│   └── KanbanColumn.xaml(.cs)      # UserControl 1 cột Kanban
+│   ├── LoginWindow.xaml(.cs)       # Màn hình đăng nhập JWT
+│   ├── MainWindow.xaml(.cs)        # Màn hình dự phòng
+│   ├── DashboardWindow.xaml(.cs)   # Bảng Kanban (Chứa DragOverlayCanvas)
+│   ├── KanbanColumn.xaml(.cs)      # Component xử lý Drag & Drop
+│   └── AppConfig.cs                # Nơi chứa HttpClient dùng chung & Token
 │
 ├── AgileTaskManagerAPI/            # Backend Web API
 │   ├── Controllers/
+│   │   ├── AuthController.cs       # Đăng nhập & cấp Token
 │   │   ├── UsersController.cs
 │   │   ├── ProjectsController.cs
+│   │   ├── ColumnsController.cs
 │   │   └── TasksController.cs
 │   ├── Model/
-│   │   ├── User.cs
+│   │   ├── LoginRequest.cs         # DTO đăng nhập
+│   │   ├── User.cs                 # Entity User
 │   │   ├── Project.cs
+│   │   ├── KanbanColumn.cs
 │   │   └── AppTask.cs
 │   ├── Data/AppDbContext.cs
-│   ├── Migrations/                 # EF Core migrations
-│   ├── wwwroot/                    # admin.html, index.html (test nhanh qua trình duyệt)
+│   ├── wwwroot/                    # Công cụ admin.html
+│   ├── appsettings.json            # Chứa JWT Key & CorsSettings
 │   └── Program.cs
 │
 └── AgileTaskManagerAPI.slnx
@@ -58,9 +68,10 @@ AgileTaskManagerAPI/
 
 ## 🗄 Mô hình dữ liệu
 
-- **User**: `UserId`, `Username`, `PasswordHash`, `Email` (unique)
+- **User**: `UserId`, `Username`, `PasswordHash` (BCrypt), `Email` (unique)
 - **Project**: `ProjectId`, `ProjectName`, `Description`, `CreatedAt`, `OwnerId` → `User`
-- **AppTask**: `TaskId`, `TaskName`, `Description`, `Status` (`ToDo` / `InProgress` / `Done`), `ProjectId` → `Project`, `AssigneeId` → `User` (có thể null)
+- **KanbanColumn**: `ColumnId`, `ColumnName`, `Position`, `ProjectId` → `Project`
+- **AppTask**: `TaskId`, `TaskName`, `Description`, `ColumnId` → `KanbanColumn`, `ProjectId` → `Project`, `AssigneeId` → `User` (có thể null)
 
 ## 🚀 Cài đặt & chạy thử
 
@@ -68,61 +79,60 @@ AgileTaskManagerAPI/
 
 - .NET SDK 8.0+
 - SQL Server (LocalDB / SQL Express / Server đầy đủ đều được)
-- Visual Studio 2022+ (khuyến nghị để mở `.slnx` và chạy WPF) hoặc .NET CLI
+- Visual Studio 2022+ (khuyến nghị) hoặc .NET CLI
 
-### 1. Cấu hình kết nối database
+### 1. Cấu hình Database & Security
 
-Sửa chuỗi kết nối trong `AgileTaskManagerAPI/appsettings.json` cho đúng với SQL Server trên máy bạn:
-
+Sửa chuỗi kết nối trong `AgileTaskManagerAPI/appsettings.json`:
 ```json
 "ConnectionStrings": {
   "DefaultConnection": "Server=<TÊN_SERVER>;Database=AgileTaskManagerDB;Trusted_Connection=True;TrustServerCertificate=True;"
 }
 ```
 
-> ⚠️ Không commit connection string chứa mật khẩu thật lên GitHub. Nên dùng `Trusted_Connection` (Windows Auth) hoặc User Secrets thay vì `uid/pwd` cứng trong file.
+*File này cũng chứa cấu hình bảo mật `JwtSettings` và `CorsSettings`. Bạn có thể thay đổi các origin hợp lệ trong mảng `AllowedOrigins`.*
 
 ### 2. Chạy migrations & khởi động API
 
 ```bash
 cd AgileTaskManagerAPI
 dotnet restore
-dotnet ef database update   # tạo database theo Migrations có sẵn
+dotnet ef database update
 dotnet run
 ```
-
-API mặc định chạy tại `http://localhost:5279`, Swagger UI tại `http://localhost:5279/swagger`.
+API sẽ chạy tại `http://localhost:5279`. 
+Mở trình duyệt truy cập `http://localhost:5279/admin.html` để tạo nhanh dữ liệu test (hoặc test API tại `http://localhost:5279/swagger`).
 
 ### 3. Chạy ứng dụng Desktop
 
 Mở `AgileTaskManagerAPI.slnx` bằng Visual Studio → chọn **AgileTaskManager.Desktop** làm Startup Project → **F5**.
+App sẽ mở lên màn hình Login, nhập tài khoản bạn vừa tạo bên `admin.html` để vào bảng Kanban.
 
-> Đảm bảo API đang chạy ở `http://localhost:5279` trước (địa chỉ này đang được hard-code trong `MainWindow.xaml.cs` và `CreateWindow.xaml.cs` qua biến `ApiBaseUrl`). Nếu đổi port, nhớ sửa lại ở cả 2 file.
+## 📡 API Endpoints (Yêu cầu JWT Token)
 
-## 📡 API Endpoints
+Đa số các API dưới đây đều yêu cầu Header: `Authorization: Bearer <TOKEN>`
 
-| Method | Endpoint | Mô tả |
-|---|---|---|
-| POST | `/api/Users/register` | Đăng ký user mới |
-| GET | `/api/Users` | Lấy danh sách user |
-| GET | `/api/Projects` | Lấy danh sách project |
-| POST | `/api/Projects` | Tạo project mới |
-| GET | `/api/Tasks/project/{projectId}` | Lấy tất cả task của 1 project |
-| POST | `/api/Tasks` | Tạo task mới |
-| PATCH | `/api/Tasks/{id}/status` | Cập nhật trạng thái task |
+| Method | Endpoint | Mô tả | Trạng thái |
+|---|---|---|---|
+| POST | `/api/Users/register` | Đăng ký user mới | Public |
+| POST | `/api/Auth/login` | Xác thực, trả về JWT Token | Public |
+| GET | `/api/Users` | Lấy danh sách user | Khóa |
+| GET | `/api/Projects` | Lấy danh sách project | Khóa |
+| POST | `/api/Projects` | Tạo project mới | Khóa |
+| GET | `/api/Tasks` | Lấy toàn bộ task | Khóa |
+| GET | `/api/Tasks/project/{id}`| Lấy task của 1 project | Khóa |
+| POST | `/api/Tasks` | Tạo task mới | Khóa |
+| PATCH | `/api/Tasks/{id}/column`| Cập nhật cột (Drag-Drop) | Khóa |
 
-## 🗺 Roadmap / TODO
+## 🗺 Roadmap / TODO (Đã hoàn thành!)
 
-- [ ] Mã hoá mật khẩu (hiện `PasswordHash` đang lưu plain text để test luồng MVP)
-- [ ] Xác thực & phân quyền (JWT)
-- [ ] Kéo-thả (drag & drop) task giữa các cột Kanban trên Desktop
-- [ ] Trang Team Directory / Files trên Desktop
-- [ ] Giới hạn CORS khi lên production (hiện đang `AllowAnyOrigin`)
+- [x] Mã hoá mật khẩu (BCrypt)
+- [x] Xác thực & phân quyền (JWT Authentication)
+- [x] Thắt chặt CORS Policy cho production
+- [x] Kéo-thả (drag & drop) custom mượt mà trên Desktop
+- [x] Công cụ Web Dashboard Data Management
+- [ ] Trang Team Directory / Files trên Desktop (Sắp tới)
 
 ## 🤝 Đóng góp
 
 Pull request và issue đều được hoan nghênh.
-
-## 📄 License
-
-Chưa có license — thêm file `LICENSE` nếu muốn public chính thức (ví dụ MIT).
