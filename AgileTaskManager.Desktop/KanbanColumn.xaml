@@ -8,7 +8,7 @@
 
     <!-- THẺ BORDER BỌC NGOÀI (SaaS Flat Design) -->
     <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Width="280" Padding="12" Margin="0,0,16,0" VerticalAlignment="Top"
-            AllowDrop="True" Drop="ColumnBorder_Drop" DragOver="ColumnBorder_DragOver">
+            AllowDrop="True">
         <Border.FocusVisualStyle>
             <Style TargetType="Control">
                 <Setter Property="Template">

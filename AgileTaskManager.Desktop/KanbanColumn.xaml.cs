@@ -1,9 +1,12 @@
 using ControlzEx.Standard;
+using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
+using System.Windows.Media.Animation;
 using System.Net.Http;
 using System.Net.Http.Json;
 
@@ -13,7 +16,7 @@ namespace AgileTaskManager.Desktop
     {
         // Lấy URL cấu hình từ AppConfig
         // Đã xóa biến local ApiBaseUrl hardcode
-        private static readonly HttpClient client = new HttpClient();
+        private static readonly HttpClient client = AppConfig.Client;
 
         // [MỚI] Biến lưu trữ ID của dự án cho cột này
         private int _currentProjectId;
@@ -126,6 +129,12 @@ namespace AgileTaskManager.Desktop
                         Tag = createdTask?.taskId
                     };
 
+                    newCard.Effect = new DropShadowEffect { BlurRadius = 4, ShadowDepth = 1, Opacity = 0.1 };
+                    TransformGroup tg = new TransformGroup();
+                    tg.Children.Add(new TranslateTransform());
+                    tg.Children.Add(new RotateTransform { Angle = 0, CenterX = 100, CenterY = 25 });
+                    newCard.RenderTransform = tg;
+
                     Grid cardGrid = new Grid();
                     cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                     cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -156,6 +165,7 @@ namespace AgileTaskManager.Desktop
 
                     newCard.PreviewMouseLeftButtonDown += Card_PreviewMouseLeftButtonDown;
                     newCard.PreviewMouseMove += Card_PreviewMouseMove;
+                    newCard.PreviewMouseLeftButtonUp += Card_PreviewMouseLeftButtonUp;
 
                     newCard.MouseEnter += (s, e) => btnDelete.Visibility = Visibility.Visible;
                     newCard.MouseLeave += (s, e) => btnDelete.Visibility = Visibility.Hidden;
@@ -210,6 +220,12 @@ namespace AgileTaskManager.Desktop
                 Tag = taskId
             };
 
+            newCard.Effect = new DropShadowEffect { BlurRadius = 4, ShadowDepth = 1, Opacity = 0.1 };
+            TransformGroup tg = new TransformGroup();
+            tg.Children.Add(new TranslateTransform());
+            tg.Children.Add(new RotateTransform { Angle = 0, CenterX = 100, CenterY = 25 });
+            newCard.RenderTransform = tg;
+
             Grid cardGrid = new Grid();
             cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -241,6 +257,7 @@ namespace AgileTaskManager.Desktop
             // Gắn sự kiện kéo thả cho thẻ
             newCard.PreviewMouseLeftButtonDown += Card_PreviewMouseLeftButtonDown;
             newCard.PreviewMouseMove += Card_PreviewMouseMove;
+            newCard.PreviewMouseLeftButtonUp += Card_PreviewMouseLeftButtonUp;
 
             // Sự kiện hiện nút xóa khi hover
             newCard.MouseEnter += (s, e) => btnDelete.Visibility = Visibility.Visible;
@@ -389,114 +406,266 @@ namespace AgileTaskManager.Desktop
         }
 
         // ==============================================================================
-        // TÍNH NĂNG DRAG & DROP CHO CÁC THẺ TASK NHỎ
+        // TÍNH NĂNG DRAG & DROP (ANIMATION TRELLO) CHO CÁC THẺ TASK NHỎ
         // ==============================================================================
+        private static bool _isCardDragging = false;
+        private static Point _cardClickPosition;
+        private static Border _draggedCard;
+        private static Border _placeholder;
+        private static StackPanel _originalPanel;
+        private static int _originalIndex;
+        private static KanbanColumn _sourceColumn;
 
-        private Point _cardDragStartPoint;
-        private int projectId;
-
-        // 1. Khi nhấn chuột vào một thẻ Task
         private void Card_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Nếu bấm trúng nút Xóa (Button) thì không kích hoạt kéo, để người dùng còn kịp bấm xóa
             if (e.OriginalSource is Button || e.OriginalSource is DependencyObject obj && FindParent<Button>(obj) != null)
                 return;
 
-            _cardDragStartPoint = e.GetPosition(null);
+            _draggedCard = sender as Border;
+            _cardClickPosition = e.GetPosition(_draggedCard);
+            _draggedCard.CaptureMouse();
         }
 
-        // 2. Khi di chuột để nhấc thẻ Task lên
         private void Card_PreviewMouseMove(object sender, MouseEventArgs e)
         {
-            if (e.LeftButton != MouseButtonState.Pressed) return;
+            if (_draggedCard == null || e.LeftButton != MouseButtonState.Pressed) return;
 
-            Point mousePos = e.GetPosition(null);
-            Vector diff = _cardDragStartPoint - mousePos;
-
-            if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
-                Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+            Point currentPos = e.GetPosition(_draggedCard);
+            if (!_isCardDragging && (Math.Abs(currentPos.X - _cardClickPosition.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                                     Math.Abs(currentPos.Y - _cardClickPosition.Y) > SystemParameters.MinimumVerticalDragDistance))
             {
-                Border draggedCard = sender as Border;
-                if (draggedCard != null)
+                StartCardDrag();
+            }
+
+            if (_isCardDragging)
+            {
+                DashboardWindow dashboard = Window.GetWindow(this) as DashboardWindow;
+                if (dashboard == null) return;
+                
+                Canvas overlay = dashboard.FindName("DragOverlayCanvas") as Canvas;
+                if (overlay == null) return;
+
+                Point mousePosInCanvas = e.GetPosition(overlay);
+                Canvas.SetLeft(_draggedCard, mousePosInCanvas.X - _cardClickPosition.X);
+                Canvas.SetTop(_draggedCard, mousePosInCanvas.Y - _cardClickPosition.Y);
+
+                UpdateCardPlaceholderPosition(mousePosInCanvas, dashboard);
+            }
+        }
+
+        private void StartCardDrag()
+        {
+            _isCardDragging = true;
+            _originalPanel = VisualTreeHelper.GetParent(_draggedCard) as StackPanel;
+            if (_originalPanel == null) return;
+            
+            _sourceColumn = FindParent<KanbanColumn>(_originalPanel);
+            _originalIndex = _originalPanel.Children.IndexOf(_draggedCard);
+
+            _placeholder = new Border
+            {
+                Width = _draggedCard.ActualWidth,
+                Height = _draggedCard.ActualHeight,
+                Margin = _draggedCard.Margin,
+                Background = new SolidColorBrush(Color.FromArgb(50, 150, 150, 150)),
+                CornerRadius = new CornerRadius(8),
+                BorderBrush = new SolidColorBrush(Colors.LightGray),
+                BorderThickness = new Thickness(1)
+            };
+
+            DashboardWindow dashboard = Window.GetWindow(this) as DashboardWindow;
+            Canvas overlay = dashboard.FindName("DragOverlayCanvas") as Canvas;
+
+            Point absolutePos = _draggedCard.TransformToAncestor(overlay).Transform(new Point(0, 0));
+            _originalPanel.Children.Remove(_draggedCard);
+            _originalPanel.Children.Insert(_originalIndex, _placeholder);
+
+            overlay.Children.Add(_draggedCard);
+            Canvas.SetLeft(_draggedCard, absolutePos.X);
+            Canvas.SetTop(_draggedCard, absolutePos.Y);
+            Panel.SetZIndex(_draggedCard, 9999);
+
+            if (_draggedCard.RenderTransform is TransformGroup tg && tg.Children.Count > 1)
+            {
+                if (tg.Children[1] is RotateTransform rotateTransform)
                 {
-                    // Đóng gói thẻ Task lại và kích hoạt lệnh kéo xuyên màn hình
-                    DragDrop.DoDragDrop(draggedCard, draggedCard, DragDropEffects.Move);
+                    DoubleAnimation tiltAnim = new DoubleAnimation(4, TimeSpan.FromMilliseconds(150));
+                    rotateTransform.BeginAnimation(RotateTransform.AngleProperty, tiltAnim);
+                }
+            }
+
+            if (_draggedCard.Effect is DropShadowEffect shadow)
+            {
+                shadow.BeginAnimation(DropShadowEffect.BlurRadiusProperty, new DoubleAnimation(15, TimeSpan.FromMilliseconds(150)));
+                shadow.BeginAnimation(DropShadowEffect.ShadowDepthProperty, new DoubleAnimation(5, TimeSpan.FromMilliseconds(150)));
+                shadow.BeginAnimation(DropShadowEffect.OpacityProperty, new DoubleAnimation(0.3, TimeSpan.FromMilliseconds(150)));
+            }
+        }
+
+        private void UpdateCardPlaceholderPosition(Point mousePosInCanvas, DashboardWindow dashboard)
+        {
+            var hitTestResult = VisualTreeHelper.HitTest(dashboard, mousePosInCanvas);
+            if (hitTestResult == null) return;
+
+            KanbanColumn targetColumn = FindParent<KanbanColumn>(hitTestResult.VisualHit);
+            if (targetColumn == null) return;
+
+            StackPanel targetPanel = targetColumn.FindName("spTaskList") as StackPanel;
+            if (targetPanel == null) return;
+
+            int newIndex = -1;
+            Canvas overlay = dashboard.FindName("DragOverlayCanvas") as Canvas;
+
+            for (int i = 0; i < targetPanel.Children.Count; i++)
+            {
+                UIElement child = targetPanel.Children[i];
+                if (child == _placeholder) continue;
+
+                Point childPos = child.TransformToAncestor(overlay).Transform(new Point(0, 0));
+                if (mousePosInCanvas.Y > childPos.Y && mousePosInCanvas.Y < childPos.Y + child.RenderSize.Height)
+                {
+                    newIndex = mousePosInCanvas.Y < childPos.Y + child.RenderSize.Height / 2 ? i : i + 1;
+                    break;
+                }
+            }
+
+            if (newIndex == -1) newIndex = targetPanel.Children.Count;
+
+            StackPanel currentPlaceholderPanel = VisualTreeHelper.GetParent(_placeholder) as StackPanel;
+            if (currentPlaceholderPanel != targetPanel || newIndex != targetPanel.Children.IndexOf(_placeholder))
+            {
+                if (currentPlaceholderPanel != null)
+                {
+                    currentPlaceholderPanel.Children.Remove(_placeholder);
+                }
+                
+                AnimateCardsSlide(targetPanel, newIndex);
+
+                if (newIndex >= targetPanel.Children.Count)
+                    targetPanel.Children.Add(_placeholder);
+                else
+                    targetPanel.Children.Insert(newIndex, _placeholder);
+            }
+        }
+
+        private void AnimateCardsSlide(StackPanel targetPanel, int newIndex)
+        {
+            int currentIndex = targetPanel.Children.IndexOf(_placeholder);
+            
+            foreach (UIElement child in targetPanel.Children)
+            {
+                if (child == _placeholder) continue;
+
+                if (child.RenderTransform is TransformGroup tg && tg.Children.Count > 0)
+                {
+                    if (tg.Children[0] is TranslateTransform translate)
+                    {
+                        translate.BeginAnimation(TranslateTransform.YProperty, null);
+                        
+                        DoubleAnimation slideAnim = new DoubleAnimation
+                        {
+                            To = 0,
+                            Duration = TimeSpan.FromMilliseconds(200),
+                            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                        };
+
+                        int childIndex = targetPanel.Children.IndexOf(child);
+                        if (currentIndex == -1)
+                        {
+                            if (childIndex >= newIndex) translate.Y = -_placeholder.ActualHeight;
+                        }
+                        else 
+                        {
+                            if (childIndex == newIndex && newIndex < currentIndex) translate.Y = -_placeholder.ActualHeight;
+                            else if (childIndex == newIndex - 1 && newIndex > currentIndex) translate.Y = _placeholder.ActualHeight;
+                        }
+
+                        if (translate.Y != 0)
+                            translate.BeginAnimation(TranslateTransform.YProperty, slideAnim);
+                    }
                 }
             }
         }
 
-      
-        private void ColumnBorder_DragOver(object sender, DragEventArgs e)
+        private void Card_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            // Nếu vật thể đang kéo là một thẻ Task (thẻ Border) thì cho phép thả
-            if (e.Data.GetDataPresent(typeof(Border)))
+            if (_draggedCard != null)
             {
-                e.Effects = DragDropEffects.Move;
-                e.Handled = true;
+                _draggedCard.ReleaseMouseCapture();
             }
+
+            if (!_isCardDragging) 
+            {
+                _draggedCard = null;
+                return;
+            }
+
+            DashboardWindow dashboard = Window.GetWindow(this) as DashboardWindow;
+            Canvas overlay = dashboard?.FindName("DragOverlayCanvas") as Canvas;
+            if (overlay == null)
+            {
+                FinishDrop();
+                return;
+            }
+
+            Point targetPos = _placeholder.TransformToAncestor(overlay).Transform(new Point(0, 0));
+
+            DoubleAnimation snapXAnim = new DoubleAnimation(targetPos.X, TimeSpan.FromMilliseconds(150)) { EasingFunction = new QuadraticEase() };
+            DoubleAnimation snapYAnim = new DoubleAnimation(targetPos.Y, TimeSpan.FromMilliseconds(150)) { EasingFunction = new QuadraticEase() };
+
+            snapYAnim.Completed += (s, ev) => FinishDrop();
+
+            _draggedCard.BeginAnimation(Canvas.LeftProperty, snapXAnim);
+            _draggedCard.BeginAnimation(Canvas.TopProperty, snapYAnim);
         }
 
-        private void ColumnBorder_Drop(object sender, DragEventArgs e)
+        private void FinishDrop()
         {
-            if (e.Data.GetDataPresent(typeof(Border)))
+            if (_draggedCard.RenderTransform is TransformGroup tg && tg.Children.Count > 1)
             {
-                Border droppedCard = e.Data.GetData(typeof(Border)) as Border;
-                if (droppedCard != null)
+                if (tg.Children[1] is RotateTransform rotateTransform)
                 {
-                    // 1. LẤY TỌA ĐỘ CHUỘT: Đo xem chuột đang nằm ở đâu so với toàn bộ danh sách Task
-                    Point mousePos = e.GetPosition(spTaskList);
-
-                    // Mặc định Index sẽ là ở cuối danh sách
-                    int targetIndex = spTaskList.Children.Count;
-
-                    // 2. DÙNG TOÁN HỌC TÌM VỊ TRÍ CHUẨN XÁC
-                    // Quét qua từng thẻ Task đang có sẵn trong cột
-                    for (int i = 0; i < spTaskList.Children.Count; i++)
-                    {
-                        UIElement child = spTaskList.Children[i];
-
-                        // Bỏ qua chính cái thẻ mình đang cầm trên tay (Tránh tính toán sai lệch khi kéo trong cùng 1 cột)
-                        if (child == droppedCard) continue;
-
-                        // Tính tọa độ Y của thẻ này so với danh sách
-                        Point childPos = child.TranslatePoint(new Point(0, 0), spTaskList);
-
-                        // Nếu mũi tên chuột nằm cao hơn ĐIỂM GIỮA của thẻ hiện tại
-                        // Nghĩa là người dùng muốn chèn lên trên thẻ này!
-                        if (mousePos.Y < childPos.Y + (((FrameworkElement)child).ActualHeight / 2))
-                        {
-                            targetIndex = i; // Chốt hạ vị trí
-                            break; // Dừng vòng lặp
-                        }
-                    }
-
-                    // 3. TIẾN HÀNH RÚT - CẮM
-                    Panel oldParent = droppedCard.Parent as Panel;
-                    int oldIndex = -1; // [MỚI] Lưu lại vị trí cũ để phòng hờ rollback (Làm như một Senior lười)
-                    if (oldParent != null)
-                    {
-                        oldIndex = oldParent.Children.IndexOf(droppedCard);
-
-                        // Xử lý một cú lừa của Logic: Nếu bạn kéo thả trong CÙNG 1 CỘT, 
-                        // khi rút thẻ cũ ra, các thẻ bên dưới sẽ bị giật lên 1 bậc làm sai số Index.
-                        // Ta cần trừ đi 1 nấc nếu vị trí cũ nằm cao hơn vị trí mới.
-                        if (oldParent == spTaskList && oldIndex < targetIndex)
-                        {
-                            targetIndex--;
-                        }
-
-                        // Rút khỏi cột cũ (hoặc vị trí cũ)
-                        oldParent.Children.Remove(droppedCard);
-                    }
-
-                    // Cắm thẻ vào vị trí chuẩn không cần chỉnh
-                    spTaskList.Children.Insert(targetIndex, droppedCard);
-
-                    if (oldParent != spTaskList)
-                        SyncCardStatusToServer(droppedCard, oldParent, oldIndex);
+                    rotateTransform.BeginAnimation(RotateTransform.AngleProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(100)));
                 }
-                e.Handled = true;
             }
+
+            if (_draggedCard.Effect is DropShadowEffect shadow)
+            {
+                shadow.BeginAnimation(DropShadowEffect.BlurRadiusProperty, new DoubleAnimation(4, TimeSpan.FromMilliseconds(100)));
+                shadow.BeginAnimation(DropShadowEffect.ShadowDepthProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(100)));
+                shadow.BeginAnimation(DropShadowEffect.OpacityProperty, new DoubleAnimation(0.1, TimeSpan.FromMilliseconds(100)));
+            }
+
+            DashboardWindow dashboard = Window.GetWindow(this) as DashboardWindow;
+            Canvas overlay = dashboard?.FindName("DragOverlayCanvas") as Canvas;
+            if (overlay != null)
+            {
+                overlay.Children.Remove(_draggedCard);
+                _draggedCard.BeginAnimation(Canvas.LeftProperty, null);
+                _draggedCard.BeginAnimation(Canvas.TopProperty, null);
+            }
+
+            StackPanel targetPanel = VisualTreeHelper.GetParent(_placeholder) as StackPanel;
+            if (targetPanel != null)
+            {
+                int dropIndex = targetPanel.Children.IndexOf(_placeholder);
+                targetPanel.Children.Remove(_placeholder);
+                targetPanel.Children.Insert(dropIndex, _draggedCard);
+                
+                KanbanColumn targetColumn = FindParent<KanbanColumn>(targetPanel);
+                if (targetColumn != _sourceColumn)
+                {
+                    targetColumn.SyncCardStatusToServer(_draggedCard, _originalPanel, _originalIndex);
+                }
+            }
+            else
+            {
+                _originalPanel.Children.Insert(_originalIndex, _draggedCard);
+            }
+
+            _isCardDragging = false;
+            _draggedCard = null;
+            _placeholder = null;
         }
 
         private async void SyncCardStatusToServer(Border card, Panel oldParent, int oldIndex)
@@ -509,73 +678,40 @@ namespace AgileTaskManager.Desktop
                 if (!response.IsSuccessStatusCode)
                 {
                     string errorMsg = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show($"Kéo thả xịt rồi (Server từ chối)!\nChi tiết: {errorMsg}\nThẻ sẽ được bế về chỗ cũ.", "Lỗi Optimistic UI", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Kéo thả xịt rồi (Server từ chối)!\nChi tiết: {errorMsg}\nThẻ sẽ được bế về chỗ cũ.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                     RollbackCardMove(card, oldParent, oldIndex);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Rớt mạng hoặc Server sập rồi!\nChi tiết: {ex.Message}\nThẻ sẽ được bế về chỗ cũ cho chắc cú.", "Lỗi Mạng/Hệ thống", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Rớt mạng hoặc Server sập rồi!\nChi tiết: {ex.Message}\nThẻ sẽ được bế về chỗ cũ cho chắc cú.", "Lỗi Hệ thống", MessageBoxButton.OK, MessageBoxImage.Error);
                 RollbackCardMove(card, oldParent, oldIndex);
             }
         }
 
-        // [MỚI] Bùa chú phục hồi nhân phẩm: Gọi khi API sập để kéo thẻ về nhà cũ
         private void RollbackCardMove(Border card, Panel oldParent, int oldIndex)
         {
-            // 1. Nhổ thẻ ra khỏi chỗ vừa thả nhầm (ui giả dối)
             if (card.Parent is Panel currentParent)
             {
                 currentParent.Children.Remove(card);
             }
             
-            // 2. Tống nó về lại nhà cũ
             if (oldParent != null)
             {
-                // Nhét lại đúng khe hở cũ
                 if (oldIndex >= 0 && oldIndex <= oldParent.Children.Count)
                 {
                     oldParent.Children.Insert(oldIndex, card);
                 }
                 else
                 {
-                    oldParent.Children.Add(card); // Backup nếu lỡ có gì đó kì quặc xảy ra
+                    oldParent.Children.Add(card); 
                 }
             }
         }
 
-        private void SpTaskList_Drop(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(typeof(Border)))
-            {
-                Border droppedCard = e.Data.GetData(typeof(Border)) as Border;
-                if (droppedCard != null)
-                {
-                    Panel oldParent = droppedCard.Parent as Panel;
-                    int oldIndex = -1; // [MỚI] Nhớ vị trí cũ trước khi nhổ thẻ lên
-                    if (oldParent != null) 
-                    {
-                        oldIndex = oldParent.Children.IndexOf(droppedCard);
-                    }
-
-                    // Nếu thả vào khoảng không của chính cột đó thì không cần làm gì, hoặc rớt xuống cuối
-                    if (oldParent == spTaskList) return;
-
-                    // Rút khỏi cột cũ
-                    if (oldParent != null) oldParent.Children.Remove(droppedCard);
-
-                    // Thêm thẳng vào cuối danh sách của cột mới
-                    spTaskList.Children.Add(droppedCard);
-
-                    SyncCardStatusToServer(droppedCard, oldParent, oldIndex);
-                }
-                e.Handled = true;
-            }
-        }
-
-        // Hàm phụ trợ dùng để kiểm tra xem người dùng có đang bấm hụt vào nút bấm hay không
         private T FindParent<T>(DependencyObject child) where T : DependencyObject
         {
+            if (child == null) return null;
             DependencyObject parentObject = VisualTreeHelper.GetParent(child);
             if (parentObject == null) return null;
             if (parentObject is T parent) return parent;

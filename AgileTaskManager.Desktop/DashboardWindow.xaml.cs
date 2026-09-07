@@ -10,8 +10,7 @@ namespace AgileTaskManager.Desktop
     {
         // Lấy URL cấu hình từ AppConfig
         // Đã xóa biến local ApiBaseUrl hardcode
-        private static readonly HttpClient client = new HttpClient();
-        private bool _isLoadingProjects;
+        private static readonly HttpClient client = AppConfig.Client;
 
         public int SelectedProjectId =>
             cboProjects.SelectedValue is int id ? id : 0;

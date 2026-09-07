@@ -1,6 +1,8 @@
-
 using Microsoft.EntityFrameworkCore;
 using AgileTaskManagerAPI.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace AgileTaskManagerAPI
 {
@@ -14,19 +16,46 @@ namespace AgileTaskManagerAPI
             builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Add services to the container.
+            // Cấu hình xác thực JWT (Authentication)
+            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+            var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false; // Bật lên True khi chạy thực tế (có HTTPS)
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtSettings["Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = jwtSettings["Audience"],
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+
+            // Add services to the container.
             builder.Services.AddControllers();
+            
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            // Mở khóa CORS cho phép mọi nguồn truy cập (Chỉ dùng khi làm MVP/Test)
+            // Cấu hình CORS chặt chẽ: Chỉ cho phép các Origins được định nghĩa trong appsettings.json
+            var allowedOrigins = builder.Configuration.GetSection("CorsSettings:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll", policy =>
+                options.AddPolicy("StrictCorsPolicy", policy =>
                 {
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins(allowedOrigins)
                           .AllowAnyMethod()
                           .AllowAnyHeader();
                 });
@@ -40,11 +69,14 @@ namespace AgileTaskManagerAPI
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseCors("AllowAll"); // <-- Thêm dòng này
-            
+            app.UseCors("StrictCorsPolicy"); // <-- Áp dụng chính sách CORS chặt chẽ
+
+            // [CỰC KỲ QUAN TRỌNG]: Authentication phải nằm TRƯỚC Authorization
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();

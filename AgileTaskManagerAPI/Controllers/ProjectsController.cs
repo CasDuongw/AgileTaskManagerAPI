@@ -1,4 +1,4 @@
-﻿using AgileTaskManagerAPI.Data;
+using AgileTaskManagerAPI.Data;
 using AgileTaskManagerAPI.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,34 +7,35 @@ namespace AgileTaskManagerAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class ProjectsController : ControllerBase
     {
         private readonly AppDbContext _context;
 
-        // Bơm (Inject) AppDbContext vào để Controller có quyền truy cập Database
+        // Bom (Inject) AppDbContext v�o d? Controller c� quy?n truy c?p Database
         public ProjectsController(AppDbContext context)
         {
             _context = context;
         }
 
-        // 1. Lấy danh sách tất cả Project (dành cho màn hình Dashboard)
+        // 1. L?y danh s�ch t?t c? Project (d�nh cho m�n h�nh Dashboard)
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
         {
             return await _context.Projects.ToListAsync();
         }
 
-        // 2. Tạo một Project mới
+        // 2. T?o m?t Project m?i
         [HttpPost]
         public async Task<ActionResult<Project>> CreateProject(Project project)
         {
-            // Tự động gán thời gian tạo là lúc này
+            // T? d?ng g�n th?i gian t?o l� l�c n�y
             project.CreatedAt = DateTime.Now;
 
             _context.Projects.Add(project);
             await _context.SaveChangesAsync();
 
-            // Trả về dữ liệu Project vừa tạo thành công
+            // Tr? v? d? li?u Project v?a t?o th�nh c�ng
             return CreatedAtAction(nameof(GetProjects), new { id = project.ProjectId }, project);
         }
     }

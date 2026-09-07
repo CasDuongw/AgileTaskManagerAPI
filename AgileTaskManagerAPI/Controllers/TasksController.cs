@@ -7,6 +7,7 @@ namespace AgileTaskManagerAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class TasksController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -21,6 +22,13 @@ namespace AgileTaskManagerAPI.Controllers
         public async Task<ActionResult<IEnumerable<AppTask>>> GetTasksByProject(int projectId)
         {
             return await _context.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
+        }
+
+        // Lấy tất cả Task trong toàn hệ thống (Dành cho Admin Dashboard)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<AppTask>>> GetAllTasks()
+        {
+            return await _context.Tasks.ToListAsync();
         }
 
         // 2. Tạo Task mới

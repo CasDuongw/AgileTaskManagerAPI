@@ -1,4 +1,4 @@
-﻿using AgileTaskManagerAPI.Data;
+using AgileTaskManagerAPI.Data;
 using AgileTaskManagerAPI.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +7,7 @@ namespace AgileTaskManagerAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class UsersController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -18,9 +19,12 @@ namespace AgileTaskManagerAPI.Controllers
 
         // Tạo tài khoản (Đăng ký)
         [HttpPost("register")]
+        [Microsoft.AspNetCore.Authorization.AllowAnonymous]
         public async Task<ActionResult<User>> Register(User user)
         {
-            // Trong thực tế sẽ cần mã hóa mật khẩu, nhưng MVP ta lưu tạm để test luồng
+            // Mã hóa mật khẩu sử dụng BCrypt trước khi lưu
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 

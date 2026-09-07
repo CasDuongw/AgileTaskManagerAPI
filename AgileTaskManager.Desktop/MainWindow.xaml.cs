@@ -9,7 +9,7 @@ namespace AgileTaskManager.Desktop
     {
         // Lấy URL cấu hình từ AppConfig
         // Đã xóa biến local ApiBaseUrl hardcode
-        private static readonly HttpClient client = new HttpClient();
+        private static readonly HttpClient client = AppConfig.Client;
 
         public MainWindow()
         {

@@ -7,6 +7,7 @@ namespace AgileTaskManagerAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class ColumnsController : ControllerBase
     {
         private readonly AppDbContext _context;
