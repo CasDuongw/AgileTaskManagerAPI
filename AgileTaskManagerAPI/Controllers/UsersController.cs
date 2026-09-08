@@ -17,25 +17,35 @@ namespace AgileTaskManagerAPI.Controllers
             _context = context;
         }
 
-        // Tạo tài khoản (Đăng ký)
         [HttpPost("register")]
         [Microsoft.AspNetCore.Authorization.AllowAnonymous]
         public async Task<ActionResult<User>> Register(User user)
         {
-            // Mã hóa mật khẩu sử dụng BCrypt trước khi lưu
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
-
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Đăng ký thành công!", userId = user.UserId });
+            return Ok(new { message = "Dang ky thanh cong!", userId = user.UserId });
         }
 
-        // Lấy danh sách User (Để xem ai đang có trong hệ thống)
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public class UserDto
         {
-            return await _context.Users.ToListAsync();
+            public int UserId { get; set; }
+            public string Username { get; set; } = string.Empty;
+            public string Email { get; set; } = string.Empty;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
+        {
+            var users = await _context.Users
+                .Select(u => new UserDto 
+                { 
+                    UserId = u.UserId, 
+                    Username = u.Username, 
+                    Email = u.Email 
+                })
+                .ToListAsync();
+            return Ok(users);
         }
     }
 }

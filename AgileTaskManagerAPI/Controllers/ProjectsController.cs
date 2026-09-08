@@ -2,6 +2,7 @@ using AgileTaskManagerAPI.Data;
 using AgileTaskManagerAPI.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace AgileTaskManagerAPI.Controllers
 {
@@ -12,30 +13,33 @@ namespace AgileTaskManagerAPI.Controllers
     {
         private readonly AppDbContext _context;
 
-        // Bom (Inject) AppDbContext vào d? Controller có quy?n truy c?p Database
         public ProjectsController(AppDbContext context)
         {
             _context = context;
         }
 
-        // 1. L?y danh sách t?t c? Project (dành cho màn hình Dashboard)
+        private int GetCurrentUserId()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            return int.TryParse(userIdStr, out int userId) ? userId : 0;
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
         {
-            return await _context.Projects.ToListAsync();
+            int currentUserId = GetCurrentUserId();
+            return await _context.Projects.Where(p => p.OwnerId == currentUserId).ToListAsync();
         }
 
-        // 2. T?o m?t Project m?i
         [HttpPost]
         public async Task<ActionResult<Project>> CreateProject(Project project)
         {
-            // T? d?ng gán th?i gian t?o là lúc này
             project.CreatedAt = DateTime.Now;
+            project.OwnerId = GetCurrentUserId();
 
             _context.Projects.Add(project);
             await _context.SaveChangesAsync();
 
-            // Tr? v? d? li?u Project v?a t?o thành công
             return CreatedAtAction(nameof(GetProjects), new { id = project.ProjectId }, project);
         }
     }

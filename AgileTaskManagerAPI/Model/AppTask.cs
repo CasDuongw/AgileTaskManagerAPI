@@ -9,6 +9,8 @@ namespace AgileTaskManagerAPI.Model
         public int TaskId { get; set; }
         public string TaskName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public int OrderIndex { get; set; }
+        public bool IsActive { get; set; } = true;
         public int ColumnId { get; set; }
 
         [ForeignKey("ColumnId")]

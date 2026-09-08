@@ -44,15 +44,30 @@ namespace AgileTaskManager.Desktop
         }
 
 
-        private void BtnDeleteColumn_Click(object sender, RoutedEventArgs e)
+        private async void BtnDeleteColumn_Click(object sender, RoutedEventArgs e)
         {
             if (this.DataContext is KanbanColumnViewModel colVm)
             {
-                Window window = Window.GetWindow(this);
-                if (window is DashboardWindow dashboard && dashboard.DataContext is KanbanBoardViewModel boardVm)
+                try
                 {
-                    boardVm.Columns.Remove(colVm);
-                    dashboard.UpdateAddListButtonText();
+                    var response = await client.DeleteAsync($"{AppConfig.ApiBaseUrl}/Columns/{colVm.ColumnId}");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        Window window = Window.GetWindow(this);
+                        if (window is DashboardWindow dashboard && dashboard.DataContext is KanbanBoardViewModel boardVm)
+                        {
+                            boardVm.Columns.Remove(colVm);
+                            dashboard.UpdateAddListButtonText();
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Loi xoa cot tren server!", "Loi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Loi ket noi: {ex.Message}", "Loi", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -114,13 +129,28 @@ namespace AgileTaskManager.Desktop
             }
         }
 
-        private void BtnDeleteTask_Click(object sender, RoutedEventArgs e)
+        private async void BtnDeleteTask_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.DataContext is KanbanTaskViewModel taskVm)
             {
                 if (this.DataContext is KanbanColumnViewModel colVm)
                 {
-                    colVm.Tasks.Remove(taskVm);
+                    try
+                    {
+                        var response = await client.DeleteAsync($"{AppConfig.ApiBaseUrl}/Tasks/{taskVm.TaskId}");
+                        if (response.IsSuccessStatusCode)
+                        {
+                            colVm.Tasks.Remove(taskVm);
+                        }
+                        else
+                        {
+                            MessageBox.Show("Loi xoa task tren server!", "Loi", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Loi ket noi: {ex.Message}", "Loi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
                 }
             }
         }
@@ -250,13 +280,48 @@ namespace AgileTaskManager.Desktop
                     if (window is DashboardWindow dashboard && dashboard.DataContext is KanbanBoardViewModel boardVm)
                     {
                         var sourceColumn = boardVm.Columns.FirstOrDefault(c => c.Tasks.Contains(droppedTask));
-                        if (sourceColumn != null && sourceColumn != targetColumn)
+                        if (sourceColumn != null)
                         {
+                            int insertIndex = targetColumn.Tasks.Count;
+                            for (int i = 0; i < icTaskList.Items.Count; i++)
+                            {
+                                var container = icTaskList.ItemContainerGenerator.ContainerFromIndex(i) as UIElement;
+                                if (container != null)
+                                {
+                                    Point p = e.GetPosition(container);
+                                    if (p.Y < container.RenderSize.Height / 2)
+                                    {
+                                        insertIndex = i;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            int oldIndex = sourceColumn.Tasks.IndexOf(droppedTask);
+                            int newIndex = insertIndex;
+
+                            if (sourceColumn == targetColumn)
+                            {
+                                if (oldIndex < newIndex) newIndex--;
+                                if (oldIndex == newIndex) return; // No change
+                            }
+
                             sourceColumn.Tasks.Remove(droppedTask);
                             droppedTask.ColumnId = targetColumn.ColumnId;
-                            targetColumn.Tasks.Add(droppedTask);
+                            
+                            if (newIndex > targetColumn.Tasks.Count) newIndex = targetColumn.Tasks.Count;
+                            if (newIndex < 0) newIndex = 0;
 
-                            SyncCardStatusToServer(droppedTask, sourceColumn, targetColumn);
+                            targetColumn.Tasks.Insert(newIndex, droppedTask);
+
+                            if (sourceColumn != targetColumn)
+                            {
+                                SyncCardStatusAndOrderToServer(droppedTask, sourceColumn, targetColumn);
+                            }
+                            else
+                            {
+                                SyncTaskOrderToServer(targetColumn);
+                            }
                         }
                     }
                 }
@@ -277,14 +342,18 @@ namespace AgileTaskManager.Desktop
             }
         }
 
-        private async void SyncCardStatusToServer(KanbanTaskViewModel task, KanbanColumnViewModel oldCol, KanbanColumnViewModel newCol)
+        private async void SyncCardStatusAndOrderToServer(KanbanTaskViewModel task, KanbanColumnViewModel oldCol, KanbanColumnViewModel newCol)
         {
             try
             {
                 var response = await client.PatchAsJsonAsync($"{AppConfig.ApiBaseUrl}/Tasks/{task.TaskId}/column", newCol.ColumnId);
-                if (!response.IsSuccessStatusCode)
+                if (response.IsSuccessStatusCode)
                 {
-                    MessageBox.Show("Server từ chối cập nhật!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    SyncTaskOrderToServer(newCol);
+                }
+                else
+                {
+                    MessageBox.Show("Server tu choi cap nhat!", "Loi", MessageBoxButton.OK, MessageBoxImage.Error);
                     newCol.Tasks.Remove(task);
                     task.ColumnId = oldCol.ColumnId;
                     oldCol.Tasks.Add(task);
@@ -292,10 +361,23 @@ namespace AgileTaskManager.Desktop
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi mạng: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Loi mang: {ex.Message}", "Loi", MessageBoxButton.OK, MessageBoxImage.Error);
                 newCol.Tasks.Remove(task);
                 task.ColumnId = oldCol.ColumnId;
                 oldCol.Tasks.Add(task);
+            }
+        }
+
+        private async void SyncTaskOrderToServer(KanbanColumnViewModel col)
+        {
+            var reorderList = col.Tasks.Select((t, index) => new { TaskId = t.TaskId, OrderIndex = index }).ToList();
+            try
+            {
+                await client.PutAsJsonAsync($"{AppConfig.ApiBaseUrl}/Tasks/reorder", reorderList);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Loi dong bo thu tu task: {ex.Message}", "Loi", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 

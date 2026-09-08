@@ -2,6 +2,7 @@ using AgileTaskManagerAPI.Data;
 using AgileTaskManagerAPI.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace AgileTaskManagerAPI.Controllers
 {
@@ -17,31 +18,55 @@ namespace AgileTaskManagerAPI.Controllers
             _context = context;
         }
 
-        // 1. Lấy danh sách cột của dự án, sort theo OrderIndex
+        private int GetCurrentUserId()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            return int.TryParse(userIdStr, out int userId) ? userId : 0;
+        }
+
         [HttpGet("project/{projectId}")]
         public async Task<ActionResult<IEnumerable<KanbanColumn>>> GetColumnsByProject(int projectId)
         {
+            int currentUserId = GetCurrentUserId();
+            var project = await _context.Projects.FindAsync(projectId);
+            if (project == null || project.OwnerId != currentUserId) return Forbid();
+
             return await _context.KanbanColumns
-                .Where(c => c.ProjectId == projectId)
+                .Where(c => c.ProjectId == projectId && c.IsActive)
                 .OrderBy(c => c.OrderIndex)
                 .ToListAsync();
         }
 
-        // 2. Tạo cột mới
         [HttpPost]
         public async Task<ActionResult<KanbanColumn>> CreateColumn(KanbanColumn column)
         {
-            // Tự động gán OrderIndex vào cuối danh sách hiện tại của Project đó
+            int currentUserId = GetCurrentUserId();
+            var project = await _context.Projects.FindAsync(column.ProjectId);
+            if (project == null || project.OwnerId != currentUserId) return Forbid();
+
             var maxOrder = await _context.KanbanColumns
                 .Where(c => c.ProjectId == column.ProjectId)
                 .MaxAsync(c => (int?)c.OrderIndex) ?? -1;
             
             column.OrderIndex = maxOrder + 1;
+            column.IsActive = true;
 
             _context.KanbanColumns.Add(column);
             await _context.SaveChangesAsync();
 
             return Ok(column);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteColumn(int id)
+        {
+            var col = await _context.KanbanColumns.Include(c => c.Project).FirstOrDefaultAsync(c => c.ColumnId == id);
+            if (col == null) return NotFound();
+            if (col.Project == null || col.Project.OwnerId != GetCurrentUserId()) return Forbid();
+
+            col.IsActive = false;
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         public class ReorderRequest
@@ -50,12 +75,11 @@ namespace AgileTaskManagerAPI.Controllers
             public int OrderIndex { get; set; }
         }
 
-        // 3. Cập nhật thứ tự hàng loạt khi kéo thả
         [HttpPut("reorder")]
         public async Task<IActionResult> ReorderColumns([FromBody] List<ReorderRequest> reorders)
         {
             if (reorders == null || !reorders.Any())
-                return BadRequest("Không có dữ liệu");
+                return BadRequest("Khong co du lieu");
 
             foreach (var req in reorders)
             {
@@ -67,7 +91,7 @@ namespace AgileTaskManagerAPI.Controllers
             }
             
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Cập nhật thứ tự thành công" });
+            return Ok(new { message = "Cap nhat thanh cong" });
         }
     }
 }

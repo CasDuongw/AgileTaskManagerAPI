@@ -35,6 +35,13 @@ namespace AgileTaskManager.Desktop.ViewModels
             get => _columnId;
             set { _columnId = value; OnPropertyChanged(); }
         }
+
+        private int _orderIndex;
+        public int OrderIndex
+        {
+            get => _orderIndex;
+            set { _orderIndex = value; OnPropertyChanged(); }
+        }
     }
 
     public class KanbanColumnViewModel : ViewModelBase
