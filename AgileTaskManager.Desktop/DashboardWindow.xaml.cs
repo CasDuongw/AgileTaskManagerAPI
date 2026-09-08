@@ -182,6 +182,7 @@ namespace AgileTaskManager.Desktop
                 txtUserName.Clear();
                 txtEmail.Clear();
                 txtPassword.Clear();
+                _ = LoadUsersAsync(); // Reload combobox
             }
             else MessageBox.Show("Lỗi: " + await response.Content.ReadAsStringAsync(), "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
         }
