@@ -1,8 +1,13 @@
+using AgileTaskManager.Desktop.ViewModels;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System;
 
 namespace AgileTaskManager.Desktop
 {
@@ -11,6 +16,7 @@ namespace AgileTaskManager.Desktop
         // Lấy URL cấu hình từ AppConfig
         // Đã xóa biến local ApiBaseUrl hardcode
         private static readonly HttpClient client = AppConfig.Client;
+        private KanbanBoardViewModel _viewModel;
 
         public int SelectedProjectId =>
             cboProjects.SelectedValue is int id ? id : 0;
@@ -18,6 +24,8 @@ namespace AgileTaskManager.Desktop
         public DashboardWindow()
         {
             InitializeComponent();
+            _viewModel = new KanbanBoardViewModel();
+            this.DataContext = _viewModel;
             this.Loaded += DashboardWindow_Loaded;
         }
 
@@ -25,6 +33,12 @@ namespace AgileTaskManager.Desktop
         {
             public int projectId { get; set; }
             public string projectName { get; set; }
+        }
+
+        public class UserDto
+        {
+            public int userId { get; set; }
+            public string username { get; set; }
         }
 
         // [MỚI] DTO cho Cột
@@ -39,9 +53,9 @@ namespace AgileTaskManager.Desktop
         private async void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
         {
             await LoadProjectsAsync();
+            await LoadUsersAsync();
         }
 
-        // [MỚI] Hàm gọi API lấy danh sách tất cả Project thả vào ComboBox
         private async Task LoadProjectsAsync()
         {
             try
@@ -51,11 +65,31 @@ namespace AgileTaskManager.Desktop
                 {
                     cboProjects.ItemsSource = projects;
                     cboProjects.SelectedIndex = 0; // Tự động chọn dự án đầu tiên trong danh sách
+
+                    cboProject.ItemsSource = projects; // Cho form Create Task
+                    if (cboProject.Items.Count > 0) cboProject.SelectedIndex = 0;
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Lỗi tải danh sách dự án: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task LoadUsersAsync()
+        {
+            try
+            {
+                var users = await client.GetFromJsonAsync<List<UserDto>>($"{AppConfig.ApiBaseUrl}/Users");
+                if (users != null && users.Count > 0)
+                {
+                    cboOwner.ItemsSource = users;
+                    if (cboOwner.Items.Count > 0) cboOwner.SelectedIndex = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi tải danh sách user: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -77,7 +111,7 @@ namespace AgileTaskManager.Desktop
 
         private async Task LoadProjectBoardAsync(int projectId)
         {
-            ClearKanbanColumns();
+            _viewModel.Columns.Clear();
 
             try
             {
@@ -89,16 +123,22 @@ namespace AgileTaskManager.Desktop
                 var tasks = await client.GetFromJsonAsync<List<KanbanColumn.TaskResponse>>($"{AppConfig.ApiBaseUrl}/Tasks/project/{projectId}");
                 var taskList = tasks ?? new List<KanbanColumn.TaskResponse>();
 
-                // 3. Vẽ cột và nạp task
+                // 3. Nạp vào ViewModel
                 foreach (var col in columns.OrderBy(c => c.orderIndex))
                 {
-                    // Sửa constructor để truyền thêm ColumnId
-                    var columnUi = new KanbanColumn(col.columnName, projectId, col.columnId);
-                    spBoard.Children.Insert(spBoard.Children.Count - 1, columnUi);
+                    var colVm = new KanbanColumnViewModel
+                    {
+                        ColumnId = col.columnId,
+                        ColumnName = col.columnName,
+                        ProjectId = projectId
+                    };
 
                     var colTasks = taskList.Where(t => t.columnId == col.columnId);
                     foreach (var task in colTasks)
-                        columnUi.AddTaskCard(task.taskId, task.taskName);
+                    {
+                        colVm.Tasks.Add(new KanbanTaskViewModel { TaskId = task.taskId, TaskName = task.taskName, ColumnId = col.columnId });
+                    }
+                    _viewModel.Columns.Add(colVm);
                 }
 
                 UpdateAddListButtonText();
@@ -111,11 +151,7 @@ namespace AgileTaskManager.Desktop
 
         private void ClearKanbanColumns()
         {
-            for (int i = spBoard.Children.Count - 2; i >= 0; i--)
-            {
-                if (spBoard.Children[i] is KanbanColumn)
-                    spBoard.Children.RemoveAt(i);
-            }
+            _viewModel.Columns.Clear();
             UpdateAddListButtonText();
         }
 
@@ -152,32 +188,53 @@ namespace AgileTaskManager.Desktop
 
         private async void BtnCreateProject_Click(object sender, RoutedEventArgs e)
         {
-            if (!int.TryParse(txtOwnerId.Text, out int ownerId)) return;
+            if (cboOwner.SelectedValue == null)
+            {
+                MessageBox.Show("Vui lòng chọn Owner.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            int ownerId = (int)cboOwner.SelectedValue;
             var project = new { projectName = txtProjectName.Text, ownerId = ownerId };
             var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/Projects", project);
             if (response.IsSuccessStatusCode)
             {
                 MessageBox.Show("Tạo Dự án thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                 txtProjectName.Clear();
-                txtOwnerId.Clear();
                 _ = LoadProjectsAsync(); // Reload combobox
             }
-            else MessageBox.Show("Lỗi: Kiểm tra lại ID User.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            else MessageBox.Show("Lỗi: Không thể tạo dự án.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
         private async void BtnCreateTask_Click(object sender, RoutedEventArgs e)
         {
-            if (!int.TryParse(txtProjectId.Text, out int projectId)) return;
+            if (cboProject.SelectedValue == null)
+            {
+                MessageBox.Show("Vui lòng chọn Dự án.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            int projectId = (int)cboProject.SelectedValue;
             var task = new { taskName = txtTaskName.Text, projectId = projectId };
             var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/Tasks", task);
             if (response.IsSuccessStatusCode)
             {
                 MessageBox.Show("Tạo Task thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                 txtTaskName.Clear();
-                txtProjectId.Clear();
-                if (SelectedProjectId == projectId) _ = LoadProjectBoardAsync(projectId); // Reload board
+                
+                // Nếu Task mới thuộc Project đang mở, thêm trực tiếp vào ViewModel thay vì reload toàn bộ bảng
+                if (SelectedProjectId == projectId) 
+                {
+                    var createdTask = await response.Content.ReadFromJsonAsync<KanbanColumn.TaskResponse>();
+                    if (createdTask != null)
+                    {
+                        var column = _viewModel.Columns.FirstOrDefault(c => c.ColumnId == createdTask.columnId);
+                        if (column != null)
+                        {
+                            column.Tasks.Add(new KanbanTaskViewModel { TaskId = createdTask.taskId, TaskName = createdTask.taskName, ColumnId = createdTask.columnId });
+                        }
+                    }
+                }
             }
-            else MessageBox.Show("Lỗi: Kiểm tra lại ID Dự án.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            else MessageBox.Show("Lỗi: Không thể tạo Task.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
         // 1. Ẩn nút, hiện ô nhập Title
@@ -228,10 +285,13 @@ namespace AgileTaskManager.Desktop
                     var createdCol = await response.Content.ReadFromJsonAsync<ColumnResponse>();
                     if (createdCol != null)
                     {
-                        // Đúc Cột mới và truyền thêm ID thực của Cột từ Database
-                        KanbanColumn newColumn = new KanbanColumn(createdCol.columnName, selectedProjectId, createdCol.columnId);
-
-                        spBoard.Children.Insert(spBoard.Children.Count - 1, newColumn);
+                        var colVm = new KanbanColumnViewModel
+                        {
+                            ColumnId = createdCol.columnId,
+                            ColumnName = createdCol.columnName,
+                            ProjectId = selectedProjectId
+                        };
+                        _viewModel.Columns.Add(colVm);
 
                         txtNewListName.Text = "";
                         panelAddListInput.Visibility = Visibility.Collapsed;
@@ -254,7 +314,7 @@ namespace AgileTaskManager.Desktop
 
         public void UpdateAddListButtonText()
         {
-            if (spBoard.Children.Count > 1)
+            if (_viewModel != null && _viewModel.Columns.Count > 0)
                 lblAddListText.Text = "Thêm danh sách khác";
             else
                 lblAddListText.Text = "Thêm danh sách";

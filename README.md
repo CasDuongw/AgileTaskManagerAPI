@@ -3,7 +3,7 @@
 Ứng dụng quản lý công việc theo mô hình Kanban, gồm 2 phần tách biệt:
 
 - **AgileTaskManagerAPI** — Backend REST API viết bằng **ASP.NET Core 8** + **Entity Framework Core** (SQL Server). Đã tích hợp bảo mật toàn diện với xác thực JWT và mã hóa BCrypt.
-- **AgileTaskManager.Desktop** — Ứng dụng desktop **WPF (.NET 8)** gọi trực tiếp API. Cung cấp giao diện bảng Kanban mượt mà với chức năng Drag & Drop tuỳ chỉnh (Custom Animation Canvas).
+- **AgileTaskManager.Desktop** — Ứng dụng desktop **WPF (.NET 8)** gọi trực tiếp API. Cung cấp giao diện bảng Kanban mượt mà với kiến trúc **MVVM (Model-View-ViewModel)** chuẩn mực, kết hợp `ObservableCollection` để cập nhật dữ liệu Real-time.
 
 ## ✨ Tính năng nổi bật
 
@@ -16,11 +16,12 @@
   - Tạo user mới và tạo dự án gắn với `OwnerId`.
 - **Bảng Kanban tuỳ chỉnh (Desktop App)**:
   - Hiển thị công việc theo từng cột trạng thái.
-  - Hỗ trợ thao tác kéo-thả (Drag & Drop) mượt mà bằng kỹ thuật Overlay Canvas tự code (nghiêng thẻ, đổ bóng, dịch chuyển mượt mà thẻ bị lướt qua).
+  - Quản lý trạng thái bằng kiến trúc **MVVM** (`ObservableCollection` và `INotifyPropertyChanged`).
+  - Hỗ trợ thao tác kéo-thả (Drag & Drop) liên kết trực tiếp với dữ liệu ViewModel, tự động gọi API cập nhật thay đổi.
 - **Giao diện Desktop**:
   - `LoginWindow` — màn hình đăng nhập nhận Token JWT.
   - `DashboardWindow` — bảng Kanban chính.
-  - `KanbanColumn` — UserControl đại diện cho một cột Kanban và xử lý logic Animation.
+  - `KanbanColumn` — UserControl đại diện cho một cột Kanban, được tự động render thông qua `ItemsControl`.
   - Tự động đính kèm `Bearer Token` vào mọi request qua `AppConfig.Client`.
 - **Trang Admin Web (`wwwroot/admin.html`)**:
   - Công cụ web tối giản giúp Dev tạo nhanh Dữ liệu (User, Project, Task).
@@ -31,7 +32,7 @@
 | Thành phần | Công nghệ |
 |---|---|
 | Backend | ASP.NET Core 8 Web API, EF Core 8 (SQL Server), BCrypt.Net-Next, JWT Bearer |
-| Desktop | WPF (.NET 8), Custom Canvas Animation, HttpClient |
+| Desktop | WPF (.NET 8), MVVM Pattern, HttpClient |
 | API Docs | Swagger/Swashbuckle |
 
 ## 📁 Cấu trúc thư mục
@@ -41,8 +42,9 @@ AgileTaskManagerAPI/
 ├── AgileTaskManager.Desktop/       # Ứng dụng WPF
 │   ├── LoginWindow.xaml(.cs)       # Màn hình đăng nhập JWT
 │   ├── MainWindow.xaml(.cs)        # Màn hình dự phòng
-│   ├── DashboardWindow.xaml(.cs)   # Bảng Kanban (Chứa DragOverlayCanvas)
-│   ├── KanbanColumn.xaml(.cs)      # Component xử lý Drag & Drop
+│   ├── DashboardWindow.xaml(.cs)   # Bảng Kanban với ItemsControl
+│   ├── KanbanColumn.xaml(.cs)      # Component xử lý hiển thị Cột và Thẻ
+│   ├── ViewModels/                 # Các Model dùng cho MVVM (KanbanBoard, KanbanColumn, KanbanTask)
 │   └── AppConfig.cs                # Nơi chứa HttpClient dùng chung & Token
 │
 ├── AgileTaskManagerAPI/            # Backend Web API
@@ -129,7 +131,7 @@ App sẽ mở lên màn hình Login, nhập tài khoản bạn vừa tạo bên 
 - [x] Mã hoá mật khẩu (BCrypt)
 - [x] Xác thực & phân quyền (JWT Authentication)
 - [x] Thắt chặt CORS Policy cho production
-- [x] Kéo-thả (drag & drop) custom mượt mà trên Desktop
+- [x] Tái cấu trúc (Refactor) Frontend Desktop sang mô hình MVVM
 - [x] Công cụ Web Dashboard Data Management
 - [ ] Trang Team Directory / Files trên Desktop (Sắp tới)
 

@@ -41,7 +41,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Name="lblTitle" Text="List Title" FontSize="15" FontWeight="Bold" Foreground="#0F172A" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                <TextBlock x:Name="lblTitle" Text="{Binding ColumnName}" FontSize="15" FontWeight="Bold" Foreground="#0F172A" TextWrapping="Wrap" VerticalAlignment="Center"/>
                 <Button x:Name="btnDeleteColumn" Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Click="BtnDeleteColumn_Click" Grid.Column="1" Foreground="#64748B" Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Visibility="Hidden" Padding="5,0,0,0"/>
             </Grid>
 
@@ -49,7 +49,46 @@
             <!-- Thuộc tính VerticalScrollBarVisibility="Auto" sẽ tự động hiện thanh cuộn khi task tràn viền -->
             <!-- TẦNG 1 [Đã sửa]: Chuyển AllowDrop lên ScrollViewer và thêm Background trong suốt -->
             <ScrollViewer Grid.Row="1" Background="Transparent" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,5,0" Margin="0,0,0,5">
-                <StackPanel x:Name="spTaskList"/>
+                <ItemsControl x:Name="icTaskList" ItemsSource="{Binding Tasks}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="White" CornerRadius="8" Padding="12" Margin="0,0,0,8" BorderThickness="1" BorderBrush="#E2E8F0" AllowDrop="True" Tag="{Binding TaskId}"
+                                    PreviewMouseLeftButtonDown="Task_PreviewMouseLeftButtonDown"
+                                    PreviewMouseMove="Task_PreviewMouseMove">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.1" />
+                                </Border.Effect>
+                                <Border.RenderTransform>
+                                    <TransformGroup>
+                                        <TranslateTransform />
+                                        <RotateTransform Angle="0" CenterX="100" CenterY="25" />
+                                    </TransformGroup>
+                                </Border.RenderTransform>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox Foreground="#111827" FontWeight="SemiBold" VerticalContentAlignment="Center" Grid.Column="0">
+                                        <TextBlock Text="{Binding TaskName}" TextWrapping="Wrap" />
+                                    </CheckBox>
+                                    <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#64748B" Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" VerticalAlignment="Top" Padding="5,0,0,0" Grid.Column="1" Click="BtnDeleteTask_Click">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility" Value="Hidden" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </ScrollViewer>
 
             <!-- TẦNG 2: Khu vực Thêm Thẻ -->
