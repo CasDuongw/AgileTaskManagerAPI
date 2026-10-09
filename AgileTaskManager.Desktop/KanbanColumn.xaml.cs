@@ -41,6 +41,7 @@ namespace AgileTaskManager.Desktop
             public string taskName { get; set; }
             public int columnId { get; set; }
             public int projectId { get; set; }
+            public int orderIndex { get; set; }
         }
 
 
@@ -112,7 +113,7 @@ namespace AgileTaskManager.Desktop
                 {
                     var createdTask = await response.Content.ReadFromJsonAsync<TaskResponse>();
                     
-                    colVm.Tasks.Add(new KanbanTaskViewModel { TaskId = createdTask.taskId, TaskName = createdTask.taskName, ColumnId = createdTask.columnId });
+                    colVm.Tasks.Add(new KanbanTaskViewModel { TaskId = createdTask.taskId, TaskName = createdTask.taskName, ColumnId = createdTask.columnId, OrderIndex = createdTask.orderIndex });
 
                     txtNewTaskName.Text = "";
                     txtNewTaskName.Focus();
@@ -316,7 +317,7 @@ namespace AgileTaskManager.Desktop
 
                             if (sourceColumn != targetColumn)
                             {
-                                SyncCardStatusAndOrderToServer(droppedTask, sourceColumn, targetColumn);
+                                SyncCardStatusAndOrderToServer(droppedTask, sourceColumn, targetColumn, oldIndex);
                             }
                             else
                             {
@@ -342,7 +343,7 @@ namespace AgileTaskManager.Desktop
             }
         }
 
-        private async void SyncCardStatusAndOrderToServer(KanbanTaskViewModel task, KanbanColumnViewModel oldCol, KanbanColumnViewModel newCol)
+        private async void SyncCardStatusAndOrderToServer(KanbanTaskViewModel task, KanbanColumnViewModel oldCol, KanbanColumnViewModel newCol, int oldIndex)
         {
             try
             {
@@ -356,7 +357,10 @@ namespace AgileTaskManager.Desktop
                     MessageBox.Show("Server tu choi cap nhat!", "Loi", MessageBoxButton.OK, MessageBoxImage.Error);
                     newCol.Tasks.Remove(task);
                     task.ColumnId = oldCol.ColumnId;
-                    oldCol.Tasks.Add(task);
+                    if (oldIndex >= 0 && oldIndex <= oldCol.Tasks.Count)
+                        oldCol.Tasks.Insert(oldIndex, task);
+                    else
+                        oldCol.Tasks.Add(task);
                 }
             }
             catch (Exception ex)
@@ -364,7 +368,10 @@ namespace AgileTaskManager.Desktop
                 MessageBox.Show($"Loi mang: {ex.Message}", "Loi", MessageBoxButton.OK, MessageBoxImage.Error);
                 newCol.Tasks.Remove(task);
                 task.ColumnId = oldCol.ColumnId;
-                oldCol.Tasks.Add(task);
+                if (oldIndex >= 0 && oldIndex <= oldCol.Tasks.Count)
+                    oldCol.Tasks.Insert(oldIndex, task);
+                else
+                    oldCol.Tasks.Add(task);
             }
         }
 

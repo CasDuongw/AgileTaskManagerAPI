@@ -133,10 +133,10 @@ namespace AgileTaskManager.Desktop
                         ProjectId = projectId
                     };
 
-                    var colTasks = taskList.Where(t => t.columnId == col.columnId);
+                    var colTasks = taskList.Where(t => t.columnId == col.columnId).OrderBy(t => t.orderIndex);
                     foreach (var task in colTasks)
                     {
-                        colVm.Tasks.Add(new KanbanTaskViewModel { TaskId = task.taskId, TaskName = task.taskName, ColumnId = col.columnId });
+                        colVm.Tasks.Add(new KanbanTaskViewModel { TaskId = task.taskId, TaskName = task.taskName, ColumnId = col.columnId, OrderIndex = task.orderIndex });
                     }
                     _viewModel.Columns.Add(colVm);
                 }
@@ -230,7 +230,7 @@ namespace AgileTaskManager.Desktop
                         var column = _viewModel.Columns.FirstOrDefault(c => c.ColumnId == createdTask.columnId);
                         if (column != null)
                         {
-                            column.Tasks.Add(new KanbanTaskViewModel { TaskId = createdTask.taskId, TaskName = createdTask.taskName, ColumnId = createdTask.columnId });
+                            column.Tasks.Add(new KanbanTaskViewModel { TaskId = createdTask.taskId, TaskName = createdTask.taskName, ColumnId = createdTask.columnId, OrderIndex = createdTask.orderIndex });
                         }
                     }
                 }
