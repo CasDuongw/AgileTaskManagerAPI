@@ -15,16 +15,17 @@ namespace AgileTaskManager.Desktop
     {
         // Lấy URL cấu hình từ AppConfig
         // Đã xóa biến local ApiBaseUrl hardcode
-        private static readonly HttpClient client = AppConfig.Client;
+        private readonly Services.ApiService _apiService;
         private KanbanBoardViewModel _viewModel;
 
         public int SelectedProjectId =>
             cboProjects.SelectedValue is int id ? id : 0;
 
-        public DashboardWindow()
+        public DashboardWindow(Services.ApiService apiService, KanbanBoardViewModel viewModel)
         {
             InitializeComponent();
-            _viewModel = new KanbanBoardViewModel();
+            _apiService = apiService;
+            _viewModel = viewModel;
             this.DataContext = _viewModel;
             this.Loaded += DashboardWindow_Loaded;
         }
@@ -60,7 +61,7 @@ namespace AgileTaskManager.Desktop
         {
             try
             {
-                var projects = await client.GetFromJsonAsync<List<ProjectDto>>($"{AppConfig.ApiBaseUrl}/Projects");
+                var projects = await _apiService.GetProjectsAsync<ProjectDto>();
                 if (projects != null && projects.Count > 0)
                 {
                     cboProjects.ItemsSource = projects;
@@ -80,7 +81,7 @@ namespace AgileTaskManager.Desktop
         {
             try
             {
-                var users = await client.GetFromJsonAsync<List<UserDto>>($"{AppConfig.ApiBaseUrl}/Users");
+                var users = await _apiService.GetUsersAsync<UserDto>();
                 if (users != null && users.Count > 0)
                 {
                     cboOwner.ItemsSource = users;
@@ -116,11 +117,11 @@ namespace AgileTaskManager.Desktop
             try
             {
                 // 1. Lấy danh sách cột
-                var columns = await client.GetFromJsonAsync<List<ColumnResponse>>($"{AppConfig.ApiBaseUrl}/Columns/project/{projectId}");
+                var columns = await _apiService.GetColumnsAsync<ColumnResponse>(projectId);
                 if (columns == null) return;
 
                 // 2. Lấy danh sách task
-                var tasks = await client.GetFromJsonAsync<List<KanbanColumn.TaskResponse>>($"{AppConfig.ApiBaseUrl}/Tasks/project/{projectId}");
+                var tasks = await _apiService.GetTasksAsync<KanbanColumn.TaskResponse>(projectId);
                 var taskList = tasks ?? new List<KanbanColumn.TaskResponse>();
 
                 // 3. Nạp vào ViewModel
@@ -175,7 +176,7 @@ namespace AgileTaskManager.Desktop
         {
             if (string.IsNullOrWhiteSpace(txtUserName.Text)) return;
             var user = new { username = txtUserName.Text, email = txtEmail.Text, passwordHash = txtPassword.Password };
-            var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/Users/register", user);
+            var response = await _apiService.RegisterUserAsync(user);
             if (response.IsSuccessStatusCode)
             {
                 MessageBox.Show("Tạo User thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -196,7 +197,7 @@ namespace AgileTaskManager.Desktop
             }
             int ownerId = (int)cboOwner.SelectedValue;
             var project = new { projectName = txtProjectName.Text, ownerId = ownerId };
-            var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/Projects", project);
+            var response = await _apiService.CreateProjectAsync(project);
             if (response.IsSuccessStatusCode)
             {
                 MessageBox.Show("Tạo Dự án thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -215,7 +216,7 @@ namespace AgileTaskManager.Desktop
             }
             int projectId = (int)cboProject.SelectedValue;
             var task = new { taskName = txtTaskName.Text, projectId = projectId };
-            var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/Tasks", task);
+            var response = await _apiService.CreateTaskAsync(task);
             if (response.IsSuccessStatusCode)
             {
                 MessageBox.Show("Tạo Task thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -279,7 +280,7 @@ namespace AgileTaskManager.Desktop
             {
                 // [MỚI] Gọi API để lưu cột xuống Database trước
                 var newCol = new { columnName = title, projectId = selectedProjectId };
-                var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/Columns", newCol);
+                var response = await _apiService.CreateColumnAsync(newCol);
                 
                 if (response.IsSuccessStatusCode)
                 {
@@ -350,3 +351,4 @@ namespace AgileTaskManager.Desktop
 
     }
 }
+

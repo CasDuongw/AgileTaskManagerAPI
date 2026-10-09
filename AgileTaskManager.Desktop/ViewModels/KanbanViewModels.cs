@@ -1,6 +1,9 @@
+using AgileTaskManager.Desktop.Commands;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Input;
+using System;
 
 namespace AgileTaskManager.Desktop.ViewModels
 {
@@ -42,6 +45,8 @@ namespace AgileTaskManager.Desktop.ViewModels
             get => _orderIndex;
             set { _orderIndex = value; OnPropertyChanged(); }
         }
+
+        public ICommand DeleteTaskCommand { get; set; }
     }
 
     public class KanbanColumnViewModel : ViewModelBase
@@ -68,6 +73,8 @@ namespace AgileTaskManager.Desktop.ViewModels
         }
 
         public ObservableCollection<KanbanTaskViewModel> Tasks { get; } = new ObservableCollection<KanbanTaskViewModel>();
+
+        public ICommand DeleteColumnCommand { get; set; }
     }
 
     public class KanbanBoardViewModel : ViewModelBase

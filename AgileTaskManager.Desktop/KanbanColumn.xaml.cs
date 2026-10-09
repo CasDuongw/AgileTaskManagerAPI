@@ -16,9 +16,8 @@ namespace AgileTaskManager.Desktop
 {
     public partial class KanbanColumn : UserControl
     {
-        // Lấy URL cấu hình từ AppConfig
-        // Đã xóa biến local ApiBaseUrl hardcode
-        private static readonly HttpClient client = AppConfig.Client;
+        // Sử dụng ApiService để gọi API thay vì dùng HttpClient trực tiếp
+        private static readonly Services.ApiService apiService = new Services.ApiService();
 
         public KanbanColumn()
         {
@@ -51,7 +50,7 @@ namespace AgileTaskManager.Desktop
             {
                 try
                 {
-                    var response = await client.DeleteAsync($"{AppConfig.ApiBaseUrl}/Columns/{colVm.ColumnId}");
+                    var response = await apiService.DeleteColumnAsync(colVm.ColumnId);
                     if (response.IsSuccessStatusCode)
                     {
                         Window window = Window.GetWindow(this);
@@ -107,7 +106,7 @@ namespace AgileTaskManager.Desktop
 
             try
             {
-                var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/Tasks", newTask);
+                var response = await apiService.CreateTaskAsync(newTask);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -138,7 +137,7 @@ namespace AgileTaskManager.Desktop
                 {
                     try
                     {
-                        var response = await client.DeleteAsync($"{AppConfig.ApiBaseUrl}/Tasks/{taskVm.TaskId}");
+                        var response = await apiService.DeleteTaskAsync(taskVm.TaskId);
                         if (response.IsSuccessStatusCode)
                         {
                             colVm.Tasks.Remove(taskVm);
@@ -335,7 +334,7 @@ namespace AgileTaskManager.Desktop
             var reorderList = boardVm.Columns.Select((col, index) => new { ColumnId = col.ColumnId, OrderIndex = index }).ToList();
             try
             {
-                await client.PutAsJsonAsync($"{AppConfig.ApiBaseUrl}/Columns/reorder", reorderList);
+                await apiService.ReorderColumnsAsync(reorderList);
             }
             catch (Exception ex)
             {
@@ -347,7 +346,7 @@ namespace AgileTaskManager.Desktop
         {
             try
             {
-                var response = await client.PatchAsJsonAsync($"{AppConfig.ApiBaseUrl}/Tasks/{task.TaskId}/column", newCol.ColumnId);
+                var response = await apiService.UpdateTaskColumnAsync(task.TaskId, newCol.ColumnId);
                 if (response.IsSuccessStatusCode)
                 {
                     SyncTaskOrderToServer(newCol);
@@ -380,7 +379,7 @@ namespace AgileTaskManager.Desktop
             var reorderList = col.Tasks.Select((t, index) => new { TaskId = t.TaskId, OrderIndex = index }).ToList();
             try
             {
-                await client.PutAsJsonAsync($"{AppConfig.ApiBaseUrl}/Tasks/reorder", reorderList);
+                await apiService.ReorderTasksAsync(reorderList);
             }
             catch (Exception ex)
             {

@@ -28,6 +28,15 @@ namespace AgileTaskManagerAPI.Controllers
         public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
         {
             int currentUserId = GetCurrentUserId();
+            var username = User.FindFirst("username")?.Value;
+
+            if (username != null && username.ToLower() == "admin")
+            {
+                // Admin thấy toàn bộ dự án
+                return await _context.Projects.ToListAsync();
+            }
+
+            // User bình thường chỉ thấy dự án của mình
             return await _context.Projects.Where(p => p.OwnerId == currentUserId).ToListAsync();
         }
 

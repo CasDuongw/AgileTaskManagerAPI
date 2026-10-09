@@ -2,6 +2,7 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AgileTaskManager.Desktop
 {
@@ -49,7 +50,7 @@ namespace AgileTaskManager.Desktop
                         AppConfig.SetToken(result.token);
 
                         // Mở màn hình chính
-                        DashboardWindow dashboard = new DashboardWindow();
+                        DashboardWindow dashboard = App.ServiceProvider.GetRequiredService<DashboardWindow>();
                         dashboard.Show();
 
                         // Đóng màn hình đăng nhập
@@ -74,3 +75,4 @@ namespace AgileTaskManager.Desktop
         }
     }
 }
+
