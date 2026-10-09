@@ -11,6 +11,9 @@ namespace AgileTaskManager.Desktop
         // HttpClient dùng chung cho toàn bộ ứng dụng WPF
         public static readonly HttpClient Client = new HttpClient();
 
+        // Lưu trữ Username của người dùng đang đăng nhập
+        public static string CurrentUsername { get; set; } = string.Empty;
+
         // Hàm tiện ích để nhúng Token JWT vào Header
         public static void SetToken(string token)
         {

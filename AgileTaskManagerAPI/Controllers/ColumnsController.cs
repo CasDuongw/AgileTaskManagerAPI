@@ -29,7 +29,8 @@ namespace AgileTaskManagerAPI.Controllers
         {
             int currentUserId = GetCurrentUserId();
             var project = await _context.Projects.FindAsync(projectId);
-            if (project == null || project.OwnerId != currentUserId) return Forbid();
+            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
+            if (project == null || (!isAdmin && project.OwnerId != currentUserId)) return Forbid();
 
             return await _context.KanbanColumns
                 .Where(c => c.ProjectId == projectId && c.IsActive)
@@ -42,7 +43,8 @@ namespace AgileTaskManagerAPI.Controllers
         {
             int currentUserId = GetCurrentUserId();
             var project = await _context.Projects.FindAsync(column.ProjectId);
-            if (project == null || project.OwnerId != currentUserId) return Forbid();
+            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
+            if (project == null || (!isAdmin && project.OwnerId != currentUserId)) return Forbid();
 
             var maxOrder = await _context.KanbanColumns
                 .Where(c => c.ProjectId == column.ProjectId)
@@ -62,7 +64,8 @@ namespace AgileTaskManagerAPI.Controllers
         {
             var col = await _context.KanbanColumns.Include(c => c.Project).FirstOrDefaultAsync(c => c.ColumnId == id);
             if (col == null) return NotFound();
-            if (col.Project == null || col.Project.OwnerId != GetCurrentUserId()) return Forbid();
+            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
+            if (col.Project == null || (!isAdmin && col.Project.OwnerId != GetCurrentUserId())) return Forbid();
 
             col.IsActive = false;
             await _context.SaveChangesAsync();

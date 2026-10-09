@@ -48,6 +48,7 @@ namespace AgileTaskManager.Desktop
                     {
                         // Lưu Token vào HttpClient tĩnh
                         AppConfig.SetToken(result.token);
+                        AppConfig.CurrentUsername = result.username;
 
                         // Mở màn hình chính
                         DashboardWindow dashboard = App.ServiceProvider.GetRequiredService<DashboardWindow>();

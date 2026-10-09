@@ -53,6 +53,12 @@ namespace AgileTaskManager.Desktop
 
         private async void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            if (AppConfig.CurrentUsername?.ToLower() != "admin")
+            {
+                panelCreateUser.Visibility = Visibility.Collapsed;
+                System.Windows.Controls.Grid.SetColumn(panelCreateProject, 0);
+                System.Windows.Controls.Grid.SetColumn(panelCreateTask, 1);
+            }
             await LoadProjectsAsync();
             await LoadUsersAsync();
         }
@@ -84,6 +90,10 @@ namespace AgileTaskManager.Desktop
                 var users = await _apiService.GetUsersAsync<UserDto>();
                 if (users != null && users.Count > 0)
                 {
+                    if (AppConfig.CurrentUsername?.ToLower() != "admin")
+                    {
+                        users = users.Where(u => u.username.ToLower() == AppConfig.CurrentUsername?.ToLower()).ToList();
+                    }
                     cboOwner.ItemsSource = users;
                     if (cboOwner.Items.Count > 0) cboOwner.SelectedIndex = 0;
                 }
@@ -351,4 +361,6 @@ namespace AgileTaskManager.Desktop
 
     }
 }
+
+
 

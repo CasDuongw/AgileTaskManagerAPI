@@ -258,7 +258,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Form Create User -->
-                    <Border Grid.Column="0" Style="{StaticResource FormCard}">
+                    <Border x:Name="panelCreateUser" Grid.Column="0" Style="{StaticResource FormCard}">
                         <Grid Margin="24">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
@@ -288,7 +288,7 @@
                     </Border>
 
                     <!-- Form Create Project -->
-                    <Border Grid.Column="1" Style="{StaticResource FormCard}">
+                    <Border x:Name="panelCreateProject" Grid.Column="1" Style="{StaticResource FormCard}">
                         <Grid Margin="24">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
@@ -315,7 +315,7 @@
                     </Border>
 
                     <!-- Form Create Task -->
-                    <Border Grid.Column="2" Style="{StaticResource FormCard}">
+                    <Border x:Name="panelCreateTask" Grid.Column="2" Style="{StaticResource FormCard}">
                         <Grid Margin="24">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
