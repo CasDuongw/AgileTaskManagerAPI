@@ -12,5 +12,7 @@ namespace AgileTaskManagerAPI.Data
         public DbSet<Project> Projects { get; set; }
         public DbSet<AppTask> Tasks { get; set; }
         public DbSet<KanbanColumn> KanbanColumns { get; set; }
+        public DbSet<Subtask> Subtasks { get; set; }
     }
 }
+

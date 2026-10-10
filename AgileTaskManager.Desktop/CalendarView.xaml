@@ -5,15 +5,21 @@
              Background="#F3F4F6">
     <UserControl.Resources>
         <DataTemplate x:Key="CalendarTaskTemplate">
-            <Border Background="#EFF6FF" BorderBrush="#3B82F6" BorderThickness="1" CornerRadius="4" Padding="5" Margin="2" dd:DragDrop.IsDragSource="True" dd:DragDrop.DragDropContext="CalendarTask">
+            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="2,4" 
+                    dd:DragDrop.IsDragSource="True" dd:DragDrop.DragDropContext="CalendarTask">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" Opacity="0.05" BlurRadius="5" ShadowDepth="1"/>
+                </Border.Effect>
                 <StackPanel>
-                    <TextBlock Text="{Binding TaskName}" TextWrapping="Wrap" FontSize="12" FontWeight="Bold" Foreground="#1E3A8A" Margin="0,0,0,4"/>
-                    <ComboBox ItemsSource="{Binding DataContext.Columns, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                              DisplayMemberPath="ColumnName" 
-                              SelectedValuePath="ColumnId" 
-                              SelectedValue="{Binding ColumnId, Mode=TwoWay}"
-                              SelectionChanged="ComboBox_SelectionChanged"
-                              FontSize="10" Padding="2"/>
+                    <TextBlock Text="{Binding ColumnName}" TextWrapping="Wrap" FontSize="14" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,8"/>
+                    
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <TextBlock Text="Trạng thái: " FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                        <ComboBox ItemsSource="{Binding DataContext.Statuses, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                  SelectedValue="{Binding Status, Mode=TwoWay}"
+                                  SelectionChanged="ComboBox_SelectionChanged"
+                                  FontSize="11" Padding="4,2" Background="#F1F5F9" BorderThickness="0" MinWidth="100"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </DataTemplate>
@@ -73,5 +79,3 @@
         </Grid>
     </Grid>
 </UserControl>
-
-

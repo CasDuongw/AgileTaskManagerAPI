@@ -16,6 +16,18 @@ namespace AgileTaskManager.Desktop.ViewModels
         }
     }
 
+    public class SubtaskViewModel : ViewModelBase
+    {
+        private int _subtaskId;
+        public int SubtaskId { get => _subtaskId; set { _subtaskId = value; OnPropertyChanged(); } }
+
+        private string _title;
+        public string Title { get => _title; set { _title = value; OnPropertyChanged(); } }
+
+        private bool _isCompleted;
+        public bool IsCompleted { get => _isCompleted; set { _isCompleted = value; OnPropertyChanged(); } }
+    }
+
     public class KanbanTaskViewModel : ViewModelBase
     {
         private int _taskId;
@@ -39,11 +51,11 @@ namespace AgileTaskManager.Desktop.ViewModels
             set { _columnId = value; OnPropertyChanged(); }
         }
 
-        private int _orderIndex;
-        public int OrderIndex
+        private int? _assigneeId;
+        public int? AssigneeId
         {
-            get => _orderIndex;
-            set { _orderIndex = value; OnPropertyChanged(); }
+            get => _assigneeId;
+            set { _assigneeId = value; OnPropertyChanged(); }
         }
 
         private string _description;
@@ -53,18 +65,18 @@ namespace AgileTaskManager.Desktop.ViewModels
             set { _description = value; OnPropertyChanged(); }
         }
 
-        private int? _assigneeId;
-        public int? AssigneeId
-        {
-            get => _assigneeId;
-            set { _assigneeId = value; OnPropertyChanged(); }
-        }
-
         private DateTime? _dueDate;
         public DateTime? DueDate
         {
             get => _dueDate;
             set { _dueDate = value; OnPropertyChanged(); }
+        }
+
+        private int _orderIndex;
+        public int OrderIndex
+        {
+            get => _orderIndex;
+            set { _orderIndex = value; OnPropertyChanged(); }
         }
 
         private string _tags;
@@ -76,6 +88,8 @@ namespace AgileTaskManager.Desktop.ViewModels
 
         public ICommand DeleteTaskCommand { get; set; }
         public ICommand EditTaskCommand { get; set; }
+
+        public ObservableCollection<SubtaskViewModel> Subtasks { get; } = new ObservableCollection<SubtaskViewModel>();
     }
 
     public class KanbanColumnViewModel : ViewModelBase
@@ -104,6 +118,15 @@ namespace AgileTaskManager.Desktop.ViewModels
         public ObservableCollection<KanbanTaskViewModel> Tasks { get; } = new ObservableCollection<KanbanTaskViewModel>();
 
         public ICommand DeleteColumnCommand { get; set; }
+
+        private int _orderIndex;
+        public int OrderIndex { get => _orderIndex; set { _orderIndex = value; OnPropertyChanged(); } }
+
+        private DateTime? _dueDate;
+        public DateTime? DueDate { get => _dueDate; set { _dueDate = value; OnPropertyChanged(); } }
+
+        private string _status = "Vừa giao";
+        public string Status { get => _status; set { _status = value; OnPropertyChanged(); } }
     }
 
     public class KanbanBoardViewModel : ViewModelBase
@@ -114,14 +137,15 @@ namespace AgileTaskManager.Desktop.ViewModels
     public class CalendarCellViewModel : ViewModelBase
     {
         public DateTime SlotTime { get; set; }
-        public ObservableCollection<KanbanTaskViewModel> Tasks { get; } = new ObservableCollection<KanbanTaskViewModel>();
+        public ObservableCollection<KanbanColumnViewModel> Tasks { get; } = new ObservableCollection<KanbanColumnViewModel>();
     }
 
     public class CalendarViewModel : ViewModelBase
     {
         public ObservableCollection<CalendarCellViewModel> Cells { get; } = new ObservableCollection<CalendarCellViewModel>();
         public ObservableCollection<KanbanColumnViewModel> Columns { get; set; }
-        public ObservableCollection<KanbanTaskViewModel> UnscheduledTasks { get; } = new ObservableCollection<KanbanTaskViewModel>();
+        public ObservableCollection<string> Statuses { get; } = new ObservableCollection<string> { "Vừa giao", "Đang làm", "Hoàn thành", "Trễ hạn" };
+        public ObservableCollection<KanbanColumnViewModel> UnscheduledTasks { get; } = new ObservableCollection<KanbanColumnViewModel>();
         
         private DateTime _currentWeekStart;
         public DateTime CurrentWeekStart 
@@ -139,3 +163,4 @@ namespace AgileTaskManager.Desktop.ViewModels
         public void Execute(object? parameter) => _execute();
     }
 }
+

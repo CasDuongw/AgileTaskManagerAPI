@@ -83,6 +83,9 @@ namespace AgileTaskManagerAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -91,6 +94,10 @@ namespace AgileTaskManagerAPI.Migrations
 
                     b.Property<int>("ProjectId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("ColumnId");
 
@@ -126,6 +133,31 @@ namespace AgileTaskManagerAPI.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("AgileTaskManagerAPI.Model.Subtask", b =>
+                {
+                    b.Property<int>("SubtaskId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SubtaskId"));
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("SubtaskId");
+
+                    b.HasIndex("TaskId");
+
+                    b.ToTable("Subtasks");
                 });
 
             modelBuilder.Entity("AgileTaskManagerAPI.Model.User", b =>
@@ -164,7 +196,7 @@ namespace AgileTaskManagerAPI.Migrations
                         .HasForeignKey("AssigneeId");
 
                     b.HasOne("AgileTaskManagerAPI.Model.KanbanColumn", "Column")
-                        .WithMany()
+                        .WithMany("Tasks")
                         .HasForeignKey("ColumnId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -202,6 +234,27 @@ namespace AgileTaskManagerAPI.Migrations
                         .IsRequired();
 
                     b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("AgileTaskManagerAPI.Model.Subtask", b =>
+                {
+                    b.HasOne("AgileTaskManagerAPI.Model.AppTask", "Task")
+                        .WithMany("Subtasks")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+                });
+
+            modelBuilder.Entity("AgileTaskManagerAPI.Model.AppTask", b =>
+                {
+                    b.Navigation("Subtasks");
+                });
+
+            modelBuilder.Entity("AgileTaskManagerAPI.Model.KanbanColumn", b =>
+                {
+                    b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618
         }

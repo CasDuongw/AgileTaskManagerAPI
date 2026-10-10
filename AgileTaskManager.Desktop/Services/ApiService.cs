@@ -38,6 +38,9 @@ namespace AgileTaskManager.Desktop.Services
         public async Task<HttpResponseMessage> CreateColumnAsync(object column) => 
             await _client.PostAsJsonAsync($"{_baseUrl}/Columns", column);
             
+        public async Task<HttpResponseMessage> UpdateColumnAsync(int columnId, object column) =>
+            await _client.PutAsJsonAsync("${_baseUrl}/Columns/${columnId}", column);
+
         public async Task<HttpResponseMessage> DeleteColumnAsync(int columnId) => 
             await _client.DeleteAsync($"{_baseUrl}/Columns/{columnId}");
             
@@ -62,5 +65,15 @@ namespace AgileTaskManager.Desktop.Services
             
         public async Task<HttpResponseMessage> ReorderTasksAsync(object reorderList) => 
             await _client.PutAsJsonAsync($"{_baseUrl}/Tasks/reorder", reorderList);
+                    public async Task<HttpResponseMessage> CreateSubtaskAsync(int taskId, object subtask) => 
+            await _client.PostAsJsonAsync($"{_baseUrl}/Subtasks/{taskId}", subtask);
+
+        public async Task<HttpResponseMessage> UpdateSubtaskAsync(int subtaskId, object subtask) => 
+            await _client.PutAsJsonAsync($"{_baseUrl}/Subtasks/{subtaskId}", subtask);
+
+        public async Task<HttpResponseMessage> DeleteSubtaskAsync(int subtaskId) => 
+            await _client.DeleteAsync($"{_baseUrl}/Subtasks/{subtaskId}");
     }
 }
+
+

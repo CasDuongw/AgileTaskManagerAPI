@@ -51,7 +51,7 @@ namespace AgileTaskManager.Desktop
             public int projectId { get; set; }
         }
 
-        private async void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
+                private async void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
         {
             if (AppConfig.CurrentUsername?.ToLower() != "admin")
             {
@@ -59,6 +59,15 @@ namespace AgileTaskManager.Desktop
                 System.Windows.Controls.Grid.SetColumn(panelCreateProject, 0);
                 System.Windows.Controls.Grid.SetColumn(panelCreateTask, 1);
             }
+
+            var timeSlots = new List<string>();
+            for (int i = 0; i < 24; i++)
+            {
+                timeSlots.Add($"{i:D2}:00");
+                timeSlots.Add($"{i:D2}:30");
+            }
+            cboCreateTaskTime.ItemsSource = timeSlots;
+
             await LoadProjectsAsync();
             await LoadUsersAsync();
         }
@@ -148,9 +157,17 @@ namespace AgileTaskManager.Desktop
                     foreach (var task in colTasks)
                     {
                         var taskVm = new KanbanTaskViewModel { TaskId = task.taskId, TaskName = task.taskName, Description = task.description, AssigneeId = task.assigneeId, DueDate = task.dueDate, Tags = task.tags, ColumnId = col.columnId, OrderIndex = task.orderIndex };
+                        if (task.subtasks != null)
+                        {
+                            foreach (var st in task.subtasks)
+                            {
+                                taskVm.Subtasks.Add(new SubtaskViewModel { SubtaskId = st.subtaskId, Title = st.title, IsCompleted = st.isCompleted });
+                            }
+                        }
                         taskVm.EditTaskCommand = new RelayCommand(async () => await EditTaskAsync(taskVm));
                         colVm.Tasks.Add(taskVm);
                     }
+                      colVm.Tasks.CollectionChanged += (s, ev) => { if (ucCalendarView != null) ucCalendarView.UpdateCalendarData(); };
                     _viewModel.Columns.Add(colVm);
                 }
 
@@ -384,7 +401,7 @@ namespace AgileTaskManager.Desktop
     
         private async Task EditTaskAsync(KanbanTaskViewModel taskVm)
         {
-            var detailWindow = new TaskDetailWindow(taskVm, cboOwner.ItemsSource);
+            var detailWindow = new TaskDetailWindow(taskVm, cboOwner.ItemsSource, _apiService);
             if (detailWindow.ShowDialog() == true)
             {
                 var updatedVm = detailWindow.TaskData;
@@ -401,4 +418,8 @@ namespace AgileTaskManager.Desktop
         }
     }
 }
+
+
+
+
 

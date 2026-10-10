@@ -45,6 +45,14 @@ namespace AgileTaskManager.Desktop
             public int columnId { get; set; }
             public int projectId { get; set; }
             public int orderIndex { get; set; }
+            public List<SubtaskResponse> subtasks { get; set; }
+        }
+
+        public class SubtaskResponse
+        {
+            public int subtaskId { get; set; }
+            public string title { get; set; }
+            public bool isCompleted { get; set; }
         }
 
 
@@ -401,3 +409,4 @@ namespace AgileTaskManager.Desktop
         }
     }
 }
+

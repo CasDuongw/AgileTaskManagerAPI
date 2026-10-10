@@ -7,6 +7,7 @@ using AgileTaskManager.Desktop.ViewModels;
 using GongSolutions.Wpf.DragDrop;
 using AgileTaskManager.Desktop.Services;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace AgileTaskManager.Desktop
 {
@@ -44,13 +45,11 @@ namespace AgileTaskManager.Desktop
             CalendarGrid.RowDefinitions.Clear();
             CalendarGrid.ColumnDefinitions.Clear();
 
-            // Cột 0: Thời gian. Cột 1-7: Thứ 2 -> Chủ nhật
             for (int i = 0; i < 8; i++)
             {
                 CalendarGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = i == 0 ? new GridLength(80) : new GridLength(1, GridUnitType.Star) });
             }
 
-            // Header hàng 0
             CalendarGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             AddCellToGrid("Slot / Day", 0, 0, true);
             for (int i = 0; i < 7; i++)
@@ -60,11 +59,10 @@ namespace AgileTaskManager.Desktop
                 AddCellToGrid($"{dayName}\n{dayDate:dd/MM}", 0, i + 1, true);
             }
 
-            // Dữ liệu thời gian: 8:00 đến 17:00 (10 slots)
             for (int row = 1; row <= 10; row++)
             {
                 CalendarGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(100) });
-                int hour = row + 7; // 8h, 9h,...
+                int hour = row + 7;
                 AddCellToGrid($"{hour}:00", row, 0, true);
 
                 for (int col = 1; col <= 7; col++)
@@ -90,7 +88,6 @@ namespace AgileTaskManager.Desktop
                         Background = Brushes.Transparent
                     };
 
-                    // Gong DragDrop
                     GongSolutions.Wpf.DragDrop.DragDrop.SetIsDropTarget(itemsControl, true);
                     GongSolutions.Wpf.DragDrop.DragDrop.SetDropHandler(itemsControl, this);
                     
@@ -109,8 +106,6 @@ namespace AgileTaskManager.Desktop
             }
             lblWeekInfo.Text = $"Tuần ({_viewModel.CurrentWeekStart:dd/MM} - {_viewModel.CurrentWeekStart.AddDays(6):dd/MM})";
         }
-
-        
 
         private void AddCellToGrid(string text, int row, int col, bool isHeader)
         {
@@ -141,7 +136,7 @@ namespace AgileTaskManager.Desktop
         {
             if (_boardVm == null) return;
 
-            _viewModel.Columns = _boardVm.Columns; // Ensure the ComboBox has columns to bind to
+            _viewModel.Columns = _boardVm.Columns;
 
             foreach (var cell in _viewModel.Cells)
             {
@@ -149,20 +144,19 @@ namespace AgileTaskManager.Desktop
             }
             _viewModel.UnscheduledTasks.Clear();
 
-            var allTasks = _boardVm.Columns.SelectMany(c => c.Tasks);
-            foreach (var task in allTasks)
+            foreach (var column in _boardVm.Columns)
             {
-                if (task.DueDate.HasValue)
+                if (column.DueDate.HasValue)
                 {
-                    var cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == task.DueDate.Value.Date && c.SlotTime.Hour == task.DueDate.Value.Hour);
+                    var cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == column.DueDate.Value.Date && c.SlotTime.Hour == column.DueDate.Value.Hour);
                     if (cell != null)
                     {
-                        cell.Tasks.Add(task);
+                        cell.Tasks.Add(column);
                     }
                 }
                 else
                 {
-                    _viewModel.UnscheduledTasks.Add(task);
+                    _viewModel.UnscheduledTasks.Add(column);
                 }
             }
         }
@@ -206,24 +200,23 @@ namespace AgileTaskManager.Desktop
             if (e.AddedItems.Count > 0)
             {
                 var cb = sender as ComboBox;
-                if (cb?.DataContext is KanbanTaskViewModel taskVm)
+                if (cb?.DataContext is KanbanColumnViewModel columnVm)
                 {
-                    if (cb.SelectedValue is int newColumnId)
+                    if (cb.SelectedValue is string newStatus)
                     {
-                        if (taskVm.ColumnId != newColumnId)
+                        if (columnVm.Status != newStatus)
                         {
-                            taskVm.ColumnId = newColumnId;
-                            await UpdateTaskApiAsync(taskVm);
+                            columnVm.Status = newStatus;
+                            await UpdateColumnApiAsync(columnVm);
                         }
                     }
                 }
             }
         }
 
-        // --- GONG DRAG DROP IMPLEMENTATION ---
         void IDropTarget.DragOver(IDropInfo dropInfo)
         {
-            if (dropInfo.Data is KanbanTaskViewModel)
+            if (dropInfo.Data is KanbanColumnViewModel)
             {
                 dropInfo.DropTargetAdorner = DropTargetAdorners.Highlight;
                 dropInfo.Effects = DragDropEffects.Move;
@@ -232,59 +225,47 @@ namespace AgileTaskManager.Desktop
 
         void IDropTarget.Drop(IDropInfo dropInfo)
         {
-            var task = dropInfo.Data as KanbanTaskViewModel;
-            if (task == null) return;
+            var column = dropInfo.Data as KanbanColumnViewModel;
+            if (column == null) return;
 
             var targetItemsControl = dropInfo.VisualTarget as ItemsControl;
-            if (targetItemsControl != null && targetItemsControl.ItemsSource is System.Collections.ObjectModel.ObservableCollection<KanbanTaskViewModel> targetList)
+            if (targetItemsControl != null && targetItemsControl.ItemsSource is System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel> targetList)
             {
-                var sourceList = dropInfo.DragInfo.SourceCollection as System.Collections.ObjectModel.ObservableCollection<KanbanTaskViewModel>;
+                var sourceList = dropInfo.DragInfo.SourceCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
                 if (sourceList != null && sourceList != targetList)
                 {
-                    // Find the corresponding cell if any
                     var cell = _viewModel.Cells.FirstOrDefault(c => c.Tasks == targetList);
                     
-                    sourceList.Remove(task);
-                    targetList.Insert(dropInfo.InsertIndex, task);
+                    sourceList.Remove(column);
+                    targetList.Insert(dropInfo.InsertIndex, column);
                     
                     if (cell != null)
                     {
-                        // Thả vào lưới Calendar -> gán DueDate
-                        task.DueDate = cell.SlotTime;
+                        column.DueDate = cell.SlotTime;
+                        _ = UpdateColumnApiAsync(column);
                     }
                     else if (targetList == _viewModel.UnscheduledTasks)
                     {
-                        // Thả vào Unscheduled -> xóa DueDate
-                        task.DueDate = null;
+                        column.DueDate = null;
+                        _ = UpdateColumnApiAsync(column);
                     }
-                    
-                    _ = UpdateTaskApiAsync(task);
                 }
             }
         }
 
-        private async Task UpdateTaskApiAsync(KanbanTaskViewModel updatedVm)
+        private async Task UpdateColumnApiAsync(KanbanColumnViewModel updatedVm)
         {
-            int projectId = _boardVm.Columns.FirstOrDefault()?.ProjectId ?? 0;
             var updatePayload = new
             {
-                TaskId = updatedVm.TaskId,
-                TaskName = updatedVm.TaskName,
-                Description = updatedVm.Description,
-                AssigneeId = updatedVm.AssigneeId,
-                DueDate = updatedVm.DueDate,
-                Tags = updatedVm.Tags,
                 ColumnId = updatedVm.ColumnId,
+                ColumnName = updatedVm.ColumnName,
                 OrderIndex = updatedVm.OrderIndex,
-                ProjectId = projectId
+                ProjectId = updatedVm.ProjectId,
+                DueDate = updatedVm.DueDate,
+                Status = updatedVm.Status,
+                IsActive = true
             };
-            await _apiService.UpdateTaskAsync(updatedVm.TaskId, updatePayload);
+            await _apiService.UpdateColumnAsync(updatedVm.ColumnId, updatePayload);
         }
     }
 }
-
-
-
-
-
-
