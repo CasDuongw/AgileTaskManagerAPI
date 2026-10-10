@@ -46,7 +46,36 @@ namespace AgileTaskManager.Desktop.ViewModels
             set { _orderIndex = value; OnPropertyChanged(); }
         }
 
+        private string _description;
+        public string Description
+        {
+            get => _description;
+            set { _description = value; OnPropertyChanged(); }
+        }
+
+        private int? _assigneeId;
+        public int? AssigneeId
+        {
+            get => _assigneeId;
+            set { _assigneeId = value; OnPropertyChanged(); }
+        }
+
+        private DateTime? _dueDate;
+        public DateTime? DueDate
+        {
+            get => _dueDate;
+            set { _dueDate = value; OnPropertyChanged(); }
+        }
+
+        private string _tags;
+        public string Tags
+        {
+            get => _tags;
+            set { _tags = value; OnPropertyChanged(); }
+        }
+
         public ICommand DeleteTaskCommand { get; set; }
+        public ICommand EditTaskCommand { get; set; }
     }
 
     public class KanbanColumnViewModel : ViewModelBase
@@ -80,5 +109,33 @@ namespace AgileTaskManager.Desktop.ViewModels
     public class KanbanBoardViewModel : ViewModelBase
     {
         public ObservableCollection<KanbanColumnViewModel> Columns { get; } = new ObservableCollection<KanbanColumnViewModel>();
+    }
+
+    public class CalendarCellViewModel : ViewModelBase
+    {
+        public DateTime SlotTime { get; set; }
+        public ObservableCollection<KanbanTaskViewModel> Tasks { get; } = new ObservableCollection<KanbanTaskViewModel>();
+    }
+
+    public class CalendarViewModel : ViewModelBase
+    {
+        public ObservableCollection<CalendarCellViewModel> Cells { get; } = new ObservableCollection<CalendarCellViewModel>();
+        public ObservableCollection<KanbanColumnViewModel> Columns { get; set; }
+        public ObservableCollection<KanbanTaskViewModel> UnscheduledTasks { get; } = new ObservableCollection<KanbanTaskViewModel>();
+        
+        private DateTime _currentWeekStart;
+        public DateTime CurrentWeekStart 
+        { 
+            get => _currentWeekStart; 
+            set { _currentWeekStart = value; OnPropertyChanged(); } 
+        }
+    }
+    public class RelayCommand : ICommand
+    {
+        private readonly Action _execute;
+        public RelayCommand(Action execute) { _execute = execute; }
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
+        public bool CanExecute(object? parameter) => true;
+        public void Execute(object? parameter) => _execute();
     }
 }

@@ -59,6 +59,27 @@ namespace AgileTaskManagerAPI.Controllers
             return Ok(task);
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] AppTask updatedTask)
+        {
+            if (id != updatedTask.TaskId) return BadRequest();
+
+            var task = await _context.Tasks.Include(t => t.Project).FirstOrDefaultAsync(t => t.TaskId == id);
+            if (task == null) return NotFound();
+            
+            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
+            if (task.Project == null || (!isAdmin && task.Project.OwnerId != GetCurrentUserId())) return Forbid();
+
+            task.TaskName = updatedTask.TaskName;
+            task.Description = updatedTask.Description;
+            task.AssigneeId = updatedTask.AssigneeId;
+            task.DueDate = updatedTask.DueDate;
+            task.Tags = updatedTask.Tags;
+
+            await _context.SaveChangesAsync();
+            return Ok(task);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(int id)
         {

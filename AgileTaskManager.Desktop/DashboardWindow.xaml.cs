@@ -147,12 +147,15 @@ namespace AgileTaskManager.Desktop
                     var colTasks = taskList.Where(t => t.columnId == col.columnId).OrderBy(t => t.orderIndex);
                     foreach (var task in colTasks)
                     {
-                        colVm.Tasks.Add(new KanbanTaskViewModel { TaskId = task.taskId, TaskName = task.taskName, ColumnId = col.columnId, OrderIndex = task.orderIndex });
+                        var taskVm = new KanbanTaskViewModel { TaskId = task.taskId, TaskName = task.taskName, Description = task.description, AssigneeId = task.assigneeId, DueDate = task.dueDate, Tags = task.tags, ColumnId = col.columnId, OrderIndex = task.orderIndex };
+                        taskVm.EditTaskCommand = new RelayCommand(async () => await EditTaskAsync(taskVm));
+                        colVm.Tasks.Add(taskVm);
                     }
                     _viewModel.Columns.Add(colVm);
                 }
 
                 UpdateAddListButtonText();
+                if (ucCalendarView != null) ucCalendarView.RenderCalendar(_viewModel);
             }
             catch (Exception ex)
             {
@@ -164,13 +167,16 @@ namespace AgileTaskManager.Desktop
         {
             _viewModel.Columns.Clear();
             UpdateAddListButtonText();
+            if (ucCalendarView != null) ucCalendarView.UpdateCalendarData();
         }
 
         private void btnMenuDashboard_Click(object sender, RoutedEventArgs e)
         {
             viewDashboard.Visibility = Visibility.Visible;
             viewCreate.Visibility = Visibility.Collapsed;
+            if (viewCalendar != null) viewCalendar.Visibility = Visibility.Collapsed;
             btnMenuDashboard.Style = (Style)FindResource("ActiveMenuBtn");
+            btnMenuCalendar.Style = (Style)FindResource("MenuBtn");
             btnMenuCreate.Style = (Style)FindResource("MenuBtn");
         }
 
@@ -178,7 +184,9 @@ namespace AgileTaskManager.Desktop
         {
             viewCreate.Visibility = Visibility.Visible;
             viewDashboard.Visibility = Visibility.Collapsed;
+            if (viewCalendar != null) viewCalendar.Visibility = Visibility.Collapsed;
             btnMenuCreate.Style = (Style)FindResource("ActiveMenuBtn");
+            btnMenuCalendar.Style = (Style)FindResource("MenuBtn");
             btnMenuDashboard.Style = (Style)FindResource("MenuBtn");
         }
 
@@ -241,7 +249,10 @@ namespace AgileTaskManager.Desktop
                         var column = _viewModel.Columns.FirstOrDefault(c => c.ColumnId == createdTask.columnId);
                         if (column != null)
                         {
-                            column.Tasks.Add(new KanbanTaskViewModel { TaskId = createdTask.taskId, TaskName = createdTask.taskName, ColumnId = createdTask.columnId, OrderIndex = createdTask.orderIndex });
+                            var taskVm = new KanbanTaskViewModel { TaskId = createdTask.taskId, TaskName = createdTask.taskName, Description = createdTask.description, AssigneeId = createdTask.assigneeId, DueDate = createdTask.dueDate, Tags = createdTask.tags, ColumnId = createdTask.columnId, OrderIndex = createdTask.orderIndex };
+                              taskVm.EditTaskCommand = new RelayCommand(async () => await EditTaskAsync(taskVm));
+                              column.Tasks.Add(taskVm);
+                              if (ucCalendarView != null) ucCalendarView.UpdateCalendarData();
                         }
                     }
                 }
@@ -359,8 +370,35 @@ namespace AgileTaskManager.Desktop
             public string ProjectName { get; set; } = string.Empty;
         }
 
+    
+        private void btnMenuCalendar_Click(object sender, RoutedEventArgs e)
+        {
+            viewCalendar.Visibility = Visibility.Visible;
+            viewDashboard.Visibility = Visibility.Collapsed;
+            viewCreate.Visibility = Visibility.Collapsed;
+            
+            btnMenuCalendar.Style = (Style)FindResource("ActiveMenuBtn");
+            btnMenuDashboard.Style = (Style)FindResource("MenuBtn");
+            btnMenuCreate.Style = (Style)FindResource("MenuBtn");
+        }
+    
+        private async Task EditTaskAsync(KanbanTaskViewModel taskVm)
+        {
+            var detailWindow = new TaskDetailWindow(taskVm, cboOwner.ItemsSource);
+            if (detailWindow.ShowDialog() == true)
+            {
+                var updatedVm = detailWindow.TaskData;
+                if (updatedVm != null)
+                {
+                    taskVm.TaskName = updatedVm.TaskName;
+                    taskVm.Description = updatedVm.Description;
+                    taskVm.AssigneeId = updatedVm.AssigneeId;
+                    taskVm.DueDate = updatedVm.DueDate;
+                    taskVm.Tags = updatedVm.Tags;
+                    if (ucCalendarView != null) ucCalendarView.UpdateCalendarData();
+                }
+            }
+        }
     }
 }
-
-
 

@@ -38,6 +38,10 @@ namespace AgileTaskManager.Desktop
         {
             public int taskId { get; set; }
             public string taskName { get; set; }
+            public string description { get; set; }
+            public int? assigneeId { get; set; }
+            public DateTime? dueDate { get; set; }
+            public string tags { get; set; }
             public int columnId { get; set; }
             public int projectId { get; set; }
             public int orderIndex { get; set; }

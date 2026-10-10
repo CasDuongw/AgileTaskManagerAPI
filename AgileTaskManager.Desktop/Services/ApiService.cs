@@ -56,6 +56,9 @@ namespace AgileTaskManager.Desktop.Services
             
         public async Task<HttpResponseMessage> UpdateTaskColumnAsync(int taskId, int newColumnId) => 
             await _client.PatchAsJsonAsync($"{_baseUrl}/Tasks/{taskId}/column", newColumnId);
+
+        public async Task<HttpResponseMessage> UpdateTaskAsync(int taskId, object task) => 
+            await _client.PutAsJsonAsync($"{_baseUrl}/Tasks/{taskId}", task);
             
         public async Task<HttpResponseMessage> ReorderTasksAsync(object reorderList) => 
             await _client.PutAsJsonAsync($"{_baseUrl}/Tasks/reorder", reorderList);

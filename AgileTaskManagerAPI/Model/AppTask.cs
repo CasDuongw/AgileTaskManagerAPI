@@ -11,6 +11,10 @@ namespace AgileTaskManagerAPI.Model
         public string Description { get; set; } = string.Empty;
         public int OrderIndex { get; set; }
         public bool IsActive { get; set; } = true;
+        
+        public DateTime? DueDate { get; set; } // Hạn chót
+        public string Tags { get; set; } = string.Empty; // Nhãn, phân tách bằng dấu phẩy
+
         public int ColumnId { get; set; }
 
         [ForeignKey("ColumnId")]

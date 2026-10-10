@@ -121,6 +121,12 @@
                         <TextBlock Text="Dashboard" Margin="8,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+                <Button x:Name="btnMenuCalendar" Style="{StaticResource MenuBtn}" Click="btnMenuCalendar_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE787;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Width="32" FontSize="16" TextAlignment="Center"/>
+                        <TextBlock Text="Calendar" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
                 <Button Style="{StaticResource MenuBtn}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE71D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Width="32" FontSize="16" TextAlignment="Center"/>
@@ -247,6 +253,11 @@
 
                         </StackPanel>
                     </ScrollViewer>
+                </Grid>
+
+                <!-- VIEW 3: CALENDAR VIEW -->
+                <Grid x:Name="viewCalendar" Visibility="Collapsed">
+                    <local:CalendarView x:Name="ucCalendarView"/>
                 </Grid>
 
                 <!-- VIEW 2: CREATE FORMS -->
