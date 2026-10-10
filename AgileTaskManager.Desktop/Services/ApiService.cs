@@ -39,7 +39,7 @@ namespace AgileTaskManager.Desktop.Services
             await _client.PostAsJsonAsync($"{_baseUrl}/Columns", column);
             
         public async Task<HttpResponseMessage> UpdateColumnAsync(int columnId, object column) =>
-            await _client.PutAsJsonAsync("${_baseUrl}/Columns/${columnId}", column);
+            await _client.PutAsJsonAsync($"{_baseUrl}/Columns/{columnId}", column);
 
         public async Task<HttpResponseMessage> DeleteColumnAsync(int columnId) => 
             await _client.DeleteAsync($"{_baseUrl}/Columns/{columnId}");

@@ -108,6 +108,13 @@ namespace AgileTaskManager.Desktop.ViewModels
             set { _columnName = value; OnPropertyChanged(); }
         }
 
+        private bool _isEditingTitle;
+        public bool IsEditingTitle
+        {
+            get => _isEditingTitle;
+            set { _isEditingTitle = value; OnPropertyChanged(); }
+        }
+
         private int _projectId;
         public int ProjectId
         {
@@ -118,6 +125,15 @@ namespace AgileTaskManager.Desktop.ViewModels
         public ObservableCollection<KanbanTaskViewModel> Tasks { get; } = new ObservableCollection<KanbanTaskViewModel>();
 
         public ICommand DeleteColumnCommand { get; set; }
+        public System.Windows.Input.ICommand EditColumnTitleCommand { get; set; }
+        public KanbanColumnViewModel()
+        {
+            EditColumnTitleCommand = new AgileTaskManager.Desktop.Commands.RelayCommand(ExecuteEditColumnTitle);
+        }
+        private void ExecuteEditColumnTitle()
+        {
+            IsEditingTitle = true;
+        }
 
         private int _orderIndex;
         public int OrderIndex { get => _orderIndex; set { _orderIndex = value; OnPropertyChanged(); } }

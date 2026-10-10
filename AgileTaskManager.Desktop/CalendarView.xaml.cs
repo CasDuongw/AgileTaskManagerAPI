@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -25,6 +25,38 @@ namespace AgileTaskManager.Desktop
             _apiService = new ApiService();
             _viewModel.CurrentWeekStart = GetStartOfWeek(DateTime.Now);
             BuildGrid();
+        }
+
+        private async void TxtColumnName_LostFocus(object sender, RoutedEventArgs e)
+        {
+            var tb = sender as TextBox;
+            if (tb?.DataContext is KanbanColumnViewModel vm)
+            {
+                vm.IsEditingTitle = false;
+                await UpdateColumnApiAsync(vm);
+            }
+        }
+
+        private void TxtCalendarTitle_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (sender is TextBox tb && tb.Visibility == Visibility.Visible)
+            {
+                tb.Focus();
+                tb.SelectAll();
+            }
+        }
+
+        private void TxtColumnName_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                System.Windows.Input.Keyboard.ClearFocus();
+                var uiElement = e.OriginalSource as UIElement;
+                if (uiElement != null)
+                {
+                    uiElement.MoveFocus(new System.Windows.Input.TraversalRequest(System.Windows.Input.FocusNavigationDirection.Next));
+                }
+            }
         }
 
         private DateTime GetStartOfWeek(DateTime dt)
@@ -270,6 +302,10 @@ namespace AgileTaskManager.Desktop
                         column.DueDate = null;
                         _ = UpdateColumnApiAsync(column);
                     }
+                }
+                else if (sourceList == targetList)
+                {
+                    GongSolutions.Wpf.DragDrop.DragDrop.DefaultDropHandler.Drop(dropInfo);
                 }
             }
         }

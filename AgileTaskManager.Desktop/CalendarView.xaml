@@ -10,7 +10,37 @@
                     <DropShadowEffect Color="#000000" Opacity="0.05" BlurRadius="5" ShadowDepth="1"/>
                 </Border.Effect>
                 <StackPanel>
-                    <TextBlock Text="{Binding ColumnName}" TextWrapping="Wrap" FontSize="14" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,8"/>
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding ColumnName}" TextWrapping="Wrap" FontSize="14" FontWeight="SemiBold" Foreground="#1E293B">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsEditingTitle}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBox Grid.Column="0" x:Name="txtCalendarTitle" Text="{Binding ColumnName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" LostFocus="TxtColumnName_LostFocus" KeyDown="TxtColumnName_KeyDown" IsVisibleChanged="TxtCalendarTitle_IsVisibleChanged" TextWrapping="Wrap" FontSize="14" FontWeight="SemiBold" Foreground="#1E293B" Background="White" BorderThickness="1" BorderBrush="#3B82F6" Padding="2">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsEditingTitle}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                        <Button Grid.Column="1" Content="&#xE70F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Command="{Binding EditColumnTitleCommand}" Foreground="#94A3B8" Background="Transparent" BorderThickness="0" FontSize="12" Cursor="Hand" Padding="5,0,0,0" ToolTip="Sửa tên" VerticalAlignment="Top"/>
+                    </Grid>
                     
                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                         <TextBlock Text="Trạng thái: " FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>

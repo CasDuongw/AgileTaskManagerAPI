@@ -1,4 +1,4 @@
-﻿using ControlzEx.Standard;
+using ControlzEx.Standard;
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -11,6 +11,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using AgileTaskManager.Desktop.ViewModels;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AgileTaskManager.Desktop
 {
@@ -47,6 +48,52 @@ namespace AgileTaskManager.Desktop
                 }
             }
         }
+                private async void TxtTitle_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is KanbanColumnViewModel vm)
+            {
+                vm.IsEditingTitle = false;
+                var updatePayload = new
+                {
+                    ColumnId = vm.ColumnId,
+                    ColumnName = vm.ColumnName,
+                    OrderIndex = vm.OrderIndex,
+                    ProjectId = vm.ProjectId,
+                    DueDate = vm.DueDate,
+                    Status = vm.Status,
+                    IsActive = true
+                };
+                var apiService = AgileTaskManager.Desktop.App.ServiceProvider.GetRequiredService<AgileTaskManager.Desktop.Services.ApiService>();
+                if (apiService != null)
+                {
+                    await apiService.UpdateColumnAsync(vm.ColumnId, updatePayload);
+                }
+            }
+        }
+
+        private void TxtTitle_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (sender is TextBox tb && tb.Visibility == Visibility.Visible)
+            {
+                tb.Focus();
+                tb.SelectAll();
+            }
+        }
+
+        private void TxtTitle_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                // Unfocus the textbox to trigger LostFocus
+                System.Windows.Input.Keyboard.ClearFocus();
+                var uiElement = e.OriginalSource as UIElement;
+                if (uiElement != null)
+                {
+                    uiElement.MoveFocus(new System.Windows.Input.TraversalRequest(System.Windows.Input.FocusNavigationDirection.Next));
+                }
+            }
+        }
+
         public KanbanColumn()
         {
             InitializeComponent();
@@ -213,7 +260,7 @@ namespace AgileTaskManager.Desktop
             }
 
             // Nếu bấm Enter -> Lưu thẻ
-            if (e.Key == Key.Enter)
+            if (e.Key == System.Windows.Input.Key.Enter)
             {
                 if (Keyboard.Modifiers == ModifierKeys.Shift) return; // Shift+Enter thì xuống dòng
 

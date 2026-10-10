@@ -59,6 +59,26 @@ namespace AgileTaskManagerAPI.Controllers
             return Ok(column);
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateColumn(int id, KanbanColumn column)
+        {
+            if (id != column.ColumnId) return BadRequest();
+
+            var existing = await _context.KanbanColumns.Include(c => c.Project).FirstOrDefaultAsync(c => c.ColumnId == id);
+            if (existing == null) return NotFound();
+
+            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
+            if (existing.Project == null || (!isAdmin && existing.Project.OwnerId != GetCurrentUserId())) return Forbid();
+
+            existing.ColumnName = column.ColumnName;
+            existing.Status = column.Status;
+            existing.DueDate = column.DueDate;
+            existing.OrderIndex = column.OrderIndex;
+
+            await _context.SaveChangesAsync();
+            return Ok(existing);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteColumn(int id)
         {

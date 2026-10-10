@@ -1,4 +1,4 @@
-using AgileTaskManager.Desktop.ViewModels;
+﻿using AgileTaskManager.Desktop.ViewModels;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
@@ -49,6 +49,8 @@ namespace AgileTaskManager.Desktop
             public string columnName { get; set; }
             public int orderIndex { get; set; }
             public int projectId { get; set; }
+            public DateTime? dueDate { get; set; }
+            public string status { get; set; }
         }
 
                 private async void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
@@ -150,7 +152,10 @@ namespace AgileTaskManager.Desktop
                     {
                         ColumnId = col.columnId,
                         ColumnName = col.columnName,
-                        ProjectId = projectId
+                        ProjectId = projectId,
+                        OrderIndex = col.orderIndex,
+                        DueDate = col.dueDate,
+                        Status = string.IsNullOrEmpty(col.status) ? "V?a giao" : col.status
                     };
 
                     var colTasks = taskList.Where(t => t.columnId == col.columnId).OrderBy(t => t.orderIndex);
