@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -47,7 +47,7 @@ namespace AgileTaskManager.Desktop
 
             for (int i = 0; i < 8; i++)
             {
-                CalendarGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = i == 0 ? new GridLength(80) : new GridLength(1, GridUnitType.Star) });
+                CalendarGrid.ColumnDefinitions.Add(new ColumnDefinition { MinWidth = i == 0 ? 80 : 120, Width = i == 0 ? new GridLength(80) : new GridLength(1, GridUnitType.Star) });
             }
 
             CalendarGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -61,7 +61,7 @@ namespace AgileTaskManager.Desktop
 
             for (int row = 1; row <= 10; row++)
             {
-                CalendarGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(100) });
+                CalendarGrid.RowDefinitions.Add(new RowDefinition { MinHeight = 100, Height = GridLength.Auto });
                 int hour = row + 7;
                 AddCellToGrid($"{hour}:00", row, 0, true);
 
@@ -90,6 +90,8 @@ namespace AgileTaskManager.Desktop
 
                     GongSolutions.Wpf.DragDrop.DragDrop.SetIsDropTarget(itemsControl, true);
                     GongSolutions.Wpf.DragDrop.DragDrop.SetDropHandler(itemsControl, this);
+                    GongSolutions.Wpf.DragDrop.DragDrop.SetIsDragSource(itemsControl, true);
+                    GongSolutions.Wpf.DragDrop.DragDrop.SetIsDragSource(itemsControl, true);
                     
                     var border = new Border
                     {
@@ -227,6 +229,25 @@ namespace AgileTaskManager.Desktop
         {
             var column = dropInfo.Data as KanbanColumnViewModel;
             if (column == null) return;
+
+            if (dropInfo.VisualTarget == txtUnscheduledHeader)
+            {
+                var sourceList = dropInfo.DragInfo.SourceCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
+                if (sourceList != null && sourceList != _viewModel.UnscheduledTasks)
+                {
+                    sourceList.Remove(column);
+                    _viewModel.UnscheduledTasks.Insert(0, column);
+                    column.DueDate = null;
+                    _ = UpdateColumnApiAsync(column);
+                }
+                else if (sourceList == _viewModel.UnscheduledTasks)
+                {
+                    sourceList.Remove(column);
+                    _viewModel.UnscheduledTasks.Insert(0, column);
+                }
+                return;
+            }
+
 
             var targetItemsControl = dropInfo.VisualTarget as ItemsControl;
             if (targetItemsControl != null && targetItemsControl.ItemsSource is System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel> targetList)

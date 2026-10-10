@@ -5,8 +5,7 @@
              Background="#F3F4F6">
     <UserControl.Resources>
         <DataTemplate x:Key="CalendarTaskTemplate">
-            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="2,4" 
-                    dd:DragDrop.IsDragSource="True" dd:DragDrop.DragDropContext="CalendarTask">
+            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="2,4">
                 <Border.Effect>
                     <DropShadowEffect Color="#000000" Opacity="0.05" BlurRadius="5" ShadowDepth="1"/>
                 </Border.Effect>
@@ -15,10 +14,16 @@
                     
                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                         <TextBlock Text="Trạng thái: " FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
-                        <ComboBox ItemsSource="{Binding DataContext.Statuses, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                        <ComboBox ItemsSource="{Binding Statuses}" 
                                   SelectedValue="{Binding Status, Mode=TwoWay}"
                                   SelectionChanged="ComboBox_SelectionChanged"
-                                  FontSize="11" Padding="4,2" Background="#F1F5F9" BorderThickness="0" MinWidth="100"/>
+                                  FontSize="11" Padding="4,2" Background="#F1F5F9" Foreground="Black" BorderThickness="0" MinWidth="100">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Foreground="Black"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -49,9 +54,9 @@
 
             <!-- Lưới Calendar -->
             <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,10,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                     <Grid x:Name="CalendarGrid">
-                        <!-- Sẽ được tạo động trong Code-Behind vì số lượng cột/hàng nhiều -->
+                        <!-- Sẽ được tạo động trong Code-Behind -->
                     </Grid>
                 </ScrollViewer>
             </Border>
@@ -63,10 +68,13 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Text="Chưa xếp lịch" FontWeight="Bold" FontSize="14" Foreground="#475569" Margin="0,0,0,10"/>
+                    <TextBlock x:Name="txtUnscheduledHeader" Grid.Row="0" Text="Chưa xếp lịch" FontWeight="Bold" FontSize="14" Foreground="#475569" Margin="0,0,0,10" AllowDrop="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding UnscheduledTasks}" ItemTemplate="{StaticResource CalendarTaskTemplate}" 
-                                      AllowDrop="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                      AllowDrop="True" Background="Transparent" MinHeight="500" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                                      dd:DragDrop.IsDragSource="True" 
+                                      dd:DragDrop.IsDropTarget="True" 
+                                      dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel Orientation="Vertical"/>

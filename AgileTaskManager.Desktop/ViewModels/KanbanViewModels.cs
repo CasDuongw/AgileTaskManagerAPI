@@ -125,6 +125,8 @@ namespace AgileTaskManager.Desktop.ViewModels
         private DateTime? _dueDate;
         public DateTime? DueDate { get => _dueDate; set { _dueDate = value; OnPropertyChanged(); } }
 
+        public ObservableCollection<string> Statuses { get; } = new ObservableCollection<string> { "Vừa giao", "Đang làm", "Hoàn thành", "Trễ hạn" };
+
         private string _status = "Vừa giao";
         public string Status { get => _status; set { _status = value; OnPropertyChanged(); } }
     }
@@ -163,4 +165,3 @@ namespace AgileTaskManager.Desktop.ViewModels
         public void Execute(object? parameter) => _execute();
     }
 }
-

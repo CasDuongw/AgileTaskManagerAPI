@@ -1,4 +1,4 @@
-using ControlzEx.Standard;
+﻿using ControlzEx.Standard;
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -19,6 +19,34 @@ namespace AgileTaskManager.Desktop
         // Sử dụng ApiService để gọi API thay vì dùng HttpClient trực tiếp
         private static readonly Services.ApiService apiService = new Services.ApiService();
 
+
+        private async void CboStatus_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0)
+            {
+                if (this.DataContext is KanbanColumnViewModel vm)
+                {
+                    if (sender is ComboBox cb && cb.SelectedValue is string newStatus)
+                    {
+                        if (vm.Status != newStatus)
+                        {
+                            vm.Status = newStatus;
+                            var updatePayload = new
+                            {
+                                ColumnId = vm.ColumnId,
+                                ColumnName = vm.ColumnName,
+                                OrderIndex = vm.OrderIndex,
+                                ProjectId = vm.ProjectId,
+                                DueDate = vm.DueDate,
+                                Status = vm.Status,
+                                IsActive = true
+                            };
+                            await apiService.UpdateColumnAsync(vm.ColumnId, updatePayload);
+                        }
+                    }
+                }
+            }
+        }
         public KanbanColumn()
         {
             InitializeComponent();

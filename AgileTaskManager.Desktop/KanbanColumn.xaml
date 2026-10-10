@@ -1,4 +1,4 @@
-<UserControl x:Class="AgileTaskManager.Desktop.KanbanColumn"
+﻿<UserControl x:Class="AgileTaskManager.Desktop.KanbanColumn"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              FocusVisualStyle="{x:Null}"
@@ -41,8 +41,23 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Name="lblTitle" Text="{Binding ColumnName}" FontSize="15" FontWeight="Bold" Foreground="#0F172A" TextWrapping="Wrap" VerticalAlignment="Center"/>
-                <Button x:Name="btnDeleteColumn" Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Click="BtnDeleteColumn_Click" Grid.Column="1" Foreground="#64748B" Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Visibility="Hidden" Padding="5,0,0,0"/>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock x:Name="lblTitle" Text="{Binding ColumnName}" FontSize="15" FontWeight="Bold" Foreground="#0F172A" TextWrapping="Wrap"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <TextBlock Text="Trạng thái: " FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                        <ComboBox ItemsSource="{Binding Statuses}" 
+                                  SelectedValue="{Binding Status, Mode=TwoWay}"
+                                  SelectionChanged="CboStatus_SelectionChanged"
+                                  FontSize="11" Padding="4,2" Background="#F8FAFC" Foreground="Black" BorderThickness="0" MinWidth="100">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Foreground="Black"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </StackPanel>
+                <Button x:Name="btnDeleteColumn" Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Click="BtnDeleteColumn_Click" Grid.Column="1" Foreground="#64748B" Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Visibility="Hidden" Padding="5,0,0,0" VerticalAlignment="Top"/>
             </Grid>
 
             <!-- TẦNG 1: spTaskList nay đã được bảo kê bởi ScrollViewer -->
