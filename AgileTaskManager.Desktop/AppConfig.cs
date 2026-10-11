@@ -6,7 +6,7 @@ namespace AgileTaskManager.Desktop
     public static class AppConfig
     {
         // Nơi duy nhất chứa URL của API. 
-        public static readonly string ApiBaseUrl = "http://localhost:5279/api";
+        public static readonly string ApiBaseUrl = "https://agiletaskmanagerapi.onrender.com/api";
         
         // HttpClient dùng chung cho toàn bộ ứng dụng WPF
         public static readonly HttpClient Client = new HttpClient();
