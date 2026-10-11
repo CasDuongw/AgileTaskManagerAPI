@@ -1,0 +1,9 @@
+**/.git
+**/.vs
+**/.vscode
+**/bin
+**/obj
+AgileTaskManager.Desktop
+Migrations_SqlServer_Backup
+Publish
+*.py
