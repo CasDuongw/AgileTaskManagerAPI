@@ -31,6 +31,6 @@ namespace AgileTaskManagerAPI.Model
 
         [ForeignKey("AssigneeId")]
         public User? Assignee { get; set; }
-            public ICollection<Subtask> Subtasks { get; set; }
+        public ICollection<Subtask>? Subtasks { get; set; } = new List<Subtask>();
     }
 }

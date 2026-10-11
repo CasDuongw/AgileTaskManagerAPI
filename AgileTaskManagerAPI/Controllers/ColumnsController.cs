@@ -72,7 +72,7 @@ namespace AgileTaskManagerAPI.Controllers
 
             existing.ColumnName = column.ColumnName;
             existing.Status = column.Status;
-            existing.DueDate = column.DueDate;
+            existing.DueDate = column.DueDate.HasValue ? DateTime.SpecifyKind(column.DueDate.Value, DateTimeKind.Utc) : null;
             existing.OrderIndex = column.OrderIndex;
 
             await _context.SaveChangesAsync();

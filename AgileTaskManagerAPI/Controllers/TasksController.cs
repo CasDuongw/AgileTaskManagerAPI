@@ -32,13 +32,20 @@ namespace AgileTaskManagerAPI.Controllers
             bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
             if (project == null || (!isAdmin && project.OwnerId != currentUserId)) return Forbid();
 
-            return await _context.Tasks.Where(t => t.ProjectId == projectId && t.IsActive).OrderBy(t => t.OrderIndex).ToListAsync();
+            return await _context.Tasks
+                .Include(t => t.Subtasks)
+                .Where(t => t.ProjectId == projectId && t.IsActive)
+                .OrderBy(t => t.OrderIndex)
+                .ToListAsync();
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AppTask>>> GetAllTasks()
         {
-            return await _context.Tasks.Where(t => t.IsActive).ToListAsync();
+            return await _context.Tasks
+                .Include(t => t.Subtasks)
+                .Where(t => t.IsActive)
+                .ToListAsync();
         }
 
         [HttpPost]
@@ -50,6 +57,10 @@ namespace AgileTaskManagerAPI.Controllers
             if (project == null || (!isAdmin && project.OwnerId != currentUserId)) return Forbid();
 
             task.IsActive = true;
+            if (task.DueDate.HasValue)
+            {
+                task.DueDate = DateTime.SpecifyKind(task.DueDate.Value, DateTimeKind.Utc);
+            }
             var maxOrder = await _context.Tasks.Where(t => t.ColumnId == task.ColumnId).MaxAsync(t => (int?)t.OrderIndex) ?? -1;
             task.OrderIndex = maxOrder + 1;
 
@@ -73,7 +84,7 @@ namespace AgileTaskManagerAPI.Controllers
             task.TaskName = updatedTask.TaskName;
             task.Description = updatedTask.Description;
             task.AssigneeId = updatedTask.AssigneeId;
-            task.DueDate = updatedTask.DueDate;
+            task.DueDate = updatedTask.DueDate.HasValue ? DateTime.SpecifyKind(updatedTask.DueDate.Value, DateTimeKind.Utc) : null;
             task.Tags = updatedTask.Tags;
 
             await _context.SaveChangesAsync();

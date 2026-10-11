@@ -10,6 +10,9 @@ namespace AgileTaskManagerAPI
     {
         public static void Main(string[] args)
         {
+            // Cho phép Npgsql xử lý DateTime linh hoạt (UTC và Unspecified) với PostgreSQL
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
             var builder = WebApplication.CreateBuilder(args);
 
             // Đăng ký AppDbContext với PostgreSQL (Neon)

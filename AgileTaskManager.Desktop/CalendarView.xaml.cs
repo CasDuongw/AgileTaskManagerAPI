@@ -281,8 +281,24 @@ namespace AgileTaskManager.Desktop
             }
 
 
-            var targetItemsControl = dropInfo.VisualTarget as ItemsControl;
-            if (targetItemsControl != null && targetItemsControl.ItemsSource is System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel> targetList)
+            var targetList = dropInfo.TargetCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>
+                ?? (dropInfo.VisualTarget as ItemsControl)?.ItemsSource as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
+
+            if (targetList == null && dropInfo.VisualTarget is FrameworkElement fe)
+            {
+                var current = fe.Parent as FrameworkElement;
+                while (current != null)
+                {
+                    if (current is ItemsControl ic && ic.ItemsSource is System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel> list)
+                    {
+                        targetList = list;
+                        break;
+                    }
+                    current = current.Parent as FrameworkElement;
+                }
+            }
+
+            if (targetList != null)
             {
                 var sourceList = dropInfo.DragInfo.SourceCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
                 if (sourceList != null && sourceList != targetList)
@@ -290,7 +306,8 @@ namespace AgileTaskManager.Desktop
                     var cell = _viewModel.Cells.FirstOrDefault(c => c.Tasks == targetList);
                     
                     sourceList.Remove(column);
-                    targetList.Insert(dropInfo.InsertIndex, column);
+                    int insertIndex = Math.Min(Math.Max(0, dropInfo.InsertIndex), targetList.Count);
+                    targetList.Insert(insertIndex, column);
                     
                     if (cell != null)
                     {
@@ -318,11 +335,23 @@ namespace AgileTaskManager.Desktop
                 ColumnName = updatedVm.ColumnName,
                 OrderIndex = updatedVm.OrderIndex,
                 ProjectId = updatedVm.ProjectId,
-                DueDate = updatedVm.DueDate,
+                DueDate = updatedVm.DueDate.HasValue ? DateTime.SpecifyKind(updatedVm.DueDate.Value, DateTimeKind.Utc) : (DateTime?)null,
                 Status = updatedVm.Status,
                 IsActive = true
             };
-            await _apiService.UpdateColumnAsync(updatedVm.ColumnId, updatePayload);
+            try
+            {
+                var response = await _apiService.UpdateColumnAsync(updatedVm.ColumnId, updatePayload);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var msg = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show($"Lỗi khi lưu lịch vào Database!\nChi tiết: {msg}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi kết nối khi cập nhật lịch: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }
