@@ -23,6 +23,8 @@ namespace AgileTaskManagerAPI.Model
 
         [JsonIgnore]
         public ICollection<AppTask> Tasks { get; set; } = new List<AppTask>();
+
+        public ICollection<Subtask> Subtasks { get; set; } = new List<Subtask>();
     }
 }
 

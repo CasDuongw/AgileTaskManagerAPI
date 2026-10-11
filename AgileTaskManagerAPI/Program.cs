@@ -87,6 +87,18 @@ namespace AgileTaskManagerAPI
 
             app.MapControllers();
 
+            // Tự động cập nhật Database Migration khi khởi động máy chủ
+            try
+            {
+                using var scope = app.Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.Migrate();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Database Migration Warning: {ex.Message}");
+            }
+
             app.Run();
         }
     }
