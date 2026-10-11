@@ -277,18 +277,16 @@ namespace AgileTaskManager.Desktop
 
         private async void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (e.AddedItems.Count > 0)
+            if (e.AddedItems.Count > 0 && e.RemovedItems.Count > 0)
             {
                 var cb = sender as ComboBox;
                 if (cb?.DataContext is KanbanColumnViewModel columnVm)
                 {
-                    if (cb.SelectedValue is string newStatus)
+                    string? newStatus = e.AddedItems[0] as string;
+                    if (!string.IsNullOrEmpty(newStatus))
                     {
-                        if (columnVm.Status != newStatus)
-                        {
-                            columnVm.Status = newStatus;
-                            await UpdateColumnApiAsync(columnVm);
-                        }
+                        columnVm.Status = newStatus;
+                        await UpdateColumnApiAsync(columnVm);
                     }
                 }
             }

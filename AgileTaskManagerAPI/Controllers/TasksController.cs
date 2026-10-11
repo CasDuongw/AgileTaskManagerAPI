@@ -81,7 +81,11 @@ namespace AgileTaskManagerAPI.Controllers
             if (task == null) return NotFound();
             
             bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-            if (task.Project == null || (!isAdmin && task.Project.OwnerId != GetCurrentUserId())) return Forbid();
+            if (!isAdmin)
+            {
+                var project = task.Project ?? await _context.Projects.FindAsync(task.ProjectId);
+                if (project == null || project.OwnerId != GetCurrentUserId()) return Forbid();
+            }
 
             task.TaskName = updatedTask.TaskName;
             task.Description = updatedTask.Description;
@@ -99,7 +103,11 @@ namespace AgileTaskManagerAPI.Controllers
             var task = await _context.Tasks.Include(t => t.Project).FirstOrDefaultAsync(t => t.TaskId == id);
             if (task == null) return NotFound();
             bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-            if (task.Project == null || (!isAdmin && task.Project.OwnerId != GetCurrentUserId())) return Forbid();
+            if (!isAdmin)
+            {
+                var project = task.Project ?? await _context.Projects.FindAsync(task.ProjectId);
+                if (project == null || project.OwnerId != GetCurrentUserId()) return Forbid();
+            }
 
             task.IsActive = false;
             await _context.SaveChangesAsync();
@@ -112,7 +120,11 @@ namespace AgileTaskManagerAPI.Controllers
             var task = await _context.Tasks.Include(t => t.Project).FirstOrDefaultAsync(t => t.TaskId == id);
             if (task == null) return NotFound();
             bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-            if (task.Project == null || (!isAdmin && task.Project.OwnerId != GetCurrentUserId())) return Forbid();
+            if (!isAdmin)
+            {
+                var project = task.Project ?? await _context.Projects.FindAsync(task.ProjectId);
+                if (project == null || project.OwnerId != GetCurrentUserId()) return Forbid();
+            }
 
             task.ColumnId = newColumnId;
             var maxOrder = await _context.Tasks.Where(t => t.ColumnId == newColumnId).MaxAsync(t => (int?)t.OrderIndex) ?? -1;

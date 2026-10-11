@@ -14,7 +14,7 @@ namespace AgileTaskManagerAPI.Model
         public bool IsActive { get; set; } = true;
         
         public DateTime? DueDate { get; set; }
-        public string Status { get; set; } = "V?a giao"; 
+        public string Status { get; set; } = "Vừa giao"; 
 
         public int ProjectId { get; set; }
 

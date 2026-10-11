@@ -23,36 +23,46 @@ namespace AgileTaskManager.Desktop
 
         private async void CboStatus_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (e.AddedItems.Count > 0)
+            if (e.AddedItems.Count > 0 && e.RemovedItems.Count > 0)
             {
                 if (this.DataContext is KanbanColumnViewModel vm)
                 {
-                    if (sender is ComboBox cb && cb.SelectedValue is string newStatus)
-                    {
-                        if (vm.Status != newStatus)
-                        {
-                            vm.Status = newStatus;
-                            DateTime? dueDateUtc = null;
-                            if (vm.DueDate.HasValue)
-                            {
-                                var dt = vm.DueDate.Value;
-                                DateTime localDt = dt.Kind == DateTimeKind.Utc ? dt.ToLocalTime() : dt;
-                                localDt = DateTime.SpecifyKind(localDt, DateTimeKind.Local);
-                                dueDateUtc = localDt.ToUniversalTime();
-                            }
+                    string? newStatus = e.AddedItems[0] as string;
+                    if (string.IsNullOrEmpty(newStatus)) return;
 
-                            var updatePayload = new
-                            {
-                                ColumnId = vm.ColumnId,
-                                ColumnName = vm.ColumnName,
-                                OrderIndex = vm.OrderIndex,
-                                ProjectId = vm.ProjectId,
-                                DueDate = dueDateUtc,
-                                Status = vm.Status,
-                                IsActive = true
-                            };
-                            await apiService.UpdateColumnAsync(vm.ColumnId, updatePayload);
+                    vm.Status = newStatus;
+                    DateTime? dueDateUtc = null;
+                    if (vm.DueDate.HasValue)
+                    {
+                        var dt = vm.DueDate.Value;
+                        DateTime localDt = dt.Kind == DateTimeKind.Utc ? dt.ToLocalTime() : dt;
+                        localDt = DateTime.SpecifyKind(localDt, DateTimeKind.Local);
+                        dueDateUtc = localDt.ToUniversalTime();
+                    }
+
+                    var updatePayload = new
+                    {
+                        ColumnId = vm.ColumnId,
+                        ColumnName = vm.ColumnName,
+                        OrderIndex = vm.OrderIndex,
+                        ProjectId = vm.ProjectId,
+                        DueDate = dueDateUtc,
+                        Status = vm.Status,
+                        IsActive = true
+                    };
+
+                    try
+                    {
+                        var response = await apiService.UpdateColumnAsync(vm.ColumnId, updatePayload);
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            var err = await response.Content.ReadAsStringAsync();
+                            MessageBox.Show($"Lỗi lưu trạng thái: {err}", "Lỗi Server", MessageBoxButton.OK, MessageBoxImage.Warning);
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi kết nối khi cập nhật trạng thái: {ex.Message}", "Lỗi mạng", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }

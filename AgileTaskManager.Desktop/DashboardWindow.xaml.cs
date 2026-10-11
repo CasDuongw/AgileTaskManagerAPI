@@ -444,7 +444,46 @@ namespace AgileTaskManager.Desktop
                     taskVm.AssigneeId = updatedVm.AssigneeId;
                     taskVm.DueDate = updatedVm.DueDate;
                     taskVm.Tags = updatedVm.Tags;
-                    if (ucCalendarView != null) ucCalendarView.UpdateCalendarData();
+
+                    DateTime? dueDateUtc = null;
+                    if (taskVm.DueDate.HasValue)
+                    {
+                        var dt = taskVm.DueDate.Value;
+                        DateTime localDt = dt.Kind == DateTimeKind.Utc ? dt.ToLocalTime() : dt;
+                        localDt = DateTime.SpecifyKind(localDt, DateTimeKind.Local);
+                        dueDateUtc = localDt.ToUniversalTime();
+                    }
+
+                    var updatePayload = new
+                    {
+                        TaskId = taskVm.TaskId,
+                        TaskName = taskVm.TaskName,
+                        Description = taskVm.Description,
+                        AssigneeId = taskVm.AssigneeId,
+                        DueDate = dueDateUtc,
+                        Tags = taskVm.Tags,
+                        ColumnId = taskVm.ColumnId,
+                        ProjectId = SelectedProjectId,
+                        OrderIndex = taskVm.OrderIndex,
+                        IsActive = true
+                    };
+
+                    try
+                    {
+                        var response = await _apiService.UpdateTaskAsync(taskVm.TaskId, updatePayload);
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            var err = await response.Content.ReadAsStringAsync();
+                            MessageBox.Show($"Lỗi lưu Task lên Server: {err}", "Lỗi Server", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi kết nối khi lưu Task: {ex.Message}", "Lỗi mạng", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+
+                    if (viewCalendar?.Visibility == Visibility.Visible && ucCalendarView != null) 
+                        ucCalendarView.UpdateCalendarData();
                 }
             }
         }

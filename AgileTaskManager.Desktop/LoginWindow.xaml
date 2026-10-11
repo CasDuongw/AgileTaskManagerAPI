@@ -31,16 +31,24 @@
                 <Button x:Name="btnLogin" Content="ĐĂNG NHẬP" Click="BtnLogin_Click" Background="{StaticResource ColorPrimary}" Foreground="White" FontWeight="Bold" Cursor="Hand">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="0,12">
+                            <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="8" Padding="0,12">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="btnBorder" Property="Background" Value="#94A3B8"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="btnBorder" Property="Background" Value="#0B5ED7"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
                 
-                <ProgressBar x:Name="pbLoading" IsIndeterminate="True" Height="4" Margin="0,16,0,0" Foreground="{StaticResource ColorPrimary}" Visibility="Collapsed"/>
-                <TextBlock x:Name="lblStatus" Text="Đang kết nối đến máy chủ..." Foreground="{StaticResource ColorTextSecondary}" FontSize="12" HorizontalAlignment="Center" Margin="0,8,0,0" Visibility="Collapsed" TextWrapping="Wrap" TextAlignment="Center"/>
-                <TextBlock x:Name="lblMessage" Foreground="Red" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,12,0,0" Visibility="Collapsed"/>
+                <ProgressBar x:Name="pbLoading" IsIndeterminate="True" Height="6" Margin="0,16,0,0" Foreground="{StaticResource ColorPrimary}" Background="#E2E8F0" BorderThickness="0" Visibility="Collapsed"/>
+                <TextBlock x:Name="lblStatus" Text="Đang kết nối đến máy chủ..." Foreground="#2563EB" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,10,0,0" Visibility="Collapsed" TextWrapping="Wrap" TextAlignment="Center"/>
+                <TextBlock x:Name="lblMessage" Foreground="#DC2626" FontSize="13" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,12,0,0" Visibility="Collapsed"/>
             </StackPanel>
         </Border>
     </Grid>

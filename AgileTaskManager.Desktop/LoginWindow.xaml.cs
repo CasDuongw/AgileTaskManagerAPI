@@ -59,10 +59,15 @@ namespace AgileTaskManager.Desktop
             // Bật trạng thái Loading
             btnLogin.IsEnabled = false;
             btnLogin.Content = "ĐANG XỬ LÝ...";
+            txtEmail.IsEnabled = false;
+            txtPassword.IsEnabled = false;
             pbLoading.Visibility = Visibility.Visible;
             lblStatus.Text = "Đang kết nối đến máy chủ đám mây...";
             lblStatus.Visibility = Visibility.Visible;
             System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+
+            // Ép WPF vẽ giao diện ngay lập tức trước khi luồng bắt đầu gửi HTTP
+            await System.Threading.Tasks.Task.Yield();
 
             // Timer thông báo nếu Render đang ngủ (Cold Start)
             using var cts = new System.Threading.CancellationTokenSource();
@@ -115,6 +120,8 @@ namespace AgileTaskManager.Desktop
                 cts.Cancel();
                 btnLogin.IsEnabled = true;
                 btnLogin.Content = "ĐĂNG NHẬP";
+                txtEmail.IsEnabled = true;
+                txtPassword.IsEnabled = true;
                 pbLoading.Visibility = Visibility.Collapsed;
                 lblStatus.Visibility = Visibility.Collapsed;
                 System.Windows.Input.Mouse.OverrideCursor = null;

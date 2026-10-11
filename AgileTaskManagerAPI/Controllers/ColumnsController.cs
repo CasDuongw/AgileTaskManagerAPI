@@ -69,7 +69,11 @@ namespace AgileTaskManagerAPI.Controllers
             if (existing == null) return NotFound();
 
             bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-            if (existing.Project == null || (!isAdmin && existing.Project.OwnerId != GetCurrentUserId())) return Forbid();
+            if (!isAdmin)
+            {
+                var project = existing.Project ?? await _context.Projects.FindAsync(existing.ProjectId);
+                if (project == null || project.OwnerId != GetCurrentUserId()) return Forbid();
+            }
 
             existing.ColumnName = column.ColumnName;
             existing.Status = column.Status;
