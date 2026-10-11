@@ -102,7 +102,7 @@ namespace AgileTaskManager.Desktop
 
                 for (int col = 1; col <= 7; col++)
                 {
-                    var cellDate = _viewModel.CurrentWeekStart.AddDays(col - 1).AddHours(hour);
+                    var cellDate = DateTime.SpecifyKind(_viewModel.CurrentWeekStart.AddDays(col - 1).AddHours(hour), DateTimeKind.Local);
                     
                     var cellVm = new CalendarCellViewModel { SlotTime = cellDate };
                     _viewModel.Cells.Add(cellVm);
@@ -128,6 +128,7 @@ namespace AgileTaskManager.Desktop
                     { 
                         Content = itemsControl, 
                         VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                        Background = Brushes.Transparent,
                         Tag = cellVm,
                         AllowDrop = true
                     };
@@ -138,7 +139,7 @@ namespace AgileTaskManager.Desktop
                     {
                         BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E2E8F0")),
                         BorderThickness = new Thickness(0, 0, 1, 1),
-                        Background = Brushes.Transparent,
+                        Background = Brushes.White,
                         Child = scrollViewer,
                         Tag = cellVm,
                         AllowDrop = true
@@ -209,9 +210,10 @@ namespace AgileTaskManager.Desktop
             {
                 if (column.DueDate.HasValue)
                 {
-                    DateTime due = column.DueDate.Value.Kind == DateTimeKind.Utc 
-                        ? column.DueDate.Value.ToLocalTime() 
-                        : column.DueDate.Value;
+                    DateTime rawDue = column.DueDate.Value;
+                    DateTime due = rawDue.Kind == DateTimeKind.Utc 
+                        ? rawDue.ToLocalTime() 
+                        : rawDue;
 
                     var cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == due.Date && c.SlotTime.Hour == due.Hour);
                     if (cell != null)
@@ -341,19 +343,79 @@ namespace AgileTaskManager.Desktop
                 current = VisualTreeHelper.GetParent(current);
             }
 
-            // 2. Fallback to dropInfo TargetCollection
+            // 2. Fallback: coordinate resolution inside CalendarGrid
+            if (targetCell == null && targetList == null)
+            {
+                try
+                {
+                    Point dropPos = dropInfo.DropPosition;
+                    if (dropInfo.VisualTarget is Visual v)
+                    {
+                        var screenPt = v.PointToScreen(dropPos);
+                        dropPos = CalendarGrid.PointFromScreen(screenPt);
+                    }
+
+                    foreach (UIElement child in CalendarGrid.Children)
+                    {
+                        if (child is FrameworkElement fe && fe.Tag is CalendarCellViewModel cell)
+                        {
+                            Point childPos = fe.TranslatePoint(new Point(0, 0), CalendarGrid);
+                            Rect bounds = new Rect(childPos, fe.RenderSize);
+                            if (bounds.Contains(dropPos))
+                            {
+                                targetCell = cell;
+                                targetList = cell.Tasks;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (targetCell == null && dropPos.X > 80 && CalendarGrid.ActualWidth > 80)
+                    {
+                        double colWidth = (CalendarGrid.ActualWidth - 80) / 7.0;
+                        int dayCol = (int)((dropPos.X - 80) / colWidth);
+                        dayCol = Math.Clamp(dayCol, 0, 6);
+
+                        double headerHeight = CalendarGrid.RowDefinitions.Count > 0 ? CalendarGrid.RowDefinitions[0].ActualHeight : 40;
+                        if (headerHeight <= 0) headerHeight = 40;
+                        double gridRemainingHeight = Math.Max(100, CalendarGrid.ActualHeight - headerHeight);
+                        double rowHeight = gridRemainingHeight / 10.0;
+                        int rowHour = (int)((dropPos.Y - headerHeight) / rowHeight) + 8;
+                        rowHour = Math.Clamp(rowHour, 8, 17);
+
+                        DateTime targetDate = _viewModel.CurrentWeekStart.AddDays(dayCol).Date;
+                        targetCell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == targetDate && c.SlotTime.Hour == rowHour);
+                        if (targetCell != null)
+                        {
+                            targetList = targetCell.Tasks;
+                        }
+                    }
+                }
+                catch
+                {
+                    // Ignore coordinate resolution errors
+                }
+            }
+
+            // 3. Fallback to dropInfo TargetCollection
             if (targetList == null)
             {
                 targetList = dropInfo.TargetCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
-                if (targetList != null)
-                {
-                    targetCell = _viewModel.Cells.FirstOrDefault(c => c.Tasks == targetList);
-                }
+            }
+
+            if (targetCell == null && targetList != null && targetList != _viewModel.UnscheduledTasks)
+            {
+                targetCell = _viewModel.Cells.FirstOrDefault(c => c.Tasks == targetList);
             }
 
             if (targetList == null) return;
 
-            var sourceList = dropInfo.DragInfo?.SourceCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
+            // Guaranteed source list resolution
+            var sourceList = (dropInfo.DragInfo?.SourceCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>)
+                ?? (_viewModel.UnscheduledTasks.Contains(column) 
+                    ? _viewModel.UnscheduledTasks 
+                    : _viewModel.Cells.FirstOrDefault(c => c.Tasks.Contains(column))?.Tasks);
+
             if (sourceList != null)
             {
                 if (sourceList != targetList)
@@ -364,7 +426,7 @@ namespace AgileTaskManager.Desktop
 
                     if (targetCell != null)
                     {
-                        column.DueDate = targetCell.SlotTime;
+                        column.DueDate = DateTime.SpecifyKind(targetCell.SlotTime, DateTimeKind.Local);
                         _ = UpdateColumnApiAsync(column);
                     }
                     else if (targetList == _viewModel.UnscheduledTasks)

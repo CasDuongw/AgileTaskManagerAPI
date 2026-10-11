@@ -30,11 +30,21 @@ namespace AgileTaskManagerAPI.Controllers
             var project = await _context.Projects.FindAsync(projectId);
             if (project == null) return NotFound();
 
-            return await _context.KanbanColumns
+            var columns = await _context.KanbanColumns
                 .AsNoTracking()
                 .Where(c => c.ProjectId == projectId && c.IsActive)
                 .OrderBy(c => c.OrderIndex)
                 .ToListAsync();
+
+            foreach (var col in columns)
+            {
+                if (col.DueDate.HasValue)
+                {
+                    col.DueDate = DateTime.SpecifyKind(col.DueDate.Value, DateTimeKind.Utc);
+                }
+            }
+
+            return columns;
         }
 
         [HttpPost]
@@ -53,14 +63,17 @@ namespace AgileTaskManagerAPI.Controllers
             {
                 column.Status = "Vừa giao";
             }
+            if (column.DueDate.HasValue)
+            {
+                column.DueDate = DateTime.SpecifyKind(column.DueDate.Value, DateTimeKind.Utc);
+            }
 
             _context.KanbanColumns.Add(column);
             await _context.SaveChangesAsync();
 
-            // Đồng bộ Task lớn vào bảng Tasks
+            // Đồng bộ Task lớn vào bảng Tasks (không gán TaskId để database tự sinh Identity)
             var mainTask = new AppTask
             {
-                TaskId = column.ColumnId,
                 TaskName = column.ColumnName,
                 ProjectId = column.ProjectId,
                 ColumnId = column.ColumnId,
@@ -90,26 +103,12 @@ namespace AgileTaskManagerAPI.Controllers
             existing.DueDate = column.DueDate.HasValue ? DateTime.SpecifyKind(column.DueDate.Value, DateTimeKind.Utc) : null;
             existing.OrderIndex = column.OrderIndex;
 
-            var mainTask = await _context.Tasks.FindAsync(id);
+            var mainTask = await _context.Tasks.FirstOrDefaultAsync(t => t.ColumnId == id);
             if (mainTask != null)
             {
                 mainTask.TaskName = column.ColumnName;
                 mainTask.DueDate = existing.DueDate;
                 mainTask.OrderIndex = column.OrderIndex;
-            }
-            else
-            {
-                mainTask = new AppTask
-                {
-                    TaskId = existing.ColumnId,
-                    TaskName = existing.ColumnName,
-                    ProjectId = existing.ProjectId,
-                    ColumnId = existing.ColumnId,
-                    OrderIndex = existing.OrderIndex,
-                    IsActive = true,
-                    DueDate = existing.DueDate
-                };
-                _context.Tasks.Add(mainTask);
             }
 
             await _context.SaveChangesAsync();
@@ -123,7 +122,7 @@ namespace AgileTaskManagerAPI.Controllers
             if (col == null) return NotFound();
 
             col.IsActive = false;
-            var mainTask = await _context.Tasks.FindAsync(id);
+            var mainTask = await _context.Tasks.FirstOrDefaultAsync(t => t.ColumnId == id);
             if (mainTask != null) mainTask.IsActive = false;
             await _context.SaveChangesAsync();
             return Ok();

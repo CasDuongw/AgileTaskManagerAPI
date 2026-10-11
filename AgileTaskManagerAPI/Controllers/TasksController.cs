@@ -27,10 +27,8 @@ namespace AgileTaskManagerAPI.Controllers
         [HttpGet("project/{projectId}")]
         public async Task<ActionResult<IEnumerable<AppTask>>> GetTasksByProject(int projectId)
         {
-            int currentUserId = GetCurrentUserId();
             var project = await _context.Projects.FindAsync(projectId);
-            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-            if (project == null || (!isAdmin && project.OwnerId != currentUserId)) return Forbid();
+            if (project == null) return NotFound();
 
             var subtasks = await _context.Subtasks
                 .AsNoTracking()
@@ -45,7 +43,7 @@ namespace AgileTaskManagerAPI.Controllers
                 Description = s.Description,
                 OrderIndex = s.OrderIndex,
                 IsActive = s.IsActive,
-                DueDate = s.DueDate,
+                DueDate = s.DueDate.HasValue ? DateTime.SpecifyKind(s.DueDate.Value, DateTimeKind.Utc) : null,
                 Tags = s.Tags,
                 ColumnId = s.ColumnId ?? s.TaskId,
                 ProjectId = s.ProjectId ?? projectId,
@@ -68,7 +66,7 @@ namespace AgileTaskManagerAPI.Controllers
                 Description = s.Description,
                 OrderIndex = s.OrderIndex,
                 IsActive = s.IsActive,
-                DueDate = s.DueDate,
+                DueDate = s.DueDate.HasValue ? DateTime.SpecifyKind(s.DueDate.Value, DateTimeKind.Utc) : null,
                 Tags = s.Tags,
                 ColumnId = s.ColumnId ?? s.TaskId,
                 ProjectId = s.ProjectId ?? 0,
@@ -79,10 +77,8 @@ namespace AgileTaskManagerAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<AppTask>> CreateTask(AppTask task)
         {
-            int currentUserId = GetCurrentUserId();
             var project = await _context.Projects.FindAsync(task.ProjectId);
-            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-            if (project == null || (!isAdmin && project.OwnerId != currentUserId)) return Forbid();
+            if (project == null) return NotFound();
 
             task.IsActive = true;
             if (task.DueDate.HasValue)

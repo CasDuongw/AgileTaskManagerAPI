@@ -84,8 +84,15 @@
 
             <!-- Lưới Calendar -->
             <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,10,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                    <Grid x:Name="CalendarGrid">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                              AllowDrop="True"
+                              dd:DragDrop.IsDropTarget="True"
+                              dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
+                    <Grid x:Name="CalendarGrid"
+                          Background="Transparent"
+                          AllowDrop="True"
+                          dd:DragDrop.IsDropTarget="True"
+                          dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
                         <!-- Sẽ được tạo động trong Code-Behind -->
                     </Grid>
                 </ScrollViewer>

@@ -174,7 +174,11 @@ namespace AgileTaskManager.Desktop
                         ColumnName = col.columnName,
                         ProjectId = projectId,
                         OrderIndex = col.orderIndex,
-                        DueDate = col.dueDate.HasValue ? (col.dueDate.Value.Kind == DateTimeKind.Utc ? col.dueDate.Value.ToLocalTime() : col.dueDate.Value) : (DateTime?)null,
+                        DueDate = col.dueDate.HasValue 
+                            ? (col.dueDate.Value.Kind == DateTimeKind.Utc 
+                                ? col.dueDate.Value.ToLocalTime() 
+                                : DateTime.SpecifyKind(col.dueDate.Value, DateTimeKind.Utc).ToLocalTime()) 
+                            : (DateTime?)null,
                         Status = string.IsNullOrEmpty(col.status) ? "Vừa giao" : col.status
                     };
 
