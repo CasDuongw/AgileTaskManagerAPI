@@ -25,13 +25,13 @@ namespace AgileTaskManagerAPI.Model
 
         public string Tags { get; set; } = string.Empty;
         
-        public int ColumnId { get; set; }
+        public int? ColumnId { get; set; }
         
         [ForeignKey("ColumnId")]
         [JsonIgnore]
         public KanbanColumn? Column { get; set; }
 
-        public int ProjectId { get; set; }
+        public int? ProjectId { get; set; }
 
         [ForeignKey("ProjectId")]
         [JsonIgnore]
@@ -42,7 +42,7 @@ namespace AgileTaskManagerAPI.Model
         [ForeignKey("AssigneeId")]
         public User? Assignee { get; set; }
 
-        public int? TaskId { get; set; }
+        public int TaskId { get; set; }
 
         [ForeignKey("TaskId")]
         [JsonIgnore]

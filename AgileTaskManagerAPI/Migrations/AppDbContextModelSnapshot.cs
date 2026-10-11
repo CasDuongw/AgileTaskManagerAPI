@@ -146,7 +146,7 @@ namespace AgileTaskManagerAPI.Migrations
                     b.Property<int?>("AssigneeId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ColumnId")
+                    b.Property<int?>("ColumnId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Description")
@@ -165,14 +165,14 @@ namespace AgileTaskManagerAPI.Migrations
                     b.Property<int>("OrderIndex")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ProjectId")
+                    b.Property<int?>("ProjectId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Tags")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("TaskId")
+                    b.Property<int>("TaskId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Title")
@@ -276,19 +276,17 @@ namespace AgileTaskManagerAPI.Migrations
 
                     b.HasOne("AgileTaskManagerAPI.Model.KanbanColumn", "Column")
                         .WithMany("Subtasks")
-                        .HasForeignKey("ColumnId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ColumnId");
 
                     b.HasOne("AgileTaskManagerAPI.Model.Project", "Project")
                         .WithMany()
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ProjectId");
 
                     b.HasOne("AgileTaskManagerAPI.Model.AppTask", "Task")
                         .WithMany("Subtasks")
-                        .HasForeignKey("TaskId");
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Assignee");
 

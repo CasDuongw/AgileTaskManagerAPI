@@ -271,7 +271,7 @@ namespace AgileTaskManager.Desktop
         {
             if (string.IsNullOrWhiteSpace(txtTaskName.Text))
             {
-                MessageBox.Show("Vui lòng nhập tên Task lớn.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Vui lòng nhập tên Task.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             if (cboProject.SelectedValue == null)
@@ -296,50 +296,53 @@ namespace AgileTaskManager.Desktop
                 dueDate = DateTime.SpecifyKind(date, DateTimeKind.Local).ToUniversalTime();
             }
 
-            var newCol = new 
+            int colId = _viewModel.Columns.FirstOrDefault()?.ColumnId ?? 0;
+
+            var task = new 
             { 
-                columnName = txtTaskName.Text.Trim(), 
+                taskName = txtTaskName.Text.Trim(), 
                 projectId = projectId,
-                dueDate = dueDate,
-                status = "Vừa giao"
+                columnId = colId,
+                dueDate = dueDate
             };
 
-            var response = await _apiService.CreateColumnAsync(newCol);
+            var response = await _apiService.CreateTaskAsync(task);
             if (response.IsSuccessStatusCode)
             {
-                MessageBox.Show("Tạo Task lớn thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Tạo Task thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                 txtTaskName.Clear();
                 dpCreateTaskDate.SelectedDate = null;
                 cboCreateTaskTime.SelectedIndex = -1;
 
                 if (SelectedProjectId == projectId)
                 {
-                    var createdCol = await response.Content.ReadFromJsonAsync<ColumnResponse>();
-                    if (createdCol != null)
+                    var createdTask = await response.Content.ReadFromJsonAsync<KanbanColumn.TaskResponse>();
+                    if (createdTask != null)
                     {
-                        var colVm = new KanbanColumnViewModel
+                        var column = _viewModel.Columns.FirstOrDefault(c => c.ColumnId == createdTask.columnId) ?? _viewModel.Columns.FirstOrDefault();
+                        if (column != null)
                         {
-                            ColumnId = createdCol.columnId,
-                            ColumnName = createdCol.columnName,
-                            ProjectId = projectId,
-                            OrderIndex = createdCol.orderIndex,
-                            DueDate = createdCol.dueDate.HasValue ? (createdCol.dueDate.Value.Kind == DateTimeKind.Utc ? createdCol.dueDate.Value.ToLocalTime() : createdCol.dueDate.Value) : (DateTime?)null,
-                            Status = string.IsNullOrEmpty(createdCol.status) ? "Vừa giao" : createdCol.status
-                        };
-                        colVm.Tasks.CollectionChanged += (s, ev) => 
-                        { 
-                            if (viewCalendar?.Visibility == Visibility.Visible && ucCalendarView != null) 
-                                ucCalendarView.UpdateCalendarData(); 
-                        };
-                        _viewModel.Columns.Add(colVm);
-                        UpdateAddListButtonText();
-                        if (ucCalendarView != null) ucCalendarView.UpdateCalendarData();
+                            var taskVm = new KanbanTaskViewModel
+                            {
+                                TaskId = createdTask.taskId,
+                                TaskName = createdTask.taskName,
+                                Description = createdTask.description ?? "",
+                                AssigneeId = createdTask.assigneeId,
+                                DueDate = createdTask.dueDate.HasValue ? (createdTask.dueDate.Value.Kind == DateTimeKind.Utc ? createdTask.dueDate.Value.ToLocalTime() : createdTask.dueDate.Value) : (DateTime?)null,
+                                Tags = createdTask.tags ?? "",
+                                ColumnId = column.ColumnId,
+                                OrderIndex = createdTask.orderIndex
+                            };
+                            taskVm.EditTaskCommand = new RelayCommand(async () => await EditTaskAsync(taskVm));
+                            column.Tasks.Add(taskVm);
+                            if (ucCalendarView != null) ucCalendarView.UpdateCalendarData();
+                        }
                     }
                 }
             }
             else
             {
-                MessageBox.Show("Lỗi: Không thể tạo Task lớn.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Lỗi: Không thể tạo Task.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

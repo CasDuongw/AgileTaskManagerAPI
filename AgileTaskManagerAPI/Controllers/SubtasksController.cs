@@ -23,6 +23,9 @@ namespace AgileTaskManagerAPI.Controllers
             if (task == null) return NotFound("Task not found.");
 
             request.TaskId = taskId;
+            request.ColumnId = task.ColumnId;
+            request.ProjectId = task.ProjectId;
+            request.IsActive = true;
             _context.Subtasks.Add(request);
             await _context.SaveChangesAsync();
             return Ok(request);
