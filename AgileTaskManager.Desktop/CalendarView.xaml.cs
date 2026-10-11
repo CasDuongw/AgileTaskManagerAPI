@@ -209,7 +209,10 @@ namespace AgileTaskManager.Desktop
             {
                 if (column.DueDate.HasValue)
                 {
-                    DateTime due = column.DueDate.Value;
+                    DateTime due = column.DueDate.Value.Kind == DateTimeKind.Utc 
+                        ? column.DueDate.Value.ToLocalTime() 
+                        : column.DueDate.Value;
+
                     var cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == due.Date && c.SlotTime.Hour == due.Hour);
                     if (cell != null)
                     {
@@ -397,13 +400,22 @@ namespace AgileTaskManager.Desktop
 
         private async Task UpdateColumnApiAsync(KanbanColumnViewModel updatedVm)
         {
+            DateTime? dueDateUtc = null;
+            if (updatedVm.DueDate.HasValue)
+            {
+                var dt = updatedVm.DueDate.Value;
+                DateTime localDt = dt.Kind == DateTimeKind.Utc ? dt.ToLocalTime() : dt;
+                localDt = DateTime.SpecifyKind(localDt, DateTimeKind.Local);
+                dueDateUtc = localDt.ToUniversalTime();
+            }
+
             var updatePayload = new
             {
                 ColumnId = updatedVm.ColumnId,
                 ColumnName = updatedVm.ColumnName,
                 OrderIndex = updatedVm.OrderIndex,
                 ProjectId = updatedVm.ProjectId,
-                DueDate = updatedVm.DueDate.HasValue ? DateTime.SpecifyKind(updatedVm.DueDate.Value, DateTimeKind.Utc) : (DateTime?)null,
+                DueDate = dueDateUtc,
                 Status = updatedVm.Status,
                 IsActive = true
             };

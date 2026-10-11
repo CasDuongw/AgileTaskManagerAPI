@@ -168,8 +168,8 @@ namespace AgileTaskManager.Desktop
                         ColumnName = col.columnName,
                         ProjectId = projectId,
                         OrderIndex = col.orderIndex,
-                        DueDate = col.dueDate,
-                        Status = string.IsNullOrEmpty(col.status) ? "V?a giao" : col.status
+                        DueDate = col.dueDate.HasValue ? (col.dueDate.Value.Kind == DateTimeKind.Utc ? col.dueDate.Value.ToLocalTime() : col.dueDate.Value) : (DateTime?)null,
+                        Status = string.IsNullOrEmpty(col.status) ? "Vừa giao" : col.status
                     };
 
                     var colTasks = taskList.Where(t => t.columnId == col.columnId).OrderBy(t => t.orderIndex);

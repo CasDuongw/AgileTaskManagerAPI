@@ -32,13 +32,22 @@ namespace AgileTaskManager.Desktop
                         if (vm.Status != newStatus)
                         {
                             vm.Status = newStatus;
+                            DateTime? dueDateUtc = null;
+                            if (vm.DueDate.HasValue)
+                            {
+                                var dt = vm.DueDate.Value;
+                                DateTime localDt = dt.Kind == DateTimeKind.Utc ? dt.ToLocalTime() : dt;
+                                localDt = DateTime.SpecifyKind(localDt, DateTimeKind.Local);
+                                dueDateUtc = localDt.ToUniversalTime();
+                            }
+
                             var updatePayload = new
                             {
                                 ColumnId = vm.ColumnId,
                                 ColumnName = vm.ColumnName,
                                 OrderIndex = vm.OrderIndex,
                                 ProjectId = vm.ProjectId,
-                                DueDate = vm.DueDate,
+                                DueDate = dueDateUtc,
                                 Status = vm.Status,
                                 IsActive = true
                             };
@@ -48,18 +57,27 @@ namespace AgileTaskManager.Desktop
                 }
             }
         }
-                private async void TxtTitle_LostFocus(object sender, RoutedEventArgs e)
+        private async void TxtTitle_LostFocus(object sender, RoutedEventArgs e)
         {
             if (DataContext is KanbanColumnViewModel vm)
             {
                 vm.IsEditingTitle = false;
+                DateTime? dueDateUtc = null;
+                if (vm.DueDate.HasValue)
+                {
+                    var dt = vm.DueDate.Value;
+                    DateTime localDt = dt.Kind == DateTimeKind.Utc ? dt.ToLocalTime() : dt;
+                    localDt = DateTime.SpecifyKind(localDt, DateTimeKind.Local);
+                    dueDateUtc = localDt.ToUniversalTime();
+                }
+
                 var updatePayload = new
                 {
                     ColumnId = vm.ColumnId,
                     ColumnName = vm.ColumnName,
                     OrderIndex = vm.OrderIndex,
                     ProjectId = vm.ProjectId,
-                    DueDate = vm.DueDate,
+                    DueDate = dueDateUtc,
                     Status = vm.Status,
                     IsActive = true
                 };
