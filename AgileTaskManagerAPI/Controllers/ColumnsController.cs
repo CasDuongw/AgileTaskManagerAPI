@@ -27,10 +27,8 @@ namespace AgileTaskManagerAPI.Controllers
         [HttpGet("project/{projectId}")]
         public async Task<ActionResult<IEnumerable<KanbanColumn>>> GetColumnsByProject(int projectId)
         {
-            int currentUserId = GetCurrentUserId();
             var project = await _context.Projects.FindAsync(projectId);
-            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-            if (project == null || (!isAdmin && project.OwnerId != currentUserId)) return Forbid();
+            if (project == null) return NotFound();
 
             return await _context.KanbanColumns
                 .AsNoTracking()
@@ -42,10 +40,8 @@ namespace AgileTaskManagerAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<KanbanColumn>> CreateColumn(KanbanColumn column)
         {
-            int currentUserId = GetCurrentUserId();
             var project = await _context.Projects.FindAsync(column.ProjectId);
-            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-            if (project == null || (!isAdmin && project.OwnerId != currentUserId)) return Forbid();
+            if (project == null) return NotFound();
 
             var maxOrder = await _context.KanbanColumns
                 .Where(c => c.ProjectId == column.ProjectId)
@@ -53,6 +49,10 @@ namespace AgileTaskManagerAPI.Controllers
             
             column.OrderIndex = maxOrder + 1;
             column.IsActive = true;
+            if (string.IsNullOrWhiteSpace(column.Status))
+            {
+                column.Status = "Vừa giao";
+            }
 
             _context.KanbanColumns.Add(column);
             await _context.SaveChangesAsync();
@@ -82,15 +82,11 @@ namespace AgileTaskManagerAPI.Controllers
             var existing = await _context.KanbanColumns.Include(c => c.Project).FirstOrDefaultAsync(c => c.ColumnId == id);
             if (existing == null) return NotFound();
 
-            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-            if (!isAdmin)
-            {
-                var project = existing.Project ?? await _context.Projects.FindAsync(existing.ProjectId);
-                if (project == null || project.OwnerId != GetCurrentUserId()) return Forbid();
-            }
-
             existing.ColumnName = column.ColumnName;
-            existing.Status = column.Status;
+            if (!string.IsNullOrWhiteSpace(column.Status))
+            {
+                existing.Status = column.Status;
+            }
             existing.DueDate = column.DueDate.HasValue ? DateTime.SpecifyKind(column.DueDate.Value, DateTimeKind.Utc) : null;
             existing.OrderIndex = column.OrderIndex;
 
@@ -101,6 +97,20 @@ namespace AgileTaskManagerAPI.Controllers
                 mainTask.DueDate = existing.DueDate;
                 mainTask.OrderIndex = column.OrderIndex;
             }
+            else
+            {
+                mainTask = new AppTask
+                {
+                    TaskId = existing.ColumnId,
+                    TaskName = existing.ColumnName,
+                    ProjectId = existing.ProjectId,
+                    ColumnId = existing.ColumnId,
+                    OrderIndex = existing.OrderIndex,
+                    IsActive = true,
+                    DueDate = existing.DueDate
+                };
+                _context.Tasks.Add(mainTask);
+            }
 
             await _context.SaveChangesAsync();
             return Ok(existing);
@@ -109,10 +119,8 @@ namespace AgileTaskManagerAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteColumn(int id)
         {
-            var col = await _context.KanbanColumns.Include(c => c.Project).FirstOrDefaultAsync(c => c.ColumnId == id);
+            var col = await _context.KanbanColumns.FindAsync(id);
             if (col == null) return NotFound();
-            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-            if (col.Project == null || (!isAdmin && col.Project.OwnerId != GetCurrentUserId())) return Forbid();
 
             col.IsActive = false;
             var mainTask = await _context.Tasks.FindAsync(id);

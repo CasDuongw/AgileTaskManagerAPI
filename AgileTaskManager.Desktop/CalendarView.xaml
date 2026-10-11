@@ -92,15 +92,15 @@
             </Border>
 
             <!-- Danh sách Unscheduled Tasks -->
-            <Border Grid.Column="1" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10">
-                <Grid>
+            <Border Grid.Column="1" Tag="Unscheduled" AllowDrop="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10">
+                <Grid Tag="Unscheduled">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <TextBlock x:Name="txtUnscheduledHeader" Grid.Row="0" Text="Chưa xếp lịch" FontWeight="Bold" FontSize="14" Foreground="#475569" Margin="0,0,0,10" AllowDrop="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding UnscheduledTasks}" ItemTemplate="{StaticResource CalendarTaskTemplate}" 
+                    <TextBlock x:Name="txtUnscheduledHeader" Tag="Unscheduled" Grid.Row="0" Text="Chưa xếp lịch" FontWeight="Bold" FontSize="14" Foreground="#475569" Margin="0,0,0,10" AllowDrop="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                    <ScrollViewer Grid.Row="1" Tag="Unscheduled" VerticalScrollBarVisibility="Auto" AllowDrop="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
+                        <ItemsControl x:Name="icUnscheduledTasks" Tag="Unscheduled" ItemsSource="{Binding UnscheduledTasks}" ItemTemplate="{StaticResource CalendarTaskTemplate}" 
                                       AllowDrop="True" Background="Transparent" MinHeight="500" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                                       dd:DragDrop.IsDragSource="True" 
                                       dd:DragDrop.IsDropTarget="True" 

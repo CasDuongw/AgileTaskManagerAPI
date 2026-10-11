@@ -277,17 +277,16 @@ namespace AgileTaskManager.Desktop
 
         private async void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (e.AddedItems.Count > 0 && e.RemovedItems.Count > 0)
+            var cb = sender as ComboBox;
+            if (cb == null || !cb.IsLoaded) return;
+
+            if (cb.DataContext is KanbanColumnViewModel columnVm)
             {
-                var cb = sender as ComboBox;
-                if (cb?.DataContext is KanbanColumnViewModel columnVm)
+                string? newStatus = e.AddedItems.Count > 0 ? e.AddedItems[0] as string : cb.SelectedValue as string;
+                if (!string.IsNullOrWhiteSpace(newStatus))
                 {
-                    string? newStatus = e.AddedItems[0] as string;
-                    if (!string.IsNullOrEmpty(newStatus))
-                    {
-                        columnVm.Status = newStatus;
-                        await UpdateColumnApiAsync(columnVm);
-                    }
+                    columnVm.Status = newStatus;
+                    await UpdateColumnApiAsync(columnVm);
                 }
             }
         }
@@ -306,81 +305,66 @@ namespace AgileTaskManager.Desktop
             var column = dropInfo.Data as KanbanColumnViewModel;
             if (column == null) return;
 
-            if (dropInfo.VisualTarget == txtUnscheduledHeader)
+            CalendarCellViewModel? targetCell = null;
+            System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>? targetList = null;
+
+            // 1. Resolve target cell or unscheduled list using VisualTreeHelper
+            DependencyObject? current = dropInfo.VisualTarget as DependencyObject;
+            while (current != null)
             {
-                var sourceList = dropInfo.DragInfo.SourceCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
-                if (sourceList != null && sourceList != _viewModel.UnscheduledTasks)
+                if (current is FrameworkElement fe)
                 {
-                    sourceList.Remove(column);
-                    _viewModel.UnscheduledTasks.Insert(0, column);
-                    column.DueDate = null;
-                    _ = UpdateColumnApiAsync(column);
-                }
-                else if (sourceList == _viewModel.UnscheduledTasks)
-                {
-                    sourceList.Remove(column);
-                    _viewModel.UnscheduledTasks.Insert(0, column);
-                }
-                return;
-            }
-
-            var targetList = dropInfo.TargetCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>
-                ?? (dropInfo.VisualTarget as ItemsControl)?.ItemsSource as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
-
-            CalendarCellViewModel targetCell = null;
-
-            if (dropInfo.VisualTarget is FrameworkElement fe)
-            {
-                if (fe.Tag is CalendarCellViewModel cellFromTag)
-                {
-                    targetCell = cellFromTag;
-                    targetList = targetCell.Tasks;
-                }
-                else if (fe is ScrollViewer sv && sv.Tag is CalendarCellViewModel cellFromSv)
-                {
-                    targetCell = cellFromSv;
-                    targetList = targetCell.Tasks;
-                }
-                else if (fe is Border b && b.Tag is CalendarCellViewModel cellFromB)
-                {
-                    targetCell = cellFromB;
-                    targetList = targetCell.Tasks;
-                }
-                else
-                {
-                    var current = fe.Parent as FrameworkElement;
-                    while (current != null)
+                    if (fe.Tag is CalendarCellViewModel cell)
                     {
-                        if (current.Tag is CalendarCellViewModel cellFromParent)
+                        targetCell = cell;
+                        targetList = cell.Tasks;
+                        break;
+                    }
+
+                    if (fe.Tag as string == "Unscheduled" || fe == txtUnscheduledHeader)
+                    {
+                        targetList = _viewModel.UnscheduledTasks;
+                        break;
+                    }
+
+                    if (fe is ItemsControl ic && ic.ItemsSource is System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel> colList)
+                    {
+                        targetList = colList;
+                        if (targetList == _viewModel.UnscheduledTasks)
                         {
-                            targetCell = cellFromParent;
-                            targetList = targetCell.Tasks;
                             break;
                         }
-                        if (current is ItemsControl ic && ic.ItemsSource is System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel> list)
-                        {
-                            targetList = list;
-                            break;
-                        }
-                        current = current.Parent as FrameworkElement;
+                        targetCell = _viewModel.Cells.FirstOrDefault(c => c.Tasks == colList);
+                        if (targetCell != null) break;
                     }
                 }
+                current = VisualTreeHelper.GetParent(current);
             }
 
-            if (targetList != null)
+            // 2. Fallback to dropInfo TargetCollection
+            if (targetList == null)
             {
-                var sourceList = dropInfo.DragInfo.SourceCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
-                if (sourceList != null && sourceList != targetList)
+                targetList = dropInfo.TargetCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
+                if (targetList != null)
                 {
-                    var cell = targetCell ?? _viewModel.Cells.FirstOrDefault(c => c.Tasks == targetList);
-                    
+                    targetCell = _viewModel.Cells.FirstOrDefault(c => c.Tasks == targetList);
+                }
+            }
+
+            if (targetList == null) return;
+
+            var sourceList = dropInfo.DragInfo?.SourceCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
+            if (sourceList != null)
+            {
+                if (sourceList != targetList)
+                {
                     sourceList.Remove(column);
                     int insertIndex = Math.Min(Math.Max(0, dropInfo.InsertIndex), targetList.Count);
                     targetList.Insert(insertIndex, column);
-                    
-                    if (cell != null)
+
+                    if (targetCell != null)
                     {
-                        column.DueDate = cell.SlotTime;
+                        column.DueDate = targetCell.SlotTime;
                         _ = UpdateColumnApiAsync(column);
                     }
                     else if (targetList == _viewModel.UnscheduledTasks)
@@ -389,9 +373,14 @@ namespace AgileTaskManager.Desktop
                         _ = UpdateColumnApiAsync(column);
                     }
                 }
-                else if (sourceList == targetList)
+                else
                 {
-                    GongSolutions.Wpf.DragDrop.DragDrop.DefaultDropHandler.Drop(dropInfo);
+                    int oldIndex = sourceList.IndexOf(column);
+                    int insertIndex = Math.Min(Math.Max(0, dropInfo.InsertIndex), sourceList.Count - 1);
+                    if (oldIndex != insertIndex && oldIndex >= 0 && insertIndex >= 0)
+                    {
+                        sourceList.Move(oldIndex, insertIndex);
+                    }
                 }
             }
         }
@@ -414,7 +403,7 @@ namespace AgileTaskManager.Desktop
                 OrderIndex = updatedVm.OrderIndex,
                 ProjectId = updatedVm.ProjectId,
                 DueDate = dueDateUtc,
-                Status = updatedVm.Status,
+                Status = string.IsNullOrWhiteSpace(updatedVm.Status) ? "Vừa giao" : updatedVm.Status,
                 IsActive = true
             };
             try

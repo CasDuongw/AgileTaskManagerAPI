@@ -386,7 +386,7 @@ namespace AgileTaskManager.Desktop
             try
             {
                 // [MỚI] Gọi API để lưu cột xuống Database trước
-                var newCol = new { columnName = title, projectId = selectedProjectId };
+                var newCol = new { columnName = title, projectId = selectedProjectId, status = "Vừa giao" };
                 var response = await _apiService.CreateColumnAsync(newCol);
                 
                 if (response.IsSuccessStatusCode)
@@ -398,7 +398,8 @@ namespace AgileTaskManager.Desktop
                         {
                             ColumnId = createdCol.columnId,
                             ColumnName = createdCol.columnName,
-                            ProjectId = selectedProjectId
+                            ProjectId = selectedProjectId,
+                            Status = string.IsNullOrEmpty(createdCol.status) ? "Vừa giao" : createdCol.status
                         };
                         colVm.Tasks.CollectionChanged += (s, ev) => { if (ucCalendarView != null) ucCalendarView.UpdateCalendarData(); };
                         _viewModel.Columns.Add(colVm);
