@@ -65,6 +65,8 @@ namespace AgileTaskManager.Desktop
             return dt.AddDays(-1 * diff).Date;
         }
 
+        private bool _isUpdatingDate = false;
+
         public void RenderCalendar(KanbanBoardViewModel boardVm)
         {
             _boardVm = boardVm;
@@ -76,6 +78,7 @@ namespace AgileTaskManager.Desktop
             CalendarGrid.Children.Clear();
             CalendarGrid.RowDefinitions.Clear();
             CalendarGrid.ColumnDefinitions.Clear();
+            _viewModel.Cells.Clear();
 
             for (int i = 0; i < 8; i++)
             {
@@ -101,12 +104,8 @@ namespace AgileTaskManager.Desktop
                 {
                     var cellDate = _viewModel.CurrentWeekStart.AddDays(col - 1).AddHours(hour);
                     
-                    var cellVm = _viewModel.Cells.FirstOrDefault(c => c.SlotTime == cellDate);
-                    if (cellVm == null)
-                    {
-                        cellVm = new CalendarCellViewModel { SlotTime = cellDate };
-                        _viewModel.Cells.Add(cellVm);
-                    }
+                    var cellVm = new CalendarCellViewModel { SlotTime = cellDate };
+                    _viewModel.Cells.Add(cellVm);
 
                     var itemsControl = new ItemsControl
                     {
@@ -117,21 +116,35 @@ namespace AgileTaskManager.Desktop
                         VerticalAlignment = VerticalAlignment.Stretch,
                         HorizontalAlignment = HorizontalAlignment.Stretch,
                         MinHeight = 80,
-                        Background = Brushes.Transparent
+                        Background = Brushes.Transparent,
+                        Tag = cellVm
                     };
 
                     GongSolutions.Wpf.DragDrop.DragDrop.SetIsDropTarget(itemsControl, true);
                     GongSolutions.Wpf.DragDrop.DragDrop.SetDropHandler(itemsControl, this);
                     GongSolutions.Wpf.DragDrop.DragDrop.SetIsDragSource(itemsControl, true);
-                    GongSolutions.Wpf.DragDrop.DragDrop.SetIsDragSource(itemsControl, true);
                     
+                    var scrollViewer = new ScrollViewer 
+                    { 
+                        Content = itemsControl, 
+                        VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                        Tag = cellVm,
+                        AllowDrop = true
+                    };
+                    GongSolutions.Wpf.DragDrop.DragDrop.SetIsDropTarget(scrollViewer, true);
+                    GongSolutions.Wpf.DragDrop.DragDrop.SetDropHandler(scrollViewer, this);
+
                     var border = new Border
                     {
                         BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E2E8F0")),
                         BorderThickness = new Thickness(0, 0, 1, 1),
                         Background = Brushes.Transparent,
-                        Child = new ScrollViewer { Content = itemsControl, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }
+                        Child = scrollViewer,
+                        Tag = cellVm,
+                        AllowDrop = true
                     };
+                    GongSolutions.Wpf.DragDrop.DragDrop.SetIsDropTarget(border, true);
+                    GongSolutions.Wpf.DragDrop.DragDrop.SetDropHandler(border, this);
 
                     Grid.SetRow(border, row);
                     Grid.SetColumn(border, col);
@@ -168,7 +181,21 @@ namespace AgileTaskManager.Desktop
 
         public void UpdateCalendarData()
         {
+            if (_boardVm == null)
+            {
+                Window window = Window.GetWindow(this);
+                if (window is DashboardWindow dashboard && dashboard.DataContext is KanbanBoardViewModel boardVm)
+                {
+                    _boardVm = boardVm;
+                }
+            }
+
             if (_boardVm == null) return;
+
+            if (_viewModel.Cells.Count == 0)
+            {
+                BuildGrid();
+            }
 
             _viewModel.Columns = _boardVm.Columns;
 
@@ -182,10 +209,19 @@ namespace AgileTaskManager.Desktop
             {
                 if (column.DueDate.HasValue)
                 {
-                    var cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == column.DueDate.Value.Date && c.SlotTime.Hour == column.DueDate.Value.Hour);
+                    DateTime due = column.DueDate.Value;
+                    var cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == due.Date && c.SlotTime.Hour == due.Hour);
                     if (cell != null)
                     {
                         cell.Tasks.Add(column);
+                    }
+                    else
+                    {
+                        // Nếu giờ không nằm trong khung 8..17h (ví dụ 00:00 midnight) hoặc thuộc tuần hiện tại mà không khớp slot:
+                        if (due.Hour < 8 || due.Hour > 17 || (due.Date >= _viewModel.CurrentWeekStart && due.Date < _viewModel.CurrentWeekStart.AddDays(7)))
+                        {
+                            _viewModel.UnscheduledTasks.Add(column);
+                        }
                     }
                 }
                 else
@@ -197,22 +233,27 @@ namespace AgileTaskManager.Desktop
 
         private void PrevWeek_Click(object sender, RoutedEventArgs e)
         {
+            _isUpdatingDate = true;
             _viewModel.CurrentWeekStart = _viewModel.CurrentWeekStart.AddDays(-7);
             dtpSelectedDate.SelectedDate = _viewModel.CurrentWeekStart;
+            _isUpdatingDate = false;
             BuildGrid();
             UpdateCalendarData();
         }
 
         private void CurrentWeek_Click(object sender, RoutedEventArgs e)
         {
+            _isUpdatingDate = true;
             _viewModel.CurrentWeekStart = GetStartOfWeek(DateTime.Now);
             dtpSelectedDate.SelectedDate = _viewModel.CurrentWeekStart;
+            _isUpdatingDate = false;
             BuildGrid();
             UpdateCalendarData();
         }
 
         private void DtpSelectedDate_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (_isUpdatingDate) return;
             if (dtpSelectedDate.SelectedDate.HasValue)
             {
                 _viewModel.CurrentWeekStart = GetStartOfWeek(dtpSelectedDate.SelectedDate.Value);
@@ -223,8 +264,10 @@ namespace AgileTaskManager.Desktop
 
         private void NextWeek_Click(object sender, RoutedEventArgs e)
         {
+            _isUpdatingDate = true;
             _viewModel.CurrentWeekStart = _viewModel.CurrentWeekStart.AddDays(7);
             dtpSelectedDate.SelectedDate = _viewModel.CurrentWeekStart;
+            _isUpdatingDate = false;
             BuildGrid();
             UpdateCalendarData();
         }
@@ -280,21 +323,46 @@ namespace AgileTaskManager.Desktop
                 return;
             }
 
-
             var targetList = dropInfo.TargetCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>
                 ?? (dropInfo.VisualTarget as ItemsControl)?.ItemsSource as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
 
-            if (targetList == null && dropInfo.VisualTarget is FrameworkElement fe)
+            CalendarCellViewModel targetCell = null;
+
+            if (dropInfo.VisualTarget is FrameworkElement fe)
             {
-                var current = fe.Parent as FrameworkElement;
-                while (current != null)
+                if (fe.Tag is CalendarCellViewModel cellFromTag)
                 {
-                    if (current is ItemsControl ic && ic.ItemsSource is System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel> list)
+                    targetCell = cellFromTag;
+                    targetList = targetCell.Tasks;
+                }
+                else if (fe is ScrollViewer sv && sv.Tag is CalendarCellViewModel cellFromSv)
+                {
+                    targetCell = cellFromSv;
+                    targetList = targetCell.Tasks;
+                }
+                else if (fe is Border b && b.Tag is CalendarCellViewModel cellFromB)
+                {
+                    targetCell = cellFromB;
+                    targetList = targetCell.Tasks;
+                }
+                else
+                {
+                    var current = fe.Parent as FrameworkElement;
+                    while (current != null)
                     {
-                        targetList = list;
-                        break;
+                        if (current.Tag is CalendarCellViewModel cellFromParent)
+                        {
+                            targetCell = cellFromParent;
+                            targetList = targetCell.Tasks;
+                            break;
+                        }
+                        if (current is ItemsControl ic && ic.ItemsSource is System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel> list)
+                        {
+                            targetList = list;
+                            break;
+                        }
+                        current = current.Parent as FrameworkElement;
                     }
-                    current = current.Parent as FrameworkElement;
                 }
             }
 
@@ -303,7 +371,7 @@ namespace AgileTaskManager.Desktop
                 var sourceList = dropInfo.DragInfo.SourceCollection as System.Collections.ObjectModel.ObservableCollection<KanbanColumnViewModel>;
                 if (sourceList != null && sourceList != targetList)
                 {
-                    var cell = _viewModel.Cells.FirstOrDefault(c => c.Tasks == targetList);
+                    var cell = targetCell ?? _viewModel.Cells.FirstOrDefault(c => c.Tasks == targetList);
                     
                     sourceList.Remove(column);
                     int insertIndex = Math.Min(Math.Max(0, dropInfo.InsertIndex), targetList.Count);

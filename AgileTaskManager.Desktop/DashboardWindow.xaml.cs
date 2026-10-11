@@ -1,4 +1,4 @@
-﻿using AgileTaskManager.Desktop.ViewModels;
+using AgileTaskManager.Desktop.ViewModels;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
@@ -27,6 +27,20 @@ namespace AgileTaskManager.Desktop
             _apiService = apiService;
             _viewModel = viewModel;
             this.DataContext = _viewModel;
+            _viewModel.Columns.CollectionChanged += (s, e) =>
+            {
+                if (e.NewItems != null)
+                {
+                    foreach (KanbanColumnViewModel col in e.NewItems)
+                    {
+                        col.Tasks.CollectionChanged += (ts, te) => ucCalendarView?.UpdateCalendarData();
+                    }
+                }
+                if (ucCalendarView != null)
+                {
+                    ucCalendarView.UpdateCalendarData();
+                }
+            };
             this.Loaded += DashboardWindow_Loaded;
         }
 
@@ -336,6 +350,7 @@ namespace AgileTaskManager.Desktop
                             ColumnName = createdCol.columnName,
                             ProjectId = selectedProjectId
                         };
+                        colVm.Tasks.CollectionChanged += (s, ev) => { if (ucCalendarView != null) ucCalendarView.UpdateCalendarData(); };
                         _viewModel.Columns.Add(colVm);
 
                         txtNewListName.Text = "";
@@ -344,6 +359,7 @@ namespace AgileTaskManager.Desktop
 
                         btnShowAddList.Focus();
                         UpdateAddListButtonText();
+                        if (ucCalendarView != null) ucCalendarView.UpdateCalendarData();
                     }
                 }
                 else
@@ -402,6 +418,11 @@ namespace AgileTaskManager.Desktop
             btnMenuCalendar.Style = (Style)FindResource("ActiveMenuBtn");
             btnMenuDashboard.Style = (Style)FindResource("MenuBtn");
             btnMenuCreate.Style = (Style)FindResource("MenuBtn");
+
+            if (ucCalendarView != null)
+            {
+                ucCalendarView.RenderCalendar(_viewModel);
+            }
         }
     
         private async Task EditTaskAsync(KanbanTaskViewModel taskVm)
