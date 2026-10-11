@@ -57,6 +57,20 @@ namespace AgileTaskManagerAPI.Controllers
             _context.KanbanColumns.Add(column);
             await _context.SaveChangesAsync();
 
+            // Đồng bộ Task lớn vào bảng Tasks
+            var mainTask = new AppTask
+            {
+                TaskId = column.ColumnId,
+                TaskName = column.ColumnName,
+                ProjectId = column.ProjectId,
+                ColumnId = column.ColumnId,
+                OrderIndex = column.OrderIndex,
+                IsActive = true,
+                DueDate = column.DueDate
+            };
+            _context.Tasks.Add(mainTask);
+            await _context.SaveChangesAsync();
+
             return Ok(column);
         }
 
@@ -80,6 +94,14 @@ namespace AgileTaskManagerAPI.Controllers
             existing.DueDate = column.DueDate.HasValue ? DateTime.SpecifyKind(column.DueDate.Value, DateTimeKind.Utc) : null;
             existing.OrderIndex = column.OrderIndex;
 
+            var mainTask = await _context.Tasks.FindAsync(id);
+            if (mainTask != null)
+            {
+                mainTask.TaskName = column.ColumnName;
+                mainTask.DueDate = existing.DueDate;
+                mainTask.OrderIndex = column.OrderIndex;
+            }
+
             await _context.SaveChangesAsync();
             return Ok(existing);
         }
@@ -93,6 +115,8 @@ namespace AgileTaskManagerAPI.Controllers
             if (col.Project == null || (!isAdmin && col.Project.OwnerId != GetCurrentUserId())) return Forbid();
 
             col.IsActive = false;
+            var mainTask = await _context.Tasks.FindAsync(id);
+            if (mainTask != null) mainTask.IsActive = false;
             await _context.SaveChangesAsync();
             return Ok();
         }

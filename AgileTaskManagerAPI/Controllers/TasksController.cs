@@ -32,22 +32,48 @@ namespace AgileTaskManagerAPI.Controllers
             bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
             if (project == null || (!isAdmin && project.OwnerId != currentUserId)) return Forbid();
 
-            return await _context.Tasks
+            var subtasks = await _context.Subtasks
                 .AsNoTracking()
-                .Include(t => t.Subtasks)
-                .Where(t => t.ProjectId == projectId && t.IsActive)
-                .OrderBy(t => t.OrderIndex)
+                .Where(s => s.ProjectId == projectId && s.IsActive)
+                .OrderBy(s => s.OrderIndex)
                 .ToListAsync();
+
+            return subtasks.Select(s => new AppTask
+            {
+                TaskId = s.SubtaskId,
+                TaskName = s.Title,
+                Description = s.Description,
+                OrderIndex = s.OrderIndex,
+                IsActive = s.IsActive,
+                DueDate = s.DueDate,
+                Tags = s.Tags,
+                ColumnId = s.ColumnId ?? s.TaskId,
+                ProjectId = s.ProjectId ?? projectId,
+                AssigneeId = s.AssigneeId
+            }).ToList();
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AppTask>>> GetAllTasks()
         {
-            return await _context.Tasks
+            var subtasks = await _context.Subtasks
                 .AsNoTracking()
-                .Include(t => t.Subtasks)
-                .Where(t => t.IsActive)
+                .Where(s => s.IsActive)
                 .ToListAsync();
+
+            return subtasks.Select(s => new AppTask
+            {
+                TaskId = s.SubtaskId,
+                TaskName = s.Title,
+                Description = s.Description,
+                OrderIndex = s.OrderIndex,
+                IsActive = s.IsActive,
+                DueDate = s.DueDate,
+                Tags = s.Tags,
+                ColumnId = s.ColumnId ?? s.TaskId,
+                ProjectId = s.ProjectId ?? 0,
+                AssigneeId = s.AssigneeId
+            }).ToList();
         }
 
         [HttpPost]
@@ -76,14 +102,50 @@ namespace AgileTaskManagerAPI.Controllers
                 }
             }
 
-            var maxOrder = await _context.Tasks
-                .Where(t => t.ColumnId == task.ColumnId)
-                .MaxAsync(t => (int?)t.OrderIndex) ?? -1;
-            task.OrderIndex = maxOrder + 1;
+            // Đảm bảo Task lớn tương ứng với ColumnId tồn tại trong bảng Tasks
+            if (task.ColumnId > 0 && !await _context.Tasks.AnyAsync(t => t.TaskId == task.ColumnId))
+            {
+                var col = await _context.KanbanColumns.FindAsync(task.ColumnId);
+                if (col != null)
+                {
+                    _context.Tasks.Add(new AppTask
+                    {
+                        TaskId = col.ColumnId,
+                        TaskName = col.ColumnName,
+                        ProjectId = col.ProjectId,
+                        ColumnId = col.ColumnId,
+                        OrderIndex = col.OrderIndex,
+                        IsActive = true,
+                        DueDate = col.DueDate
+                    });
+                    await _context.SaveChangesAsync();
+                }
+            }
 
-            _context.Tasks.Add(task);
+            var maxOrder = await _context.Subtasks
+                .Where(s => s.ColumnId == task.ColumnId || s.TaskId == task.ColumnId)
+                .MaxAsync(s => (int?)s.OrderIndex) ?? -1;
+            
+            var subtask = new Subtask
+            {
+                Title = task.TaskName,
+                Description = task.Description,
+                OrderIndex = maxOrder + 1,
+                IsActive = true,
+                DueDate = task.DueDate,
+                Tags = task.Tags,
+                ColumnId = task.ColumnId,
+                ProjectId = task.ProjectId,
+                AssigneeId = task.AssigneeId,
+                TaskId = task.ColumnId > 0 ? task.ColumnId : 1,
+                IsCompleted = false
+            };
+
+            _context.Subtasks.Add(subtask);
             await _context.SaveChangesAsync();
 
+            task.TaskId = subtask.SubtaskId;
+            task.OrderIndex = subtask.OrderIndex;
             return Ok(task);
         }
 
@@ -92,66 +154,70 @@ namespace AgileTaskManagerAPI.Controllers
         {
             if (id != updatedTask.TaskId) return BadRequest();
 
-            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-
-            var task = await _context.Tasks.Include(t => t.Project).FirstOrDefaultAsync(t => t.TaskId == id);
-            if (task == null) return NotFound();
-
-            if (!isAdmin)
+            var subtask = await _context.Subtasks.FindAsync(id);
+            if (subtask != null)
             {
-                var project = task.Project ?? await _context.Projects.FindAsync(task.ProjectId);
-                if (project == null || project.OwnerId != GetCurrentUserId()) return Forbid();
+                subtask.Title = updatedTask.TaskName;
+                subtask.Description = updatedTask.Description;
+                subtask.AssigneeId = updatedTask.AssigneeId;
+                subtask.DueDate = updatedTask.DueDate.HasValue ? DateTime.SpecifyKind(updatedTask.DueDate.Value, DateTimeKind.Utc) : null;
+                subtask.Tags = updatedTask.Tags;
+                await _context.SaveChangesAsync();
+                return Ok(updatedTask);
             }
 
-            task.TaskName = updatedTask.TaskName;
-            task.Description = updatedTask.Description;
-            task.AssigneeId = updatedTask.AssigneeId;
-            task.DueDate = updatedTask.DueDate.HasValue ? DateTime.SpecifyKind(updatedTask.DueDate.Value, DateTimeKind.Utc) : null;
-            task.Tags = updatedTask.Tags;
+            var task = await _context.Tasks.FindAsync(id);
+            if (task != null)
+            {
+                task.TaskName = updatedTask.TaskName;
+                task.Description = updatedTask.Description;
+                task.AssigneeId = updatedTask.AssigneeId;
+                task.DueDate = updatedTask.DueDate.HasValue ? DateTime.SpecifyKind(updatedTask.DueDate.Value, DateTimeKind.Utc) : null;
+                task.Tags = updatedTask.Tags;
+                await _context.SaveChangesAsync();
+                return Ok(updatedTask);
+            }
 
-            await _context.SaveChangesAsync();
-            return Ok(task);
+            return NotFound();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(int id)
         {
-            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-
-            var task = await _context.Tasks.Include(t => t.Project).FirstOrDefaultAsync(t => t.TaskId == id);
-            if (task == null) return NotFound();
-
-            if (!isAdmin)
+            var subtask = await _context.Subtasks.FindAsync(id);
+            if (subtask != null)
             {
-                var project = task.Project ?? await _context.Projects.FindAsync(task.ProjectId);
-                if (project == null || project.OwnerId != GetCurrentUserId()) return Forbid();
+                subtask.IsActive = false;
+                await _context.SaveChangesAsync();
+                return Ok();
             }
-            task.IsActive = false;
 
-            await _context.SaveChangesAsync();
-            return Ok();
+            var task = await _context.Tasks.FindAsync(id);
+            if (task != null)
+            {
+                task.IsActive = false;
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+
+            return NotFound();
         }
 
         [HttpPatch("{id}/column")]
         public async Task<IActionResult> UpdateTaskColumn(int id, [FromBody] int newColumnId)
         {
-            bool isAdmin = User.FindFirst("username")?.Value?.ToLower() == "admin";
-
-            var task = await _context.Tasks.Include(t => t.Project).FirstOrDefaultAsync(t => t.TaskId == id);
-            if (task == null) return NotFound();
-
-            if (!isAdmin)
+            var subtask = await _context.Subtasks.FindAsync(id);
+            if (subtask != null)
             {
-                var project = task.Project ?? await _context.Projects.FindAsync(task.ProjectId);
-                if (project == null || project.OwnerId != GetCurrentUserId()) return Forbid();
+                subtask.ColumnId = newColumnId;
+                subtask.TaskId = newColumnId;
+                var maxOrder = await _context.Subtasks.Where(s => s.ColumnId == newColumnId || s.TaskId == newColumnId).MaxAsync(s => (int?)s.OrderIndex) ?? -1;
+                subtask.OrderIndex = maxOrder + 1;
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Cap nhat thanh cong" });
             }
 
-            task.ColumnId = newColumnId;
-            var maxOrder = await _context.Tasks.Where(t => t.ColumnId == newColumnId).MaxAsync(t => (int?)t.OrderIndex) ?? -1;
-            task.OrderIndex = maxOrder + 1;
-
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Cap nhat thanh cong", task });
+            return NotFound();
         }
 
         public class TaskReorderRequest
@@ -168,8 +234,8 @@ namespace AgileTaskManagerAPI.Controllers
 
             foreach (var req in reorders)
             {
-                var task = await _context.Tasks.FindAsync(req.TaskId);
-                if (task != null) task.OrderIndex = req.OrderIndex;
+                var subtask = await _context.Subtasks.FindAsync(req.TaskId);
+                if (subtask != null) subtask.OrderIndex = req.OrderIndex;
             }
             
             await _context.SaveChangesAsync();
