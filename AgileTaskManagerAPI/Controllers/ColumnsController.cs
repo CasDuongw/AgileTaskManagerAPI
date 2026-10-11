@@ -33,6 +33,7 @@ namespace AgileTaskManagerAPI.Controllers
             if (project == null || (!isAdmin && project.OwnerId != currentUserId)) return Forbid();
 
             return await _context.KanbanColumns
+                .AsNoTracking()
                 .Where(c => c.ProjectId == projectId && c.IsActive)
                 .OrderBy(c => c.OrderIndex)
                 .ToListAsync();

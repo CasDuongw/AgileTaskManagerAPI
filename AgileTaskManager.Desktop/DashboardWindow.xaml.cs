@@ -33,10 +33,14 @@ namespace AgileTaskManager.Desktop
                 {
                     foreach (KanbanColumnViewModel col in e.NewItems)
                     {
-                        col.Tasks.CollectionChanged += (ts, te) => ucCalendarView?.UpdateCalendarData();
+                        col.Tasks.CollectionChanged += (ts, te) => 
+                        {
+                            if (viewCalendar?.Visibility == Visibility.Visible)
+                                ucCalendarView?.UpdateCalendarData();
+                        };
                     }
                 }
-                if (ucCalendarView != null)
+                if (viewCalendar?.Visibility == Visibility.Visible && ucCalendarView != null)
                 {
                     ucCalendarView.UpdateCalendarData();
                 }
@@ -84,8 +88,7 @@ namespace AgileTaskManager.Desktop
             }
             cboCreateTaskTime.ItemsSource = timeSlots;
 
-            await LoadProjectsAsync();
-            await LoadUsersAsync();
+            await Task.WhenAll(LoadProjectsAsync(), LoadUsersAsync());
         }
 
         private async Task LoadProjectsAsync()
@@ -151,12 +154,15 @@ namespace AgileTaskManager.Desktop
 
             try
             {
-                // 1. Lấy danh sách cột
-                var columns = await _apiService.GetColumnsAsync<ColumnResponse>(projectId);
+                // 1 & 2. Gọi song song lấy Cột và lấy Task để rút ngắn 50% thời gian chờ mạng
+                var columnsTask = _apiService.GetColumnsAsync<ColumnResponse>(projectId);
+                var tasksTask = _apiService.GetTasksAsync<KanbanColumn.TaskResponse>(projectId);
+                await Task.WhenAll(columnsTask, tasksTask);
+
+                var columns = await columnsTask;
                 if (columns == null) return;
 
-                // 2. Lấy danh sách task
-                var tasks = await _apiService.GetTasksAsync<KanbanColumn.TaskResponse>(projectId);
+                var tasks = await tasksTask;
                 var taskList = tasks ?? new List<KanbanColumn.TaskResponse>();
 
                 // 3. Nạp vào ViewModel

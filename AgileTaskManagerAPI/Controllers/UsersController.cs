@@ -38,6 +38,7 @@ namespace AgileTaskManagerAPI.Controllers
         public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
         {
             var users = await _context.Users
+                .AsNoTracking()
                 .Select(u => new UserDto 
                 { 
                     UserId = u.UserId, 

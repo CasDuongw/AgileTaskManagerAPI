@@ -33,11 +33,11 @@ namespace AgileTaskManagerAPI.Controllers
             if (username != null && username.ToLower() == "admin")
             {
                 // Admin thấy toàn bộ dự án
-                return await _context.Projects.ToListAsync();
+                return await _context.Projects.AsNoTracking().ToListAsync();
             }
 
             // User bình thường chỉ thấy dự án của mình
-            return await _context.Projects.Where(p => p.OwnerId == currentUserId).ToListAsync();
+            return await _context.Projects.AsNoTracking().Where(p => p.OwnerId == currentUserId).ToListAsync();
         }
 
         [HttpPost]

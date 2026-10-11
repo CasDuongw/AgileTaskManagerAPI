@@ -33,6 +33,7 @@ namespace AgileTaskManagerAPI.Controllers
             if (project == null || (!isAdmin && project.OwnerId != currentUserId)) return Forbid();
 
             return await _context.Tasks
+                .AsNoTracking()
                 .Include(t => t.Subtasks)
                 .Where(t => t.ProjectId == projectId && t.IsActive)
                 .OrderBy(t => t.OrderIndex)
@@ -43,6 +44,7 @@ namespace AgileTaskManagerAPI.Controllers
         public async Task<ActionResult<IEnumerable<AppTask>>> GetAllTasks()
         {
             return await _context.Tasks
+                .AsNoTracking()
                 .Include(t => t.Subtasks)
                 .Where(t => t.IsActive)
                 .ToListAsync();

@@ -82,6 +82,9 @@ namespace AgileTaskManagerAPI
             app.UseAuthentication();
             app.UseAuthorization();
 
+            // Endpoint kiểm tra sức khỏe và giữ ấm máy chủ (Keep-alive / Pre-warm)
+            app.MapGet("/api/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }));
+
             app.MapControllers();
 
             app.Run();
