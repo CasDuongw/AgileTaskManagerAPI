@@ -31,10 +31,31 @@ namespace AgileTaskManagerAPI.Controllers
             if (project == null) return NotFound();
 
             var columns = await _context.KanbanColumns
-                .AsNoTracking()
                 .Where(c => c.ProjectId == projectId && c.IsActive)
                 .OrderBy(c => c.OrderIndex)
+                .ThenBy(c => c.ColumnId)
                 .ToListAsync();
+
+            // Tự động chuẩn hóa (Auto-heal) nếu phát hiện OrderIndex bị trùng hoặc cột tạo sau bị đè OrderIndex = 0
+            bool hasDuplicates = columns.GroupBy(c => c.OrderIndex).Any(g => g.Count() > 1);
+            bool hasInvertedZero = columns.Any(c => c.OrderIndex == 0 && columns.Any(o => o.ColumnId < c.ColumnId && o.OrderIndex > 0));
+
+            if (hasDuplicates || hasInvertedZero)
+            {
+                // Xếp lại tuần tự theo đúng thời gian tạo (ColumnId tăng dần)
+                var sorted = columns.OrderBy(c => c.ColumnId).ToList();
+                for (int i = 0; i < sorted.Count; i++)
+                {
+                    sorted[i].OrderIndex = i;
+                    var mainTask = await _context.Tasks.FirstOrDefaultAsync(t => t.ColumnId == sorted[i].ColumnId);
+                    if (mainTask != null)
+                    {
+                        mainTask.OrderIndex = i;
+                    }
+                }
+                await _context.SaveChangesAsync();
+                columns = sorted;
+            }
 
             foreach (var col in columns)
             {
@@ -44,7 +65,7 @@ namespace AgileTaskManagerAPI.Controllers
                 }
             }
 
-            return columns;
+            return columns.OrderBy(c => c.OrderIndex).ThenBy(c => c.ColumnId).ToList();
         }
 
         [HttpPost]
@@ -54,7 +75,7 @@ namespace AgileTaskManagerAPI.Controllers
             if (project == null) return NotFound();
 
             var maxOrder = await _context.KanbanColumns
-                .Where(c => c.ProjectId == column.ProjectId)
+                .Where(c => c.ProjectId == column.ProjectId && c.IsActive)
                 .MaxAsync(c => (int?)c.OrderIndex) ?? -1;
             
             column.OrderIndex = maxOrder + 1;
@@ -101,14 +122,19 @@ namespace AgileTaskManagerAPI.Controllers
                 existing.Status = column.Status;
             }
             existing.DueDate = column.DueDate.HasValue ? DateTime.SpecifyKind(column.DueDate.Value, DateTimeKind.Utc) : null;
-            existing.OrderIndex = column.OrderIndex;
+            
+            // Bảo vệ OrderIndex: Tránh trường hợp client gửi OrderIndex = 0 đè lên OrderIndex hợp lệ đã có
+            if (column.OrderIndex > 0 || existing.OrderIndex == 0)
+            {
+                existing.OrderIndex = column.OrderIndex;
+            }
 
             var mainTask = await _context.Tasks.FirstOrDefaultAsync(t => t.ColumnId == id);
             if (mainTask != null)
             {
                 mainTask.TaskName = column.ColumnName;
                 mainTask.DueDate = existing.DueDate;
-                mainTask.OrderIndex = column.OrderIndex;
+                mainTask.OrderIndex = existing.OrderIndex;
             }
 
             await _context.SaveChangesAsync();
@@ -146,6 +172,11 @@ namespace AgileTaskManagerAPI.Controllers
                 if (col != null)
                 {
                     col.OrderIndex = req.OrderIndex;
+                    var mainTask = await _context.Tasks.FirstOrDefaultAsync(t => t.ColumnId == col.ColumnId);
+                    if (mainTask != null)
+                    {
+                        mainTask.OrderIndex = req.OrderIndex;
+                    }
                 }
             }
             

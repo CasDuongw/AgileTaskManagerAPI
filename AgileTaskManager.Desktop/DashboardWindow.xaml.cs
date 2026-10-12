@@ -167,7 +167,7 @@ namespace AgileTaskManager.Desktop
                 var taskList = tasks ?? new List<KanbanColumn.TaskResponse>();
 
                 // 3. Nạp vào ViewModel
-                foreach (var col in columns.OrderBy(c => c.orderIndex))
+                foreach (var col in columns.OrderBy(c => c.orderIndex).ThenBy(c => c.columnId))
                 {
                     var colVm = new KanbanColumnViewModel
                     {
@@ -183,7 +183,7 @@ namespace AgileTaskManager.Desktop
                         Status = string.IsNullOrEmpty(col.status) ? "Vừa giao" : col.status
                     };
 
-                    var colTasks = taskList.Where(t => t.columnId == col.columnId).OrderBy(t => t.orderIndex);
+                    var colTasks = taskList.Where(t => t.columnId == col.columnId).OrderBy(t => t.orderIndex).ThenBy(t => t.taskId);
                     foreach (var task in colTasks)
                     {
                         var taskVm = new KanbanTaskViewModel { TaskId = task.taskId, TaskName = task.taskName, Description = task.description, AssigneeId = task.assigneeId, DueDate = task.dueDate, Tags = task.tags, ColumnId = col.columnId, OrderIndex = task.orderIndex };
@@ -408,6 +408,12 @@ namespace AgileTaskManager.Desktop
                             ColumnId = createdCol.columnId,
                             ColumnName = createdCol.columnName,
                             ProjectId = selectedProjectId,
+                            OrderIndex = createdCol.orderIndex,
+                            DueDate = createdCol.dueDate.HasValue
+                                ? (createdCol.dueDate.Value.Kind == DateTimeKind.Utc
+                                    ? createdCol.dueDate.Value.ToLocalTime()
+                                    : DateTime.SpecifyKind(createdCol.dueDate.Value, DateTimeKind.Utc).ToLocalTime())
+                                : (DateTime?)null,
                             Status = string.IsNullOrEmpty(createdCol.status) ? "Vừa giao" : createdCol.status
                         };
                         colVm.Tasks.CollectionChanged += (s, ev) => { if (ucCalendarView != null) ucCalendarView.UpdateCalendarData(); };
@@ -485,7 +491,7 @@ namespace AgileTaskManager.Desktop
             }
         }
     
-        private async Task EditTaskAsync(KanbanTaskViewModel taskVm)
+        public async Task EditTaskAsync(KanbanTaskViewModel taskVm)
         {
             var detailWindow = new TaskDetailWindow(taskVm, cboOwner.ItemsSource, _apiService);
             if (detailWindow.ShowDialog() == true)

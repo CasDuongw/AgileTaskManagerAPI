@@ -31,12 +31,32 @@ namespace AgileTaskManagerAPI.Controllers
             if (project == null) return NotFound();
 
             var subtasks = await _context.Subtasks
-                .AsNoTracking()
                 .Where(s => s.ProjectId == projectId && s.IsActive)
                 .OrderBy(s => s.OrderIndex)
+                .ThenBy(s => s.SubtaskId)
                 .ToListAsync();
 
-            return subtasks.Select(s => new AppTask
+            // Auto-heal nếu có duplicate OrderIndex trong cùng 1 cột
+            var byCol = subtasks.GroupBy(s => s.ColumnId ?? s.TaskId);
+            bool needHeal = false;
+            foreach (var grp in byCol)
+            {
+                if (grp.GroupBy(s => s.OrderIndex).Any(g => g.Count() > 1))
+                {
+                    needHeal = true;
+                    var ordered = grp.OrderBy(s => s.SubtaskId).ToList();
+                    for (int i = 0; i < ordered.Count; i++)
+                    {
+                        ordered[i].OrderIndex = i;
+                    }
+                }
+            }
+            if (needHeal)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            return subtasks.OrderBy(s => s.OrderIndex).ThenBy(s => s.SubtaskId).Select(s => new AppTask
             {
                 TaskId = s.SubtaskId,
                 TaskName = s.Title,
@@ -126,7 +146,7 @@ namespace AgileTaskManagerAPI.Controllers
             int targetTaskId = mainTask != null ? mainTask.TaskId : (task.ColumnId > 0 ? task.ColumnId : 1);
 
             var maxOrder = await _context.Subtasks
-                .Where(s => s.ColumnId == task.ColumnId || s.TaskId == targetTaskId)
+                .Where(s => (s.ColumnId == task.ColumnId || s.TaskId == targetTaskId) && s.IsActive)
                 .MaxAsync(s => (int?)s.OrderIndex) ?? -1;
             
             var subtask = new Subtask

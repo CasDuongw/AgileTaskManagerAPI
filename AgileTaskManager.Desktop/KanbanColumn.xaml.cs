@@ -10,6 +10,7 @@ using System.Windows.Media.Animation;
 using System.Net.Http;
 using System.Net.Http.Json;
 using AgileTaskManager.Desktop.ViewModels;
+using AgileTaskManager.Desktop.Commands;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -226,11 +227,25 @@ namespace AgileTaskManager.Desktop
                 if (response.IsSuccessStatusCode)
                 {
                     var createdTask = await response.Content.ReadFromJsonAsync<TaskResponse>();
-                    
-                    colVm.Tasks.Add(new KanbanTaskViewModel { TaskId = createdTask.taskId, TaskName = createdTask.taskName, ColumnId = createdTask.columnId, OrderIndex = createdTask.orderIndex });
+                    if (createdTask != null)
+                    {
+                        var taskVm = new KanbanTaskViewModel 
+                        { 
+                            TaskId = createdTask.taskId, 
+                            TaskName = createdTask.taskName, 
+                            ColumnId = createdTask.columnId, 
+                            OrderIndex = createdTask.orderIndex 
+                        };
+                        Window window = Window.GetWindow(this);
+                        if (window is DashboardWindow dashboard)
+                        {
+                            taskVm.EditTaskCommand = new RelayCommand(async () => await dashboard.EditTaskAsync(taskVm));
+                        }
+                        colVm.Tasks.Add(taskVm);
 
-                    txtNewTaskName.Text = "";
-                    txtNewTaskName.Focus();
+                        txtNewTaskName.Text = "";
+                        txtNewTaskName.Focus();
+                    }
                 }
                 else
                 {
@@ -446,6 +461,10 @@ namespace AgileTaskManager.Desktop
 
         private async void SyncColumnOrderToServer(KanbanBoardViewModel boardVm)
         {
+            for (int i = 0; i < boardVm.Columns.Count; i++)
+            {
+                boardVm.Columns[i].OrderIndex = i;
+            }
             var reorderList = boardVm.Columns.Select((col, index) => new { ColumnId = col.ColumnId, OrderIndex = index }).ToList();
             try
             {
@@ -491,6 +510,10 @@ namespace AgileTaskManager.Desktop
 
         private async void SyncTaskOrderToServer(KanbanColumnViewModel col)
         {
+            for (int i = 0; i < col.Tasks.Count; i++)
+            {
+                col.Tasks[i].OrderIndex = i;
+            }
             var reorderList = col.Tasks.Select((t, index) => new { TaskId = t.TaskId, OrderIndex = index }).ToList();
             try
             {
