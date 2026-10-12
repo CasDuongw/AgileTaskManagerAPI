@@ -7,6 +7,7 @@ namespace AgileTaskManagerAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class SubtasksController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -19,10 +20,11 @@ namespace AgileTaskManagerAPI.Controllers
         [HttpPost("{taskId}")]
         public async Task<ActionResult<Subtask>> CreateSubtask(int taskId, [FromBody] Subtask request)
         {
-            var task = await _context.Tasks.FindAsync(taskId);
+            var task = await _context.Tasks.FindAsync(taskId)
+                ?? await _context.Tasks.FirstOrDefaultAsync(t => t.ColumnId == taskId);
             if (task == null) return NotFound("Task not found.");
 
-            request.TaskId = taskId;
+            request.TaskId = task.TaskId;
             request.ColumnId = task.ColumnId;
             request.ProjectId = task.ProjectId;
             request.IsActive = true;

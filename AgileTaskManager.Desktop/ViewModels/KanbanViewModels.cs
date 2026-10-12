@@ -21,7 +21,7 @@ namespace AgileTaskManager.Desktop.ViewModels
         private int _subtaskId;
         public int SubtaskId { get => _subtaskId; set { _subtaskId = value; OnPropertyChanged(); } }
 
-        private string _title;
+        private string _title = string.Empty;
         public string Title { get => _title; set { _title = value; OnPropertyChanged(); } }
 
         private bool _isCompleted;
@@ -37,7 +37,7 @@ namespace AgileTaskManager.Desktop.ViewModels
             set { _taskId = value; OnPropertyChanged(); }
         }
 
-        private string _taskName;
+        private string _taskName = string.Empty;
         public string TaskName
         {
             get => _taskName;
@@ -58,7 +58,7 @@ namespace AgileTaskManager.Desktop.ViewModels
             set { _assigneeId = value; OnPropertyChanged(); }
         }
 
-        private string _description;
+        private string _description = string.Empty;
         public string Description
         {
             get => _description;
@@ -79,15 +79,15 @@ namespace AgileTaskManager.Desktop.ViewModels
             set { _orderIndex = value; OnPropertyChanged(); }
         }
 
-        private string _tags;
+        private string _tags = string.Empty;
         public string Tags
         {
             get => _tags;
             set { _tags = value; OnPropertyChanged(); }
         }
 
-        public ICommand DeleteTaskCommand { get; set; }
-        public ICommand EditTaskCommand { get; set; }
+        public ICommand? DeleteTaskCommand { get; set; }
+        public ICommand? EditTaskCommand { get; set; }
 
         public ObservableCollection<SubtaskViewModel> Subtasks { get; } = new ObservableCollection<SubtaskViewModel>();
     }
@@ -101,7 +101,7 @@ namespace AgileTaskManager.Desktop.ViewModels
             set { _columnId = value; OnPropertyChanged(); }
         }
 
-        private string _columnName;
+        private string _columnName = string.Empty;
         public string ColumnName
         {
             get => _columnName;
@@ -124,8 +124,8 @@ namespace AgileTaskManager.Desktop.ViewModels
 
         public ObservableCollection<KanbanTaskViewModel> Tasks { get; } = new ObservableCollection<KanbanTaskViewModel>();
 
-        public ICommand DeleteColumnCommand { get; set; }
-        public System.Windows.Input.ICommand EditColumnTitleCommand { get; set; }
+        public ICommand? DeleteColumnCommand { get; set; }
+        public ICommand? EditColumnTitleCommand { get; set; }
         public KanbanColumnViewModel()
         {
             EditColumnTitleCommand = new AgileTaskManager.Desktop.Commands.RelayCommand(ExecuteEditColumnTitle);
@@ -161,7 +161,7 @@ namespace AgileTaskManager.Desktop.ViewModels
     public class CalendarViewModel : ViewModelBase
     {
         public ObservableCollection<CalendarCellViewModel> Cells { get; } = new ObservableCollection<CalendarCellViewModel>();
-        public ObservableCollection<KanbanColumnViewModel> Columns { get; set; }
+        public ObservableCollection<KanbanColumnViewModel>? Columns { get; set; }
         public ObservableCollection<string> Statuses { get; } = new ObservableCollection<string> { "Vừa giao", "Đang làm", "Hoàn thành", "Trễ hạn" };
         public ObservableCollection<KanbanColumnViewModel> UnscheduledTasks { get; } = new ObservableCollection<KanbanColumnViewModel>();
         
@@ -171,13 +171,5 @@ namespace AgileTaskManager.Desktop.ViewModels
             get => _currentWeekStart; 
             set { _currentWeekStart = value; OnPropertyChanged(); } 
         }
-    }
-    public class RelayCommand : ICommand
-    {
-        private readonly Action _execute;
-        public RelayCommand(Action execute) { _execute = execute; }
-        public event EventHandler? CanExecuteChanged { add { } remove { } }
-        public bool CanExecute(object? parameter) => true;
-        public void Execute(object? parameter) => _execute();
     }
 }

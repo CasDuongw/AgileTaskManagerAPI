@@ -1,4 +1,5 @@
 using AgileTaskManager.Desktop.ViewModels;
+using AgileTaskManager.Desktop.Commands;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
@@ -332,7 +333,11 @@ namespace AgileTaskManager.Desktop
                                 TaskName = createdTask.taskName,
                                 Description = createdTask.description ?? "",
                                 AssigneeId = createdTask.assigneeId,
-                                DueDate = createdTask.dueDate.HasValue ? (createdTask.dueDate.Value.Kind == DateTimeKind.Utc ? createdTask.dueDate.Value.ToLocalTime() : createdTask.dueDate.Value) : (DateTime?)null,
+                                DueDate = createdTask.dueDate.HasValue 
+                                    ? (createdTask.dueDate.Value.Kind == DateTimeKind.Utc 
+                                        ? createdTask.dueDate.Value.ToLocalTime() 
+                                        : DateTime.SpecifyKind(createdTask.dueDate.Value, DateTimeKind.Utc).ToLocalTime()) 
+                                    : (DateTime?)null,
                                 Tags = createdTask.tags ?? "",
                                 ColumnId = column.ColumnId,
                                 OrderIndex = createdTask.orderIndex

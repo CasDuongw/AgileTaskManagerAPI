@@ -99,27 +99,34 @@ namespace AgileTaskManagerAPI.Controllers
             }
 
             // Đảm bảo Task lớn tương ứng với ColumnId tồn tại trong bảng Tasks
-            if (task.ColumnId > 0 && !await _context.Tasks.AnyAsync(t => t.TaskId == task.ColumnId))
+            AppTask? mainTask = null;
+            if (task.ColumnId > 0)
             {
-                var col = await _context.KanbanColumns.FindAsync(task.ColumnId);
-                if (col != null)
+                mainTask = await _context.Tasks.FirstOrDefaultAsync(t => t.ColumnId == task.ColumnId);
+                if (mainTask == null)
                 {
-                    _context.Tasks.Add(new AppTask
+                    var col = await _context.KanbanColumns.FindAsync(task.ColumnId);
+                    if (col != null)
                     {
-                        TaskId = col.ColumnId,
-                        TaskName = col.ColumnName,
-                        ProjectId = col.ProjectId,
-                        ColumnId = col.ColumnId,
-                        OrderIndex = col.OrderIndex,
-                        IsActive = true,
-                        DueDate = col.DueDate
-                    });
-                    await _context.SaveChangesAsync();
+                        mainTask = new AppTask
+                        {
+                            TaskName = col.ColumnName,
+                            ProjectId = col.ProjectId,
+                            ColumnId = col.ColumnId,
+                            OrderIndex = col.OrderIndex,
+                            IsActive = true,
+                            DueDate = col.DueDate
+                        };
+                        _context.Tasks.Add(mainTask);
+                        await _context.SaveChangesAsync();
+                    }
                 }
             }
 
+            int targetTaskId = mainTask != null ? mainTask.TaskId : (task.ColumnId > 0 ? task.ColumnId : 1);
+
             var maxOrder = await _context.Subtasks
-                .Where(s => s.ColumnId == task.ColumnId || s.TaskId == task.ColumnId)
+                .Where(s => s.ColumnId == task.ColumnId || s.TaskId == targetTaskId)
                 .MaxAsync(s => (int?)s.OrderIndex) ?? -1;
             
             var subtask = new Subtask
@@ -133,7 +140,7 @@ namespace AgileTaskManagerAPI.Controllers
                 ColumnId = task.ColumnId,
                 ProjectId = task.ProjectId,
                 AssigneeId = task.AssigneeId,
-                TaskId = task.ColumnId > 0 ? task.ColumnId : 1,
+                TaskId = targetTaskId,
                 IsCompleted = false
             };
 
@@ -206,8 +213,32 @@ namespace AgileTaskManagerAPI.Controllers
             if (subtask != null)
             {
                 subtask.ColumnId = newColumnId;
-                subtask.TaskId = newColumnId;
-                var maxOrder = await _context.Subtasks.Where(s => s.ColumnId == newColumnId || s.TaskId == newColumnId).MaxAsync(s => (int?)s.OrderIndex) ?? -1;
+                var mainTask = await _context.Tasks.FirstOrDefaultAsync(t => t.ColumnId == newColumnId);
+                if (mainTask != null)
+                {
+                    subtask.TaskId = mainTask.TaskId;
+                }
+                else
+                {
+                    var col = await _context.KanbanColumns.FindAsync(newColumnId);
+                    if (col != null)
+                    {
+                        mainTask = new AppTask
+                        {
+                            TaskName = col.ColumnName,
+                            ProjectId = col.ProjectId,
+                            ColumnId = col.ColumnId,
+                            OrderIndex = col.OrderIndex,
+                            IsActive = true,
+                            DueDate = col.DueDate
+                        };
+                        _context.Tasks.Add(mainTask);
+                        await _context.SaveChangesAsync();
+                        subtask.TaskId = mainTask.TaskId;
+                    }
+                }
+
+                var maxOrder = await _context.Subtasks.Where(s => s.ColumnId == newColumnId || s.TaskId == subtask.TaskId).MaxAsync(s => (int?)s.OrderIndex) ?? -1;
                 subtask.OrderIndex = maxOrder + 1;
                 await _context.SaveChangesAsync();
                 return Ok(new { message = "Cap nhat thanh cong" });
