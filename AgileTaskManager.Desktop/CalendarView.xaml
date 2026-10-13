@@ -90,14 +90,14 @@
                         <Border Width="28" Height="28" CornerRadius="7" Background="#EAF5FC" Margin="0,0,8,0">
                             <TextBlock Text="&#xE787;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Foreground="#425B9A" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <TextBlock x:Name="lblCalendarHeader" Text="Thứ Ba, 13/10" FontSize="15" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="lblCalendarHeader" Text="Tuần" FontSize="15" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- Segmented View Mode Toggle: [ Ngày | Tuần ] -->
+                    <!-- Segmented View Mode Toggle: [ Ngày | Tuần ] (Mặc định Tuần) -->
                     <Border Grid.Column="1" Background="#F1F5F9" CornerRadius="6" Padding="2" BorderBrush="#E2E8F0" BorderThickness="1">
                         <StackPanel Orientation="Horizontal">
                             <Button x:Name="btnViewDay" Content="Ngày" Click="BtnViewDay_Click"
-                                    Background="#425B9A" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                                    Background="Transparent" Foreground="#64748B" FontWeight="SemiBold" FontSize="12"
                                     Padding="10,4" BorderThickness="0" Cursor="Hand">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
@@ -108,7 +108,7 @@
                                 </Button.Template>
                             </Button>
                             <Button x:Name="btnViewWeek" Content="Tuần" Click="BtnViewWeek_Click"
-                                    Background="Transparent" Foreground="#64748B" FontWeight="SemiBold" FontSize="12"
+                                    Background="#425B9A" Foreground="White" FontWeight="SemiBold" FontSize="12"
                                     Padding="10,4" BorderThickness="0" Cursor="Hand">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">

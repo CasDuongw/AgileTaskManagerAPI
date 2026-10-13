@@ -25,7 +25,7 @@ namespace AgileTaskManager.Desktop
         private CalendarViewModel _viewModel;
         private KanbanBoardViewModel? _boardVm;
         private ApiService _apiService;
-        private CalendarViewMode _viewMode = CalendarViewMode.Day;
+        private CalendarViewMode _viewMode = CalendarViewMode.Week;
         private DateTime _selectedDate = DateTime.Today;
         private bool _isUpdatingDate = false;
 
@@ -40,7 +40,18 @@ namespace AgileTaskManager.Desktop
             _isUpdatingDate = true;
             dtpSelectedDate.SelectedDate = _selectedDate;
             _isUpdatingDate = false;
+            _viewMode = CalendarViewMode.Week;
             BuildGrid();
+        }
+
+        /// <summary>
+        /// Đặt lại chế độ xem mặc định là Tuần và cập nhật dữ liệu lịch
+        /// </summary>
+        public void ResetToWeekView()
+        {
+            _viewMode = CalendarViewMode.Week;
+            BuildGrid();
+            UpdateCalendarData();
         }
 
         public void SetSideBySideMode(bool isSideBySide)
@@ -444,7 +455,7 @@ namespace AgileTaskManager.Desktop
             }
             _viewModel.UnscheduledTasks.Clear();
 
-            // Gán các thẻ có DueDate vào cell phù hợp, các thẻ không có DueDate (hoặc ngoài view) vào Unscheduled
+            // Gán các thẻ có DueDate vào cell phù hợp; các thẻ hoàn toàn chưa có DueDate vào Unscheduled
             foreach (var column in _boardVm.Columns)
             {
                 // 1. Quét các công việc cụ thể (Tasks) bên trong cột
@@ -458,6 +469,20 @@ namespace AgileTaskManager.Desktop
                             : rawDue;
 
                         var cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == due.Date && c.SlotTime.Hour == due.Hour);
+                        if (cell == null)
+                        {
+                            if (_viewMode == CalendarViewMode.Day && due.Date == _selectedDate.Date)
+                            {
+                                int clampedHour = Math.Clamp(due.Hour, 7, 21);
+                                cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == due.Date && c.SlotTime.Hour == clampedHour);
+                            }
+                            else if (_viewMode == CalendarViewMode.Week && due.Date >= _viewModel.CurrentWeekStart.Date && due.Date < _viewModel.CurrentWeekStart.AddDays(7).Date)
+                            {
+                                int clampedHour = Math.Clamp(due.Hour, 8, 17);
+                                cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == due.Date && c.SlotTime.Hour == clampedHour);
+                            }
+                        }
+
                         if (cell != null)
                         {
                             if (!cell.Tasks.Contains(task))
@@ -465,16 +490,11 @@ namespace AgileTaskManager.Desktop
                                 cell.Tasks.Add(task);
                             }
                         }
-                        else
-                        {
-                            if (!_viewModel.UnscheduledTasks.Contains(task))
-                            {
-                                _viewModel.UnscheduledTasks.Add(task);
-                            }
-                        }
+                        // LƯU Ý: Task đã có DueDate nhưng không thuộc ngày/tuần đang xem thì KHÔNG BAO GIỜ thêm vào Chưa xếp lịch
                     }
                     else
                     {
+                        // Chỉ những task hoàn toàn chưa có DueDate mới hiển thị ở cột Chưa xếp lịch
                         if (!_viewModel.UnscheduledTasks.Contains(task))
                         {
                             _viewModel.UnscheduledTasks.Add(task);
@@ -491,6 +511,20 @@ namespace AgileTaskManager.Desktop
                         : rawDue;
 
                     var cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == due.Date && c.SlotTime.Hour == due.Hour);
+                    if (cell == null)
+                    {
+                        if (_viewMode == CalendarViewMode.Day && due.Date == _selectedDate.Date)
+                        {
+                            int clampedHour = Math.Clamp(due.Hour, 7, 21);
+                            cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == due.Date && c.SlotTime.Hour == clampedHour);
+                        }
+                        else if (_viewMode == CalendarViewMode.Week && due.Date >= _viewModel.CurrentWeekStart.Date && due.Date < _viewModel.CurrentWeekStart.AddDays(7).Date)
+                        {
+                            int clampedHour = Math.Clamp(due.Hour, 8, 17);
+                            cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == due.Date && c.SlotTime.Hour == clampedHour);
+                        }
+                    }
+
                     if (cell != null && !cell.Tasks.Contains(column))
                     {
                         cell.Tasks.Add(column);

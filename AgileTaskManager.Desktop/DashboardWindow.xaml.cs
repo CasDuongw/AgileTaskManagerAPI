@@ -255,9 +255,10 @@ namespace AgileTaskManager.Desktop
                 ? (Style)FindResource("BottomTabBtnActive") 
                 : (Style)FindResource("BottomTabBtn");
 
-            // 3. Nếu chuyển sang Calendar, đồng bộ và render lại dữ liệu lịch mới nhất
+            // 3. Nếu chuyển sang Calendar, mặc định chế độ Tuần và đồng bộ dữ liệu mới nhất
             if (_currentTab == ActiveTab.Calendar && ucCalendarView != null)
             {
+                ucCalendarView.ResetToWeekView();
                 ucCalendarView.RenderCalendar(_viewModel);
             }
         }
