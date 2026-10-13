@@ -88,8 +88,10 @@
 
                         <!-- Checklist Header -->
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock Text="&#xE73E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                       FontSize="13" Foreground="#425B9A" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <Border Background="#FFF0F2" CornerRadius="6" Padding="6,3" Margin="0,0,8,0">
+                                <TextBlock Text="&#xE73E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           FontSize="13" Foreground="#FF95A5" VerticalAlignment="Center"/>
+                            </Border>
                             <TextBlock Text="Việc cần làm (Checklist)" FontWeight="Bold" FontSize="13" Foreground="#0F172A" VerticalAlignment="Center"/>
                         </StackPanel>
 
@@ -107,7 +109,7 @@
                                                 </Grid.ColumnDefinitions>
                                                 <CheckBox IsChecked="{Binding IsCompleted, Mode=TwoWay}" VerticalAlignment="Center" Grid.Column="0" Margin="0,0,8,0" Checked="Subtask_CheckedChanged" Unchecked="Subtask_CheckedChanged" Tag="{Binding}"/>
                                                 <TextBox Text="{Binding Title, Mode=TwoWay}" Grid.Column="1" VerticalAlignment="Center" Padding="4,2" Background="Transparent" BorderThickness="0" Foreground="#1E293B" FontSize="12" LostFocus="Subtask_LostFocus" Tag="{Binding}"/>
-                                                <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Grid.Column="2" Width="22" Height="22" Background="Transparent" Foreground="#EF4444" BorderThickness="0" Cursor="Hand" Click="BtnDeleteSubtask_Click" Tag="{Binding}"/>
+                                                <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Grid.Column="2" Width="22" Height="22" Background="Transparent" Foreground="#FF95A5" BorderThickness="0" Cursor="Hand" Click="BtnDeleteSubtask_Click" Tag="{Binding}"/>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>

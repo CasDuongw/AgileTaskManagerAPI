@@ -36,13 +36,24 @@
 
                 <!-- 1. Brand Header -->
                 <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,24">
-                    <!-- Brand Icon Badge -->
-                    <Border Width="48" Height="48" CornerRadius="12" Background="{StaticResource ColorPrimary}" HorizontalAlignment="Center" Margin="0,0,0,12">
+                    <!-- Brand Icon Badge (Gradient #425B9A -> #76C0EC) -->
+                    <Border Width="52" Height="52" CornerRadius="14" HorizontalAlignment="Center" Margin="0,0,0,12">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#425B9A" Offset="0.0"/>
+                                <GradientStop Color="#76C0EC" Offset="1.0"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border.Effect>
+                            <DropShadowEffect Color="#425B9A" BlurRadius="12" ShadowDepth="3" Opacity="0.25"/>
+                        </Border.Effect>
                         <TextBlock Text="&#xE80F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                   FontSize="24" Foreground="{StaticResource ColorAccent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                   FontSize="26" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <TextBlock Text="Agile Manager" FontSize="22" FontWeight="Bold" Foreground="{StaticResource ColorPrimary}" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Đăng nhập để bắt đầu phiên làm việc" FontSize="13" Foreground="{StaticResource ColorTextSecondary}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    <Border Background="#FFF6DC" BorderBrush="#FCE8A6" BorderThickness="1" CornerRadius="10" Padding="10,3" Margin="0,6,0,0" HorizontalAlignment="Center">
+                        <TextBlock Text="Đăng nhập để bắt đầu phiên làm việc" FontSize="11" FontWeight="SemiBold" Foreground="#7A5E12"/>
+                    </Border>
                 </StackPanel>
 
                 <!-- 2. Form Inputs -->
@@ -127,7 +138,12 @@
                 </StackPanel>
 
                 <!-- 5. Footer Info -->
-                <TextBlock Grid.Row="4" Text="Agile Manager • Phiên bản 2.0" FontSize="11" Foreground="{StaticResource ColorTextMuted}" HorizontalAlignment="Center" Margin="0,18,0,0"/>
+                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,18,0,0">
+                    <TextBlock Text="Agile Manager" FontSize="11" Foreground="{StaticResource ColorTextMuted}" VerticalAlignment="Center"/>
+                    <Border Background="#FFF0F2" BorderBrush="#FFCCD4" BorderThickness="1" CornerRadius="8" Padding="6,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="v2.0" FontSize="10" FontWeight="Bold" Foreground="#D94158"/>
+                    </Border>
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>

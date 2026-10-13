@@ -252,8 +252,8 @@ namespace AgileTaskManager.Desktop
                 : (Style)FindResource("BottomTabBtn");
 
             btnMenuCreate.Style = (_currentTab == ActiveTab.Create) 
-                ? (Style)FindResource("BottomTabBtnActive") 
-                : (Style)FindResource("BottomTabBtn");
+                ? (Style)FindResource("BottomTabCreateBtnActive") 
+                : (Style)FindResource("BottomTabCreateBtn");
 
             // 3. Nếu chuyển sang Calendar, mặc định chế độ Tuần và đồng bộ dữ liệu mới nhất
             if (_currentTab == ActiveTab.Calendar && ucCalendarView != null)

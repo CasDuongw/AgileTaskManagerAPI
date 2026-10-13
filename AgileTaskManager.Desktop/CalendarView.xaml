@@ -46,14 +46,14 @@
                     
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Trạng thái: " FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
-                        <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="4">
+                        <Border Background="#FFF6DC" BorderBrush="#FCE8A6" BorderThickness="1" CornerRadius="4">
                             <ComboBox ItemsSource="{Binding Statuses}" 
                                       SelectedValue="{Binding Status, Mode=TwoWay}"
                                       SelectionChanged="ComboBox_SelectionChanged"
-                                      FontSize="11" Padding="4,1" Background="Transparent" Foreground="#1E293B" BorderThickness="0" MinWidth="85">
+                                      FontSize="11" Padding="4,1" Background="Transparent" Foreground="#7A5E12" BorderThickness="0" MinWidth="85">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding}" Foreground="#1E293B"/>
+                                        <TextBlock Text="{Binding}" Foreground="#7A5E12" FontWeight="SemiBold"/>
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
@@ -219,8 +219,8 @@
                                 dd:DragDrop.IsDropTarget="True"
                                 dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="#EAF5FC" CornerRadius="6" Padding="6,3" Margin="0,0,8,0">
-                                <TextBlock Text="&#xE823;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12" Foreground="#425B9A" VerticalAlignment="Center"/>
+                            <Border Background="#FFF6DC" BorderBrush="#FCE8A6" BorderThickness="1" CornerRadius="6" Padding="6,3" Margin="0,0,8,0">
+                                <TextBlock Text="&#xE823;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12" Foreground="#7A5E12" VerticalAlignment="Center"/>
                             </Border>
                             <TextBlock x:Name="txtUnscheduledHeader" Tag="Unscheduled" Text="Chưa xếp lịch" FontWeight="Bold" FontSize="14" Foreground="#0F172A" VerticalAlignment="Center"/>
                         </StackPanel>

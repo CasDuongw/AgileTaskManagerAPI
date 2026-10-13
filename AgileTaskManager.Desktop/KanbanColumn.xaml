@@ -69,14 +69,14 @@
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                         <TextBlock Text="Trạng thái: " FontSize="11" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center"/>
-                        <Border Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6">
+                        <Border Background="#FFF6DC" BorderBrush="#FCE8A6" BorderThickness="1" CornerRadius="6">
                             <ComboBox ItemsSource="{Binding Statuses}" 
                                       SelectedValue="{Binding Status, Mode=TwoWay}"
                                       SelectionChanged="CboStatus_SelectionChanged"
-                                      FontSize="11" Padding="6,2" Background="Transparent" Foreground="#1E293B" BorderThickness="0" MinWidth="105">
+                                      FontSize="11" Padding="6,2" Background="Transparent" Foreground="#7A5E12" BorderThickness="0" MinWidth="105">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding}" Foreground="#1E293B"/>
+                                        <TextBlock Text="{Binding}" Foreground="#7A5E12" FontWeight="SemiBold"/>
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
@@ -85,7 +85,7 @@
                 </StackPanel>
                 <StackPanel x:Name="btnDeleteColumn" Grid.Column="1" Orientation="Horizontal" Visibility="Hidden" VerticalAlignment="Top">
                     <Button Content="&#xE70F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Command="{Binding EditColumnTitleCommand}" Foreground="#64748B" Background="Transparent" BorderThickness="0" FontSize="13" Cursor="Hand" Padding="4" ToolTip="Sửa tên"/>
-                    <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Click="BtnDeleteColumn_Click" Foreground="#EF4444" Background="Transparent" BorderThickness="0" FontSize="13" Cursor="Hand" Padding="4" ToolTip="Xóa cột"/>
+                    <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Click="BtnDeleteColumn_Click" Foreground="#FF95A5" Background="Transparent" BorderThickness="0" FontSize="13" Cursor="Hand" Padding="4" ToolTip="Xóa cột"/>
                 </StackPanel>
             </Grid>
 
@@ -98,7 +98,7 @@
                                     PreviewMouseLeftButtonDown="Task_PreviewMouseLeftButtonDown"
                                     PreviewMouseMove="Task_PreviewMouseMove" Cursor="Hand">
                                 <Border.Effect>
-                                    <DropShadowEffect Color="#0F172A" BlurRadius="6" ShadowDepth="1" Opacity="0.04" />
+                                    <DropShadowEffect Color="#425B9A" BlurRadius="6" ShadowDepth="1" Opacity="0.05" />
                                 </Border.Effect>
                                 <Border.RenderTransform>
                                     <TransformGroup>
@@ -111,7 +111,7 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <CheckBox Foreground="#1E293B" FontWeight="SemiBold" FontSize="13" VerticalContentAlignment="Center" Grid.Column="0">
+                                    <CheckBox Foreground="#0F172A" FontWeight="SemiBold" FontSize="13" VerticalContentAlignment="Center" Grid.Column="0">
                                         <TextBlock Text="{Binding TaskName}" TextWrapping="Wrap" />
                                     </CheckBox>
                                     <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right">
@@ -127,7 +127,7 @@
                                                 </Style>
                                             </Button.Style>
                                         </Button>
-                                        <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#EF4444" Background="Transparent" BorderThickness="0" FontSize="13" Cursor="Hand" Padding="4,2" Click="BtnDeleteTask_Click" ToolTip="Xóa công việc">
+                                        <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#FF95A5" Background="Transparent" BorderThickness="0" FontSize="13" Cursor="Hand" Padding="4,2" Click="BtnDeleteTask_Click" ToolTip="Xóa công việc">
                                             <Button.Style>
                                                 <Style TargetType="Button">
                                                     <Setter Property="Visibility" Value="Hidden" />

@@ -244,7 +244,7 @@ namespace AgileTaskManager.Desktop
                 Width = 26,
                 Height = 26,
                 CornerRadius = new CornerRadius(13),
-                Background = PrimaryBrush,
+                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF95A5")),
                 VerticalAlignment = VerticalAlignment.Center
             };
             dayBadge.Child = new TextBlock

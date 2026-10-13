@@ -4,15 +4,39 @@
              xmlns:local="clr-namespace:AgileTaskManager.Desktop"
              Startup="Application_Startup">
     <Application.Resources>
-        <!-- 2 Main Dominant Colors from User Palette -->
+        <!-- === USER PALETTE (4 CORE HARMONIOUS COLORS) === -->
+        <!-- 1. Deep Primary Navy (#425B9A) -->
         <SolidColorBrush x:Key="ColorPrimary" Color="#425B9A"/>
-        <SolidColorBrush x:Key="ColorPrimaryHover" Color="#354A80"/>
+        <SolidColorBrush x:Key="ColorPrimaryHover" Color="#33487A"/>
+        <SolidColorBrush x:Key="ColorPrimaryLight" Color="#EEF2FA"/>
+
+        <!-- 2. Soft Sky Blue (#76C0EC) -->
+        <SolidColorBrush x:Key="ColorSky" Color="#76C0EC"/>
+        <SolidColorBrush x:Key="ColorSkyLight" Color="#EAF5FC"/>
+        <SolidColorBrush x:Key="ColorSkyHover" Color="#5DAFE0"/>
         <SolidColorBrush x:Key="ColorAccent" Color="#76C0EC"/>
         <SolidColorBrush x:Key="ColorAccentLight" Color="#EAF5FC"/>
-        <SolidColorBrush x:Key="ColorBackground" Color="#F4F6FA"/>
+
+        <!-- 3. Warm Vanilla Cream (#FFF6DC) - Nịnh mắt, ấm áp -->
+        <SolidColorBrush x:Key="ColorCream" Color="#FFF6DC"/>
+        <SolidColorBrush x:Key="ColorCreamLight" Color="#FFFBF0"/>
+        <SolidColorBrush x:Key="ColorCreamBorder" Color="#FCE8A6"/>
+        <SolidColorBrush x:Key="ColorCreamText" Color="#7A5E12"/>
+
+        <!-- 4. Pastel Rose Pink (#FF95A5) - Điểm nhấn ngọt ngào, hiện đại -->
+        <SolidColorBrush x:Key="ColorPink" Color="#FF95A5"/>
+        <SolidColorBrush x:Key="ColorPinkLight" Color="#FFF0F2"/>
+        <SolidColorBrush x:Key="ColorPinkHover" Color="#F47E90"/>
+        <SolidColorBrush x:Key="ColorPinkBorder" Color="#FFCCD4"/>
+        <SolidColorBrush x:Key="ColorPinkText" Color="#D94158"/>
+
+        <!-- Neutral Background & Surfaces -->
+        <SolidColorBrush x:Key="ColorBackground" Color="#F8FAFC"/>
         <SolidColorBrush x:Key="ColorSurface" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="ColorBorder" Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="ColorBorderSoft" Color="#F1F5F9"/>
         <SolidColorBrush x:Key="ColorTextPrimary" Color="#0F172A"/>
-        <SolidColorBrush x:Key="ColorTextSecondary" Color="#5A6B87"/>
+        <SolidColorBrush x:Key="ColorTextSecondary" Color="#64748B"/>
+        <SolidColorBrush x:Key="ColorTextMuted" Color="#94A3B8"/>
     </Application.Resources>
 </Application>
