@@ -4,6 +4,15 @@
              xmlns:local="clr-namespace:AgileTaskManager.Desktop"
              Startup="Application_Startup">
     <Application.Resources>
-        
+        <!-- 2 Main Dominant Colors from User Palette -->
+        <SolidColorBrush x:Key="ColorPrimary" Color="#425B9A"/>
+        <SolidColorBrush x:Key="ColorPrimaryHover" Color="#354A80"/>
+        <SolidColorBrush x:Key="ColorAccent" Color="#76C0EC"/>
+        <SolidColorBrush x:Key="ColorAccentLight" Color="#EAF5FC"/>
+        <SolidColorBrush x:Key="ColorBackground" Color="#F4F6FA"/>
+        <SolidColorBrush x:Key="ColorSurface" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="ColorBorder" Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="ColorTextPrimary" Color="#0F172A"/>
+        <SolidColorBrush x:Key="ColorTextSecondary" Color="#5A6B87"/>
     </Application.Resources>
 </Application>

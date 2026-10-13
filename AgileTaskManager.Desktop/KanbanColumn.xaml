@@ -6,8 +6,8 @@
              Drop="UserControl_Drop" 
              DragOver="UserControl_DragOver">
 
-    <!-- THẺ BORDER BỌC NGOÀI (SaaS Flat Design) -->
-    <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Width="280" Padding="12" Margin="0,0,16,0" VerticalAlignment="Top"
+    <!-- THẺ BORDER BỌC NGOÀI (Modern Flat SaaS Design) -->
+    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Width="285" Padding="14" Margin="0,0,16,0" VerticalAlignment="Top"
             AllowDrop="True">
         <Border.FocusVisualStyle>
             <Style TargetType="Control">
@@ -21,19 +21,18 @@
             </Style>
         </Border.FocusVisualStyle>
 
-        <!-- [CODE MỚI ĐƯỢC THÊM VÀO]: THAY THẾ STACKPANEL THÀNH GRID CHIA 3 TẦNG -->
         <Grid>
             <Grid.RowDefinitions>
-                <!-- Dòng 0: Dành cho Tiêu đề (Bao nhiêu chữ lấy bấy nhiêu cao) -->
+                <!-- Dòng 0: Tiêu đề cột & trạng thái -->
                 <RowDefinition Height="Auto"/>
-                <!-- Dòng 1: Dành cho Danh sách Task (Dấu * ép nó lấp đầy phần trống và tự sinh thanh cuộn nếu quá dài) -->
+                <!-- Dòng 1: Danh sách Task với thanh cuộn tự động -->
                 <RowDefinition Height="*"/>
-                <!-- Dòng 2: Dành cho Nút/Form thêm thẻ mới -->
+                <!-- Dòng 2: Nút/Form thêm thẻ mới -->
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- TẦNG 0: Tiêu đề cột & Nút Xóa Cột -->
-            <Grid x:Name="titleGrid" Grid.Row="0" Margin="5,5,5,15" Background="Transparent" 
+            <Grid x:Name="titleGrid" Grid.Row="0" Margin="4,2,4,14" Background="Transparent" 
                   Cursor="SizeAll"
                   PreviewMouseLeftButtonDown="TitleGrid_PreviewMouseLeftButtonDown" 
                   PreviewMouseMove="TitleGrid_PreviewMouseMove">
@@ -55,7 +54,7 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <TextBox x:Name="txtTitle" Text="{Binding ColumnName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" LostFocus="TxtTitle_LostFocus" KeyDown="TxtTitle_KeyDown" IsVisibleChanged="TxtTitle_IsVisibleChanged" FontSize="15" FontWeight="Bold" Foreground="#0F172A" Background="White" BorderThickness="1" BorderBrush="#3B82F6" TextWrapping="Wrap" Padding="2">
+                        <TextBox x:Name="txtTitle" Text="{Binding ColumnName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" LostFocus="TxtTitle_LostFocus" KeyDown="TxtTitle_KeyDown" IsVisibleChanged="TxtTitle_IsVisibleChanged" FontSize="15" FontWeight="Bold" Foreground="#0F172A" Background="White" BorderThickness="1" BorderBrush="#425B9A" TextWrapping="Wrap" Padding="4,2">
                             <TextBox.Style>
                                 <Style TargetType="TextBox">
                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -68,38 +67,38 @@
                             </TextBox.Style>
                         </TextBox>
                     </Grid>
-                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                        <TextBlock Text="Trạng thái: " FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
-                        <ComboBox ItemsSource="{Binding Statuses}" 
-                                  SelectedValue="{Binding Status, Mode=TwoWay}"
-                                  SelectionChanged="CboStatus_SelectionChanged"
-                                  FontSize="11" Padding="4,2" Background="#F8FAFC" Foreground="Black" BorderThickness="0" MinWidth="100">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding}" Foreground="Black"/>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <TextBlock Text="Trạng thái: " FontSize="11" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center"/>
+                        <Border Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6">
+                            <ComboBox ItemsSource="{Binding Statuses}" 
+                                      SelectedValue="{Binding Status, Mode=TwoWay}"
+                                      SelectionChanged="CboStatus_SelectionChanged"
+                                      FontSize="11" Padding="6,2" Background="Transparent" Foreground="#1E293B" BorderThickness="0" MinWidth="105">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Foreground="#1E293B"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Border>
                     </StackPanel>
                 </StackPanel>
                 <StackPanel x:Name="btnDeleteColumn" Grid.Column="1" Orientation="Horizontal" Visibility="Hidden" VerticalAlignment="Top">
-                    <Button Content="&#xE70F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Command="{Binding EditColumnTitleCommand}" Foreground="#64748B" Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Padding="5,0,5,0" ToolTip="Sửa tên"/>
-                    <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Click="BtnDeleteColumn_Click" Foreground="#64748B" Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Padding="0,0,0,0" ToolTip="Xóa"/>
+                    <Button Content="&#xE70F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Command="{Binding EditColumnTitleCommand}" Foreground="#64748B" Background="Transparent" BorderThickness="0" FontSize="13" Cursor="Hand" Padding="4" ToolTip="Sửa tên"/>
+                    <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Click="BtnDeleteColumn_Click" Foreground="#EF4444" Background="Transparent" BorderThickness="0" FontSize="13" Cursor="Hand" Padding="4" ToolTip="Xóa cột"/>
                 </StackPanel>
             </Grid>
 
-            <!-- TẦNG 1: spTaskList nay đã được bảo kê bởi ScrollViewer -->
-            <!-- Thuộc tính VerticalScrollBarVisibility="Auto" sẽ tự động hiện thanh cuộn khi task tràn viền -->
-            <!-- TẦNG 1 [Đã sửa]: Chuyển AllowDrop lên ScrollViewer và thêm Background trong suốt -->
-            <ScrollViewer Grid.Row="1" Background="Transparent" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,5,0" Margin="0,0,0,5">
+            <!-- TẦNG 1: Danh sách task -->
+            <ScrollViewer Grid.Row="1" Background="Transparent" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,4,0" Margin="0,0,0,6">
                 <ItemsControl x:Name="icTaskList" ItemsSource="{Binding Tasks}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="White" CornerRadius="8" Padding="12" Margin="0,0,0,8" BorderThickness="1" BorderBrush="#E2E8F0" AllowDrop="True" Tag="{Binding TaskId}"
+                            <Border Background="White" CornerRadius="9" Padding="12,10" Margin="0,0,0,8" BorderThickness="1" BorderBrush="#E2E8F0" AllowDrop="True" Tag="{Binding TaskId}"
                                     PreviewMouseLeftButtonDown="Task_PreviewMouseLeftButtonDown"
-                                    PreviewMouseMove="Task_PreviewMouseMove">
+                                    PreviewMouseMove="Task_PreviewMouseMove" Cursor="Hand">
                                 <Border.Effect>
-                                    <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.1" />
+                                    <DropShadowEffect Color="#0F172A" BlurRadius="6" ShadowDepth="1" Opacity="0.04" />
                                 </Border.Effect>
                                 <Border.RenderTransform>
                                     <TransformGroup>
@@ -112,11 +111,11 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <CheckBox Foreground="#111827" FontWeight="SemiBold" VerticalContentAlignment="Center" Grid.Column="0">
+                                    <CheckBox Foreground="#1E293B" FontWeight="SemiBold" FontSize="13" VerticalContentAlignment="Center" Grid.Column="0">
                                         <TextBlock Text="{Binding TaskName}" TextWrapping="Wrap" />
                                     </CheckBox>
                                     <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right">
-                                        <Button Content="&#xE70F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#64748B" Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Padding="5,0,5,0" Command="{Binding EditTaskCommand}" ToolTip="Edit Task">
+                                        <Button Content="&#xE70F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#64748B" Background="Transparent" BorderThickness="0" FontSize="13" Cursor="Hand" Padding="4,2" Command="{Binding EditTaskCommand}" ToolTip="Chỉnh sửa công việc">
                                             <Button.Style>
                                                 <Style TargetType="Button">
                                                     <Setter Property="Visibility" Value="Hidden" />
@@ -128,7 +127,7 @@
                                                 </Style>
                                             </Button.Style>
                                         </Button>
-                                        <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#64748B" Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Padding="5,0,0,0" Click="BtnDeleteTask_Click" ToolTip="Delete Task">
+                                        <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#EF4444" Background="Transparent" BorderThickness="0" FontSize="13" Cursor="Hand" Padding="4,2" Click="BtnDeleteTask_Click" ToolTip="Xóa công việc">
                                             <Button.Style>
                                                 <Style TargetType="Button">
                                                     <Setter Property="Visibility" Value="Hidden" />
@@ -149,11 +148,11 @@
             </ScrollViewer>
 
             <!-- TẦNG 2: Khu vực Thêm Thẻ -->
-            <Grid Grid.Row="2" Margin="0,5,0,0">
-                <Button x:Name="btnShowAddCard" Click="BtnShowAddCard_Click" Background="Transparent" Foreground="#64748B" BorderThickness="0" HorizontalContentAlignment="Left" Padding="8" Cursor="Hand" Margin="0,4,0,0" FocusVisualStyle="{x:Null}">
+            <Grid Grid.Row="2" Margin="0,4,0,0">
+                <Button x:Name="btnShowAddCard" Click="BtnShowAddCard_Click" Background="Transparent" Foreground="#64748B" BorderThickness="0" HorizontalContentAlignment="Left" Padding="8" Cursor="Hand" Margin="0,2,0,0" FocusVisualStyle="{x:Null}">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="8">
                                 <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
                             </Border>
                         </ControlTemplate>
@@ -162,24 +161,24 @@
                         <Style TargetType="Button">
                             <Style.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#E2E8F0"/>
-                                    <Setter Property="Foreground" Value="#0F172A"/>
+                                    <Setter Property="Background" Value="#EAF5FC"/>
+                                    <Setter Property="Foreground" Value="#425B9A"/>
                                 </Trigger>
                             </Style.Triggers>
                         </Style>
                     </Button.Style>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="2,0,0,0">
-                        <TextBlock Text="&#xE710;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="+ Thêm thẻ việc" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE710;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Thêm công việc" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
-                <StackPanel x:Name="panelAddCardInput" Visibility="Collapsed" Margin="0,8,0,0">
-                    <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Margin="0,0,0,12">
-                        <TextBox x:Name="txtNewTaskName" MinHeight="60" TextWrapping="Wrap" AcceptsReturn="True" Padding="12" BorderThickness="0" Background="Transparent" Foreground="#0F172A" VerticalContentAlignment="Top" PreviewKeyDown="TxtNewTaskName_PreviewKeyDown"/>
+                <StackPanel x:Name="panelAddCardInput" Visibility="Collapsed" Margin="0,6,0,0">
+                    <Border Background="#FFFFFF" BorderBrush="#425B9A" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10">
+                        <TextBox x:Name="txtNewTaskName" MinHeight="60" TextWrapping="Wrap" AcceptsReturn="True" Padding="10,8" BorderThickness="0" Background="Transparent" Foreground="#0F172A" VerticalContentAlignment="Top" PreviewKeyDown="TxtNewTaskName_PreviewKeyDown"/>
                     </Border>
                     <StackPanel Orientation="Horizontal">
-                        <Button Content="Thêm thẻ việc" Click="BtnConfirmAddCard_Click" Background="#0D6EFD" Foreground="White" FontWeight="SemiBold" BorderThickness="0" Padding="16,8" Cursor="Hand" FocusVisualStyle="{x:Null}">
+                        <Button Content="Thêm việc" Click="BtnConfirmAddCard_Click" Background="#425B9A" Foreground="White" FontWeight="SemiBold" BorderThickness="0" Padding="14,7" Cursor="Hand" FocusVisualStyle="{x:Null}">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border Background="{TemplateBinding Background}" CornerRadius="6">
@@ -188,7 +187,7 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
-                        <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Click="BtnCancelAddCard_Click" FontSize="14" Background="Transparent" Foreground="#64748B" BorderThickness="0" Margin="12,0,0,0" Cursor="Hand" FocusVisualStyle="{x:Null}">
+                        <Button Content="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Click="BtnCancelAddCard_Click" FontSize="13" Background="Transparent" Foreground="#64748B" BorderThickness="0" Margin="10,0,0,0" Cursor="Hand" FocusVisualStyle="{x:Null}">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>

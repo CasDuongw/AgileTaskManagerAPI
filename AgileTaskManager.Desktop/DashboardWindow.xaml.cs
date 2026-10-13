@@ -34,17 +34,15 @@ namespace AgileTaskManager.Desktop
                 {
                     foreach (KanbanColumnViewModel col in e.NewItems)
                     {
-                        col.Tasks.CollectionChanged += (ts, te) => 
+                        col.Tasks.CollectionChanged += (ts, te) =>
                         {
-                            if (viewCalendar?.Visibility == Visibility.Visible)
+                            if (panelCalendar?.Visibility == Visibility.Visible)
                                 ucCalendarView?.UpdateCalendarData();
                         };
                     }
                 }
-                if (viewCalendar?.Visibility == Visibility.Visible && ucCalendarView != null)
-                {
+                if (panelCalendar?.Visibility == Visibility.Visible && ucCalendarView != null)
                     ucCalendarView.UpdateCalendarData();
-                }
             };
             this.Loaded += DashboardWindow_Loaded;
         }
@@ -74,6 +72,11 @@ namespace AgileTaskManager.Desktop
 
                 private async void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            if (!string.IsNullOrEmpty(AppConfig.CurrentUsername))
+            {
+                lblCurrentUserName.Text = AppConfig.CurrentUsername;
+            }
+
             if (AppConfig.CurrentUsername?.ToLower() != "admin")
             {
                 panelCreateUser.Visibility = Visibility.Collapsed;
@@ -88,6 +91,7 @@ namespace AgileTaskManager.Desktop
                 timeSlots.Add($"{i:D2}:30");
             }
             cboCreateTaskTime.ItemsSource = timeSlots;
+            UpdateViewLayout();
 
             await Task.WhenAll(LoadProjectsAsync(), LoadUsersAsync());
         }
@@ -197,7 +201,10 @@ namespace AgileTaskManager.Desktop
                         taskVm.EditTaskCommand = new RelayCommand(async () => await EditTaskAsync(taskVm));
                         colVm.Tasks.Add(taskVm);
                     }
-                      colVm.Tasks.CollectionChanged += (s, ev) => { if (ucCalendarView != null) ucCalendarView.UpdateCalendarData(); };
+                    colVm.Tasks.CollectionChanged += (s, ev) =>
+                    {
+                        if (ucCalendarView != null) ucCalendarView.UpdateCalendarData();
+                    };
                     _viewModel.Columns.Add(colVm);
                 }
 
@@ -217,24 +224,159 @@ namespace AgileTaskManager.Desktop
             if (ucCalendarView != null) ucCalendarView.UpdateCalendarData();
         }
 
+        // === BOTTOM TAB NAVIGATION (TRELLO-STYLE TOGGLES) ===
+        private bool _isCalendarActive = false;
+        private bool _isDashboardActive = true;
+        private bool _isCreateActive = false;
+        private double _savedCalendarWidth = 360;
+
+        /// <summary>Cập nhật giao diện workspace theo trạng thái bật/tắt của Calendar và Dashboard.</summary>
+        private void UpdateViewLayout()
+        {
+            if (_isCreateActive)
+            {
+                viewWorkspace.Visibility = Visibility.Collapsed;
+                viewCreate.Visibility = Visibility.Visible;
+                btnMenuCreate.Style = (Style)FindResource("BottomTabBtnActive");
+                btnMenuCalendar.Style = (Style)FindResource("BottomTabBtn");
+                btnMenuDashboard.Style = (Style)FindResource("BottomTabBtn");
+                return;
+            }
+
+            viewCreate.Visibility = Visibility.Collapsed;
+            viewWorkspace.Visibility = Visibility.Visible;
+            btnMenuCreate.Style = (Style)FindResource("BottomTabBtn");
+
+            // Cập nhật trạng thái sáng/tối của 2 nút tab
+            btnMenuCalendar.Style = _isCalendarActive 
+                ? (Style)FindResource("BottomTabBtnActive") 
+                : (Style)FindResource("BottomTabBtn");
+
+            btnMenuDashboard.Style = _isDashboardActive 
+                ? (Style)FindResource("BottomTabBtnActive") 
+                : (Style)FindResource("BottomTabBtn");
+
+            if (_isCalendarActive && _isDashboardActive)
+            {
+                // Cả 2 cùng sáng: Hiện song song 2 bên (Trình lập kế hoạch bên trái, Bảng thông tin bên phải)
+                panelCalendar.Visibility = Visibility.Visible;
+                colCalendar.Width = new GridLength(Math.Max(280, _savedCalendarWidth), GridUnitType.Pixel);
+                colCalendar.MinWidth = 280;
+
+                splitterView.Visibility = Visibility.Visible;
+                colSplitter.Width = new GridLength(6, GridUnitType.Pixel);
+
+                panelDashboard.Visibility = Visibility.Visible;
+                colDashboard.Width = new GridLength(1, GridUnitType.Star);
+                colDashboard.MinWidth = 340;
+
+                if (ucCalendarView != null)
+                {
+                    ucCalendarView.SetSideBySideMode(true);
+                    ucCalendarView.RenderCalendar(_viewModel);
+                }
+            }
+            else if (_isCalendarActive && !_isDashboardActive)
+            {
+                // Chỉ có Trình lập kế hoạch sáng: Chiếm trọn toàn màn hình
+                if (colCalendar.Width.IsAbsolute && colCalendar.Width.Value > 0)
+                {
+                    _savedCalendarWidth = colCalendar.Width.Value;
+                }
+
+                panelCalendar.Visibility = Visibility.Visible;
+                colCalendar.Width = new GridLength(1, GridUnitType.Star);
+                colCalendar.MinWidth = 0;
+
+                splitterView.Visibility = Visibility.Collapsed;
+                colSplitter.Width = new GridLength(0);
+
+                panelDashboard.Visibility = Visibility.Collapsed;
+                colDashboard.Width = new GridLength(0);
+                colDashboard.MinWidth = 0;
+
+                if (ucCalendarView != null)
+                {
+                    ucCalendarView.SetSideBySideMode(false);
+                    ucCalendarView.RenderCalendar(_viewModel);
+                }
+            }
+            else // Chỉ có Bảng thông tin sáng: Chiếm trọn toàn màn hình
+            {
+                if (colCalendar.Width.IsAbsolute && colCalendar.Width.Value > 0)
+                {
+                    _savedCalendarWidth = colCalendar.Width.Value;
+                }
+
+                panelCalendar.Visibility = Visibility.Collapsed;
+                colCalendar.Width = new GridLength(0);
+                colCalendar.MinWidth = 0;
+
+                splitterView.Visibility = Visibility.Collapsed;
+                colSplitter.Width = new GridLength(0);
+
+                panelDashboard.Visibility = Visibility.Visible;
+                colDashboard.Width = new GridLength(1, GridUnitType.Star);
+                colDashboard.MinWidth = 0;
+            }
+        }
+
+        private void btnMenuCalendar_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isCreateActive)
+            {
+                _isCreateActive = false;
+                _isCalendarActive = true;
+            }
+            else
+            {
+                if (_isCalendarActive)
+                {
+                    // Nếu dashboard đang bật thì cho phép tắt calendar
+                    if (_isDashboardActive)
+                    {
+                        _isCalendarActive = false;
+                    }
+                }
+                else
+                {
+                    _isCalendarActive = true;
+                }
+            }
+
+            UpdateViewLayout();
+        }
+
         private void btnMenuDashboard_Click(object sender, RoutedEventArgs e)
         {
-            viewDashboard.Visibility = Visibility.Visible;
-            viewCreate.Visibility = Visibility.Collapsed;
-            if (viewCalendar != null) viewCalendar.Visibility = Visibility.Collapsed;
-            btnMenuDashboard.Style = (Style)FindResource("ActiveMenuBtn");
-            btnMenuCalendar.Style = (Style)FindResource("MenuBtn");
-            btnMenuCreate.Style = (Style)FindResource("MenuBtn");
+            if (_isCreateActive)
+            {
+                _isCreateActive = false;
+                _isDashboardActive = true;
+            }
+            else
+            {
+                if (_isDashboardActive)
+                {
+                    // Nếu calendar đang bật thì cho phép tắt dashboard
+                    if (_isCalendarActive)
+                    {
+                        _isDashboardActive = false;
+                    }
+                }
+                else
+                {
+                    _isDashboardActive = true;
+                }
+            }
+
+            UpdateViewLayout();
         }
 
         private void btnMenuCreate_Click(object sender, RoutedEventArgs e)
         {
-            viewCreate.Visibility = Visibility.Visible;
-            viewDashboard.Visibility = Visibility.Collapsed;
-            if (viewCalendar != null) viewCalendar.Visibility = Visibility.Collapsed;
-            btnMenuCreate.Style = (Style)FindResource("ActiveMenuBtn");
-            btnMenuCalendar.Style = (Style)FindResource("MenuBtn");
-            btnMenuDashboard.Style = (Style)FindResource("MenuBtn");
+            _isCreateActive = !_isCreateActive;
+            UpdateViewLayout();
         }
 
         private async void BtnCreateUser_Click(object sender, RoutedEventArgs e)
@@ -475,21 +617,7 @@ namespace AgileTaskManager.Desktop
         }
 
     
-        private void btnMenuCalendar_Click(object sender, RoutedEventArgs e)
-        {
-            viewCalendar.Visibility = Visibility.Visible;
-            viewDashboard.Visibility = Visibility.Collapsed;
-            viewCreate.Visibility = Visibility.Collapsed;
-            
-            btnMenuCalendar.Style = (Style)FindResource("ActiveMenuBtn");
-            btnMenuDashboard.Style = (Style)FindResource("MenuBtn");
-            btnMenuCreate.Style = (Style)FindResource("MenuBtn");
-
-            if (ucCalendarView != null)
-            {
-                ucCalendarView.RenderCalendar(_viewModel);
-            }
-        }
+        // btnMenuCalendar_Click đã được định nghĩa ở trên cùng với HideAllViews()
     
         public async Task EditTaskAsync(KanbanTaskViewModel taskVm)
         {
@@ -542,7 +670,7 @@ namespace AgileTaskManager.Desktop
                         MessageBox.Show($"Lỗi kết nối khi lưu Task: {ex.Message}", "Lỗi mạng", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
 
-                    if (viewCalendar?.Visibility == Visibility.Visible && ucCalendarView != null) 
+                    if (panelCalendar?.Visibility == Visibility.Visible && ucCalendarView != null)
                         ucCalendarView.UpdateCalendarData();
                 }
             }

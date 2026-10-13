@@ -2,20 +2,22 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:dd="urn:gong-wpf-dragdrop"
-             Background="#F3F4F6">
+             Background="#F8FAFC"
+             FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
     <UserControl.Resources>
+        <!-- Task Card Template in Calendar Slot -->
         <DataTemplate x:Key="CalendarTaskTemplate">
-            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="2,4">
+            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,3" Cursor="Hand">
                 <Border.Effect>
-                    <DropShadowEffect Color="#000000" Opacity="0.05" BlurRadius="5" ShadowDepth="1"/>
+                    <DropShadowEffect Color="#425B9A" Opacity="0.06" BlurRadius="6" ShadowDepth="1"/>
                 </Border.Effect>
                 <StackPanel>
-                    <Grid Margin="0,0,0,8">
+                    <Grid Margin="0,0,0,4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{Binding ColumnName}" TextWrapping="Wrap" FontSize="14" FontWeight="SemiBold" Foreground="#1E293B">
+                        <TextBlock Grid.Column="0" Text="{Binding ColumnName}" TextWrapping="Wrap" FontSize="13" FontWeight="SemiBold" Foreground="#0F172A">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Visible"/>
@@ -27,7 +29,7 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <TextBox Grid.Column="0" x:Name="txtCalendarTitle" Text="{Binding ColumnName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" LostFocus="TxtColumnName_LostFocus" KeyDown="TxtColumnName_KeyDown" IsVisibleChanged="TxtCalendarTitle_IsVisibleChanged" TextWrapping="Wrap" FontSize="14" FontWeight="SemiBold" Foreground="#1E293B" Background="White" BorderThickness="1" BorderBrush="#3B82F6" Padding="2">
+                        <TextBox Grid.Column="0" x:Name="txtCalendarTitle" Text="{Binding ColumnName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" LostFocus="TxtColumnName_LostFocus" KeyDown="TxtColumnName_KeyDown" IsVisibleChanged="TxtCalendarTitle_IsVisibleChanged" TextWrapping="Wrap" FontSize="13" FontWeight="SemiBold" Foreground="#0F172A" Background="White" BorderThickness="1" BorderBrush="#425B9A" Padding="3,1">
                             <TextBox.Style>
                                 <Style TargetType="TextBox">
                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -39,88 +41,151 @@
                                 </Style>
                             </TextBox.Style>
                         </TextBox>
-                        <Button Grid.Column="1" Content="&#xE70F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Command="{Binding EditColumnTitleCommand}" Foreground="#94A3B8" Background="Transparent" BorderThickness="0" FontSize="12" Cursor="Hand" Padding="5,0,0,0" ToolTip="Sửa tên" VerticalAlignment="Top"/>
+                        <Button Grid.Column="1" Content="&#xE70F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Command="{Binding EditColumnTitleCommand}" Foreground="#64748B" Background="Transparent" BorderThickness="0" FontSize="11" Cursor="Hand" Padding="4,0,0,0" ToolTip="Sửa tên" VerticalAlignment="Top"/>
                     </Grid>
                     
-                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                    <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Trạng thái: " FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
-                        <ComboBox ItemsSource="{Binding Statuses}" 
-                                  SelectedValue="{Binding Status, Mode=TwoWay}"
-                                  SelectionChanged="ComboBox_SelectionChanged"
-                                  FontSize="11" Padding="4,2" Background="#F1F5F9" Foreground="Black" BorderThickness="0" MinWidth="100">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding}" Foreground="Black"/>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                        <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="4">
+                            <ComboBox ItemsSource="{Binding Statuses}" 
+                                      SelectedValue="{Binding Status, Mode=TwoWay}"
+                                      SelectionChanged="ComboBox_SelectionChanged"
+                                      FontSize="11" Padding="4,1" Background="Transparent" Foreground="#1E293B" BorderThickness="0" MinWidth="85">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Foreground="#1E293B"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Border>
                     </StackPanel>
                 </StackPanel>
             </Border>
         </DataTemplate>
     </UserControl.Resources>
-    <Grid Margin="10">
+
+    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- Header tuần -->
-            <RowDefinition Height="*"/>    <!-- Lưới lịch -->
+            <RowDefinition Height="Auto"/> <!-- Header / Toolbar (Trello style) -->
+            <RowDefinition Height="*"/>    <!-- Calendar Timeline Area -->
         </Grid.RowDefinitions>
 
-        <!-- Header: Nút chuyển tuần -->
-        <Border Grid.Row="0" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,10">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock x:Name="lblWeekInfo" Text="Tuần (09/11 - 15/11)" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
-                <DatePicker x:Name="dtpSelectedDate" Margin="20,0,10,0" Width="120" SelectedDateChanged="DtpSelectedDate_SelectedDateChanged" />
-                <Button Content="&lt; Tuần trước" Margin="10,0,10,0" Padding="10,5" Click="PrevWeek_Click"/>
-                <Button Content="Tuần hiện tại" Background="#3B82F6" Foreground="White" BorderThickness="0" Padding="10,5" Click="CurrentWeek_Click"/>
-                <Button Content="Tuần sau &gt;" Margin="10,0,0,0" Padding="10,5" Click="NextWeek_Click"/>
-            </StackPanel>
+        <!-- HEADER / TOOLBAR -->
+        <Border Grid.Row="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="12,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Dòng 1: Tiêu đề ngày/tuần + Nút chuyển chế độ Ngày / Tuần -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Tiêu đề ngày/tuần -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="28" Height="28" CornerRadius="7" Background="#EAF5FC" Margin="0,0,8,0">
+                            <TextBlock Text="&#xE787;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Foreground="#425B9A" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock x:Name="lblCalendarHeader" Text="Thứ Ba, 13/10" FontSize="15" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Segmented View Mode Toggle: [ Ngày | Tuần ] -->
+                    <Border Grid.Column="1" Background="#F1F5F9" CornerRadius="6" Padding="2" BorderBrush="#E2E8F0" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="btnViewDay" Content="Ngày" Click="BtnViewDay_Click"
+                                    Background="#425B9A" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                                    Padding="10,4" BorderThickness="0" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button x:Name="btnViewWeek" Content="Tuần" Click="BtnViewWeek_Click"
+                                    Background="Transparent" Foreground="#64748B" FontWeight="SemiBold" FontSize="12"
+                                    Padding="10,4" BorderThickness="0" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Dòng 2: Navigation controls [<] [Hôm nay] [>] + DatePicker -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Nút Lùi: [<] -->
+                        <Button Click="Prev_Click" ToolTip="Lùi lại" Width="30" Height="28" Margin="0,0,4,0"
+                                Background="White" BorderBrush="#CBD5E1" BorderThickness="1" Foreground="#475569" Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                                        <TextBlock Text="&#xE76B;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- Nút Hôm nay -->
+                        <Button Content="Hôm nay" Click="Today_Click" Height="28" Padding="8,0" Margin="0,0,4,0"
+                                Background="#EAF5FC" BorderBrush="#76C0EC" BorderThickness="1" Foreground="#425B9A" FontWeight="SemiBold" FontSize="12" Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- Nút Tiến: [>] -->
+                        <Button Click="Next_Click" ToolTip="Tiếp theo" Width="30" Height="28" Margin="0,0,8,0"
+                                Background="White" BorderBrush="#CBD5E1" BorderThickness="1" Foreground="#475569" Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                                        <TextBlock Text="&#xE76C;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- DatePicker gọn gàng -->
+                    <DatePicker x:Name="dtpSelectedDate" Grid.Column="1" HorizontalAlignment="Right" Width="120" Height="28"
+                                SelectedDateChanged="DtpSelectedDate_SelectedDateChanged"/>
+                </Grid>
+            </Grid>
         </Border>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="250"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Lưới Calendar -->
-            <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,10,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-                              AllowDrop="True"
-                              dd:DragDrop.IsDropTarget="True"
-                              dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
-                    <Grid x:Name="CalendarGrid"
-                          Background="Transparent"
-                          AllowDrop="True"
-                          dd:DragDrop.IsDropTarget="True"
-                          dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
-                        <!-- Sẽ được tạo động trong Code-Behind -->
-                    </Grid>
-                </ScrollViewer>
-            </Border>
-
-            <!-- Danh sách Unscheduled Tasks -->
-            <Border Grid.Column="1" Tag="Unscheduled" AllowDrop="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10">
-                <Grid Tag="Unscheduled">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock x:Name="txtUnscheduledHeader" Tag="Unscheduled" Grid.Row="0" Text="Chưa xếp lịch" FontWeight="Bold" FontSize="14" Foreground="#475569" Margin="0,0,0,10" AllowDrop="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                    <ScrollViewer Grid.Row="1" Tag="Unscheduled" VerticalScrollBarVisibility="Auto" AllowDrop="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
-                        <ItemsControl x:Name="icUnscheduledTasks" Tag="Unscheduled" ItemsSource="{Binding UnscheduledTasks}" ItemTemplate="{StaticResource CalendarTaskTemplate}" 
-                                      AllowDrop="True" Background="Transparent" MinHeight="500" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
-                                      dd:DragDrop.IsDragSource="True" 
-                                      dd:DragDrop.IsDropTarget="True" 
-                                      dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Vertical"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </Grid>
-            </Border>
-        </Grid>
+        <!-- LƯỚI LỊCH (HOÀN TOÀN KHÔNG CÒN CỘT CHƯA XẾP LỊCH, CHIẾM 100% DIỆN TÍCH) -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                      AllowDrop="True"
+                      dd:DragDrop.IsDropTarget="True"
+                      dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
+            <Grid x:Name="CalendarGrid"
+                  Background="Transparent"
+                  AllowDrop="True"
+                  dd:DragDrop.IsDropTarget="True"
+                  dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <!-- Được render động theo chế độ Ngày hoặc Tuần -->
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </UserControl>

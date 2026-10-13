@@ -86,6 +86,40 @@ namespace AgileTaskManager.Desktop.ViewModels
             set { _tags = value; OnPropertyChanged(); }
         }
 
+        // Tương thích hiển thị Calendar
+        public string ColumnName
+        {
+            get => _taskName;
+            set { TaskName = value; }
+        }
+
+        public string DisplayTitle => _taskName;
+
+        private bool _isEditingTitle;
+        public bool IsEditingTitle
+        {
+            get => _isEditingTitle;
+            set { _isEditingTitle = value; OnPropertyChanged(); }
+        }
+
+        private string _status = "Vừa giao";
+        public string Status
+        {
+            get => _status;
+            set { _status = value; OnPropertyChanged(); }
+        }
+
+        public ObservableCollection<string> Statuses { get; } = new ObservableCollection<string> { "Vừa giao", "Đang làm", "Hoàn thành", "Trễ hạn" };
+
+        public ICommand? EditColumnTitleCommand { get; set; }
+        public ICommand? EditTitleCommand { get; set; }
+
+        public KanbanTaskViewModel()
+        {
+            EditColumnTitleCommand = new AgileTaskManager.Desktop.Commands.RelayCommand(() => IsEditingTitle = true);
+            EditTitleCommand = EditColumnTitleCommand;
+        }
+
         public ICommand? DeleteTaskCommand { get; set; }
         public ICommand? EditTaskCommand { get; set; }
 
@@ -105,8 +139,10 @@ namespace AgileTaskManager.Desktop.ViewModels
         public string ColumnName
         {
             get => _columnName;
-            set { _columnName = value; OnPropertyChanged(); }
+            set { _columnName = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTitle)); }
         }
+
+        public string DisplayTitle => _columnName;
 
         private bool _isEditingTitle;
         public bool IsEditingTitle
@@ -126,6 +162,8 @@ namespace AgileTaskManager.Desktop.ViewModels
 
         public ICommand? DeleteColumnCommand { get; set; }
         public ICommand? EditColumnTitleCommand { get; set; }
+        public ICommand? EditTitleCommand => EditColumnTitleCommand;
+
         public KanbanColumnViewModel()
         {
             EditColumnTitleCommand = new AgileTaskManager.Desktop.Commands.RelayCommand(ExecuteEditColumnTitle);
@@ -155,7 +193,7 @@ namespace AgileTaskManager.Desktop.ViewModels
     public class CalendarCellViewModel : ViewModelBase
     {
         public DateTime SlotTime { get; set; }
-        public ObservableCollection<KanbanColumnViewModel> Tasks { get; } = new ObservableCollection<KanbanColumnViewModel>();
+        public ObservableCollection<ViewModelBase> Tasks { get; } = new ObservableCollection<ViewModelBase>();
     }
 
     public class CalendarViewModel : ViewModelBase
@@ -163,7 +201,7 @@ namespace AgileTaskManager.Desktop.ViewModels
         public ObservableCollection<CalendarCellViewModel> Cells { get; } = new ObservableCollection<CalendarCellViewModel>();
         public ObservableCollection<KanbanColumnViewModel>? Columns { get; set; }
         public ObservableCollection<string> Statuses { get; } = new ObservableCollection<string> { "Vừa giao", "Đang làm", "Hoàn thành", "Trễ hạn" };
-        public ObservableCollection<KanbanColumnViewModel> UnscheduledTasks { get; } = new ObservableCollection<KanbanColumnViewModel>();
+        public ObservableCollection<ViewModelBase> UnscheduledTasks { get; } = new ObservableCollection<ViewModelBase>();
         
         private DateTime _currentWeekStart;
         public DateTime CurrentWeekStart 
