@@ -238,15 +238,28 @@
                 <!-- Project Selector (Center) -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock Text="&#xE8B7;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                               FontSize="14" Foreground="{StaticResource ColorAccent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                               FontSize="14" Foreground="{StaticResource ColorSky}" Margin="0,0,8,0" VerticalAlignment="Center"/>
                     <TextBlock Text="Dự án:" FontSize="13" FontWeight="SemiBold" Foreground="White"
                                Margin="0,0,10,0" VerticalAlignment="Center"/>
-                    <Border Background="#33487A" CornerRadius="8" BorderBrush="{StaticResource ColorAccent}" BorderThickness="1">
-                        <ComboBox x:Name="cboProjects" Width="240" Height="34" FontSize="13" Padding="10,6"
-                                  DisplayMemberPath="projectName" SelectedValuePath="projectId"
+                    <Border Background="White" CornerRadius="8" BorderBrush="{StaticResource ColorSky}" BorderThickness="1.5" Padding="4,0">
+                        <ComboBox x:Name="cboProjects" Width="240" Height="32" FontSize="13" FontWeight="SemiBold"
+                                  SelectedValuePath="projectId"
                                   SelectionChanged="CboProjects_SelectionChanged"
-                                  Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                  VerticalContentAlignment="Center" Foreground="White"/>
+                                  Background="White" Foreground="{StaticResource ColorTextPrimary}" BorderThickness="0" Cursor="Hand"
+                                  VerticalContentAlignment="Center">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="Foreground" Value="{StaticResource ColorTextPrimary}"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Padding" Value="8,6"/>
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding projectName}" Foreground="{StaticResource ColorTextPrimary}" FontWeight="SemiBold"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                     </Border>
                 </StackPanel>
 
@@ -448,7 +461,7 @@
 
                                 <TextBlock Text="Người quản lý (Owner)" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,6" FontSize="12" FontWeight="SemiBold"/>
                                 <Border Background="{StaticResource ColorSurface}" BorderBrush="{StaticResource ColorBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,16">
-                                    <ComboBox x:Name="cboOwner" Padding="12,10" Background="Transparent" BorderThickness="0" DisplayMemberPath="username" SelectedValuePath="userId" VerticalContentAlignment="Center"/>
+                                    <ComboBox x:Name="cboOwner" Padding="12,10" Background="Transparent" BorderThickness="0" DisplayMemberPath="username" SelectedValuePath="userId" VerticalContentAlignment="Center" Foreground="{StaticResource ColorTextPrimary}"/>
                                 </Border>
                             </StackPanel>
 
@@ -480,7 +493,7 @@
 
                                 <TextBlock Text="Thuộc dự án" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,6" FontSize="12" FontWeight="SemiBold"/>
                                 <Border Background="{StaticResource ColorSurface}" BorderBrush="{StaticResource ColorBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,16">
-                                    <ComboBox x:Name="cboProject" Padding="12,10" Background="Transparent" BorderThickness="0" DisplayMemberPath="projectName" SelectedValuePath="projectId" VerticalContentAlignment="Center"/>
+                                    <ComboBox x:Name="cboProject" Padding="12,10" Background="Transparent" BorderThickness="0" DisplayMemberPath="projectName" SelectedValuePath="projectId" VerticalContentAlignment="Center" Foreground="{StaticResource ColorTextPrimary}"/>
                                 </Border>
 
                                 <TextBlock Text="Hạn hoàn thành" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,6" FontSize="12" FontWeight="SemiBold"/>
@@ -490,7 +503,7 @@
 
                                 <TextBlock Text="Khung giờ (Không bắt buộc)" Foreground="{StaticResource ColorTextSecondary}" Margin="0,0,0,6" FontSize="12" FontWeight="SemiBold"/>
                                 <Border Background="{StaticResource ColorSurface}" BorderBrush="{StaticResource ColorBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,16">
-                                    <ComboBox x:Name="cboCreateTaskTime" Padding="12,10" Background="Transparent" BorderThickness="0"/>
+                                    <ComboBox x:Name="cboCreateTaskTime" Padding="12,10" Background="Transparent" BorderThickness="0" Foreground="{StaticResource ColorTextPrimary}"/>
                                 </Border>
                             </StackPanel>
 

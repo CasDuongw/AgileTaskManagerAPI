@@ -1,8 +1,8 @@
 <Window x:Class="AgileTaskManager.Desktop.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Agile Manager - Đăng nhập" Height="580" Width="440"
-        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        Title="Agile Manager - Đăng nhập" Height="600" Width="430"
+        WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize"
         Background="#F1F5F9"
         FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
     
@@ -19,132 +19,134 @@
     </Window.Resources>
 
     <Grid>
-        <!-- Background subtle decor -->
-        <Border Margin="24" Background="{StaticResource ColorSurface}" BorderBrush="{StaticResource ColorBorder}" BorderThickness="1" CornerRadius="16" Padding="32,28">
+        <!-- Background Card -->
+        <Border Margin="16" Background="{StaticResource ColorSurface}" BorderBrush="{StaticResource ColorBorder}" BorderThickness="1" CornerRadius="16" Padding="28,20">
             <Border.Effect>
                 <DropShadowEffect Color="#425B9A" BlurRadius="24" ShadowDepth="4" Opacity="0.1"/>
             </Border.Effect>
             
-            <Grid VerticalAlignment="Center">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/> <!-- Brand Header -->
-                    <RowDefinition Height="Auto"/> <!-- Form Inputs -->
-                    <RowDefinition Height="Auto"/> <!-- Action Button & Loading -->
-                    <RowDefinition Height="Auto"/> <!-- Alerts -->
-                    <RowDefinition Height="Auto"/> <!-- Footer -->
-                </Grid.RowDefinitions>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" FocusVisualStyle="{x:Null}">
+                <Grid VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/> <!-- Brand Header -->
+                        <RowDefinition Height="Auto"/> <!-- Form Inputs -->
+                        <RowDefinition Height="Auto"/> <!-- Action Button & Loading -->
+                        <RowDefinition Height="Auto"/> <!-- Alerts -->
+                        <RowDefinition Height="Auto"/> <!-- Footer -->
+                    </Grid.RowDefinitions>
 
-                <!-- 1. Brand Header -->
-                <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,24">
-                    <!-- Brand Icon Badge (Gradient #425B9A -> #76C0EC) -->
-                    <Border Width="52" Height="52" CornerRadius="14" HorizontalAlignment="Center" Margin="0,0,0,12">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#425B9A" Offset="0.0"/>
-                                <GradientStop Color="#76C0EC" Offset="1.0"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <Border.Effect>
-                            <DropShadowEffect Color="#425B9A" BlurRadius="12" ShadowDepth="3" Opacity="0.25"/>
-                        </Border.Effect>
-                        <TextBlock Text="&#xE80F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                   FontSize="26" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <TextBlock Text="Agile Manager" FontSize="22" FontWeight="Bold" Foreground="{StaticResource ColorPrimary}" HorizontalAlignment="Center"/>
-                    <Border Background="#FFF6DC" BorderBrush="#FCE8A6" BorderThickness="1" CornerRadius="10" Padding="10,3" Margin="0,6,0,0" HorizontalAlignment="Center">
-                        <TextBlock Text="Đăng nhập để bắt đầu phiên làm việc" FontSize="11" FontWeight="SemiBold" Foreground="#7A5E12"/>
-                    </Border>
-                </StackPanel>
+                    <!-- 1. Brand Header -->
+                    <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,20">
+                        <!-- Brand Icon Badge (Gradient #425B9A -> #76C0EC) -->
+                        <Border Width="48" Height="48" CornerRadius="14" HorizontalAlignment="Center" Margin="0,0,0,10">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#425B9A" Offset="0.0"/>
+                                    <GradientStop Color="#76C0EC" Offset="1.0"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect Color="#425B9A" BlurRadius="12" ShadowDepth="3" Opacity="0.25"/>
+                            </Border.Effect>
+                            <TextBlock Text="&#xE80F;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                       FontSize="24" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Agile Manager" FontSize="22" FontWeight="Bold" Foreground="{StaticResource ColorPrimary}" HorizontalAlignment="Center"/>
+                        <Border Background="#FFF6DC" BorderBrush="#FCE8A6" BorderThickness="1" CornerRadius="10" Padding="10,3" Margin="0,6,0,0" HorizontalAlignment="Center">
+                            <TextBlock Text="Đăng nhập để bắt đầu phiên làm việc" FontSize="11" FontWeight="SemiBold" Foreground="#7A5E12"/>
+                        </Border>
+                    </StackPanel>
 
-                <!-- 2. Form Inputs -->
-                <StackPanel Grid.Row="1" Margin="0,0,0,8">
-                    <!-- Email Label & Input -->
-                    <TextBlock Text="EMAIL TÀI KHOẢN" FontSize="11" FontWeight="Bold" Foreground="{StaticResource ColorTextSecondary}" Margin="2,0,0,6"/>
-                    <Border Background="#F4F6FA" BorderBrush="{StaticResource ColorBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,16" Padding="10,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="&#xE715;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                       FontSize="14" Foreground="{StaticResource ColorPrimary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBox Grid.Column="1" x:Name="txtEmail" Padding="4,10" Background="Transparent" BorderThickness="0"
-                                     Foreground="{StaticResource ColorTextPrimary}" FontSize="13" VerticalContentAlignment="Center"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- Password Label & Input -->
-                    <TextBlock Text="MẬT KHẨU" FontSize="11" FontWeight="Bold" Foreground="{StaticResource ColorTextSecondary}" Margin="2,0,0,6"/>
-                    <Border Background="#F4F6FA" BorderBrush="{StaticResource ColorBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,20" Padding="10,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="&#xE72E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                       FontSize="14" Foreground="{StaticResource ColorPrimary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <PasswordBox Grid.Column="1" x:Name="txtPassword" Padding="4,10" Background="Transparent" BorderThickness="0"
+                    <!-- 2. Form Inputs -->
+                    <StackPanel Grid.Row="1" Margin="0,0,0,8">
+                        <!-- Email Label & Input -->
+                        <TextBlock Text="EMAIL TÀI KHOẢN" FontSize="11" FontWeight="Bold" Foreground="{StaticResource ColorTextSecondary}" Margin="2,0,0,6"/>
+                        <Border Background="#F4F6FA" BorderBrush="{StaticResource ColorBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,14" Padding="10,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="&#xE715;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           FontSize="14" Foreground="{StaticResource ColorPrimary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox Grid.Column="1" x:Name="txtEmail" Padding="4,9" Background="Transparent" BorderThickness="0"
                                          Foreground="{StaticResource ColorTextPrimary}" FontSize="13" VerticalContentAlignment="Center"/>
-                        </Grid>
-                    </Border>
-                </StackPanel>
+                            </Grid>
+                        </Border>
 
-                <!-- 3. Action Button -->
-                <StackPanel Grid.Row="2">
-                    <Button x:Name="btnLogin" Content="ĐĂNG NHẬP" Click="BtnLogin_Click"
-                            Background="{StaticResource ColorPrimary}" Foreground="White"
-                            FontWeight="Bold" FontSize="13" Cursor="Hand" Height="44">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="8">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsEnabled" Value="False">
-                                        <Setter TargetName="btnBorder" Property="Background" Value="#94A3B8"/>
-                                    </Trigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="btnBorder" Property="Background" Value="{StaticResource ColorPrimaryHover}"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
+                        <!-- Password Label & Input -->
+                        <TextBlock Text="MẬT KHẨU" FontSize="11" FontWeight="Bold" Foreground="{StaticResource ColorTextSecondary}" Margin="2,0,0,6"/>
+                        <Border Background="#F4F6FA" BorderBrush="{StaticResource ColorBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,16" Padding="10,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="&#xE72E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           FontSize="14" Foreground="{StaticResource ColorPrimary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <PasswordBox Grid.Column="1" x:Name="txtPassword" Padding="4,9" Background="Transparent" BorderThickness="0"
+                                             Foreground="{StaticResource ColorTextPrimary}" FontSize="13" VerticalContentAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
 
-                    <ProgressBar x:Name="pbLoading" IsIndeterminate="True" Height="4" Margin="0,12,0,0"
-                                 Foreground="{StaticResource ColorPrimary}" Background="#E2E8F0" BorderThickness="0" Visibility="Collapsed"/>
-                </StackPanel>
+                    <!-- 3. Action Button -->
+                    <StackPanel Grid.Row="2">
+                        <Button x:Name="btnLogin" Content="ĐĂNG NHẬP" Click="BtnLogin_Click"
+                                Background="{StaticResource ColorPrimary}" Foreground="White"
+                                FontWeight="Bold" FontSize="13" Cursor="Hand" Height="42">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="8">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="btnBorder" Property="Background" Value="#94A3B8"/>
+                                        </Trigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="btnBorder" Property="Background" Value="{StaticResource ColorPrimaryHover}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
 
-                <!-- 4. Alerts & Status -->
-                <StackPanel Grid.Row="3" Margin="0,12,0,0">
-                    <Border x:Name="bdrStatus" Background="{StaticResource ColorAccentLight}" BorderBrush="{StaticResource ColorAccent}" BorderThickness="1" CornerRadius="6" Padding="10,8" Visibility="{Binding ElementName=lblStatus, Path=Visibility}">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <TextBlock Text="&#xE946;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                       FontSize="14" Foreground="{StaticResource ColorPrimary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock x:Name="lblStatus" Text="Đang kết nối đến máy chủ..."
-                                       Foreground="{StaticResource ColorPrimary}" FontSize="12" FontWeight="SemiBold"
-                                       TextWrapping="Wrap" TextAlignment="Center" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
+                        <ProgressBar x:Name="pbLoading" IsIndeterminate="True" Height="4" Margin="0,10,0,0"
+                                     Foreground="{StaticResource ColorPrimary}" Background="#E2E8F0" BorderThickness="0" Visibility="Collapsed"/>
+                    </StackPanel>
 
-                    <Border x:Name="bdrError" Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,6,0,0" Visibility="{Binding ElementName=lblMessage, Path=Visibility}">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <TextBlock Text="&#xE783;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                       FontSize="14" Foreground="#DC2626" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock x:Name="lblMessage" Foreground="#DC2626" FontSize="12" FontWeight="SemiBold"
-                                       TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
+                    <!-- 4. Alerts & Status (Initially Collapsed) -->
+                    <StackPanel Grid.Row="3" Margin="0,8,0,0">
+                        <Border x:Name="bdrStatus" Background="{StaticResource ColorAccentLight}" BorderBrush="{StaticResource ColorAccent}" BorderThickness="1" CornerRadius="6" Padding="10,8" Visibility="Collapsed">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="&#xE946;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           FontSize="14" Foreground="{StaticResource ColorPrimary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="lblStatus" Text="Đang kết nối đến máy chủ..."
+                                           Foreground="{StaticResource ColorPrimary}" FontSize="12" FontWeight="SemiBold"
+                                           TextWrapping="Wrap" TextAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            </StackPanel>
+                        </Border>
 
-                <!-- 5. Footer Info -->
-                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,18,0,0">
-                    <TextBlock Text="Agile Manager" FontSize="11" Foreground="{StaticResource ColorTextMuted}" VerticalAlignment="Center"/>
-                    <Border Background="#FFF0F2" BorderBrush="#FFCCD4" BorderThickness="1" CornerRadius="8" Padding="6,1" Margin="6,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="v2.0" FontSize="10" FontWeight="Bold" Foreground="#D94158"/>
-                    </Border>
-                </StackPanel>
-            </Grid>
+                        <Border x:Name="bdrError" Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,6,0,0" Visibility="Collapsed">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="&#xE783;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           FontSize="14" Foreground="#DC2626" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="lblMessage" Foreground="#DC2626" FontSize="12" FontWeight="SemiBold"
+                                           TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- 5. Footer Info -->
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,14,0,0">
+                        <TextBlock Text="Agile Manager" FontSize="11" Foreground="{StaticResource ColorTextMuted}" VerticalAlignment="Center"/>
+                        <Border Background="#FFF0F2" BorderBrush="#FFCCD4" BorderThickness="1" CornerRadius="8" Padding="6,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="v2.0" FontSize="10" FontWeight="Bold" Foreground="#D94158"/>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
         </Border>
     </Grid>
 </Window>

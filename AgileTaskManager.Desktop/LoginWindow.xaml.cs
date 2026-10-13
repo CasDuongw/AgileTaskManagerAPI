@@ -43,6 +43,7 @@ namespace AgileTaskManager.Desktop
             string password = txtPassword.Password;
 
             lblMessage.Visibility = Visibility.Collapsed;
+            bdrError.Visibility = Visibility.Collapsed;
 
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
@@ -64,6 +65,7 @@ namespace AgileTaskManager.Desktop
             pbLoading.Visibility = Visibility.Visible;
             lblStatus.Text = "Đang kết nối đến máy chủ đám mây...";
             lblStatus.Visibility = Visibility.Visible;
+            bdrStatus.Visibility = Visibility.Visible;
             System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
 
             // Ép WPF vẽ giao diện ngay lập tức trước khi luồng bắt đầu gửi HTTP
@@ -119,11 +121,12 @@ namespace AgileTaskManager.Desktop
             {
                 cts.Cancel();
                 btnLogin.IsEnabled = true;
-                btnLogin.Content = "ĐĂNG NHẬP";
+                btnLogin.Content = "ĐANG NHẬP";
                 txtEmail.IsEnabled = true;
                 txtPassword.IsEnabled = true;
                 pbLoading.Visibility = Visibility.Collapsed;
                 lblStatus.Visibility = Visibility.Collapsed;
+                bdrStatus.Visibility = Visibility.Collapsed;
                 System.Windows.Input.Mouse.OverrideCursor = null;
             }
         }
@@ -132,6 +135,7 @@ namespace AgileTaskManager.Desktop
         {
             lblMessage.Text = msg;
             lblMessage.Visibility = Visibility.Visible;
+            bdrError.Visibility = Visibility.Visible;
         }
     }
 }

@@ -65,7 +65,8 @@
                         <TextBlock Text="NGƯỜI PHỤ TRÁCH" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="2,0,0,6"/>
                         <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8">
                             <ComboBox x:Name="cboAssignee" Padding="10,7" Background="Transparent" BorderThickness="0"
-                                      DisplayMemberPath="username" SelectedValuePath="userId" VerticalContentAlignment="Center"/>
+                                      DisplayMemberPath="username" SelectedValuePath="userId" VerticalContentAlignment="Center"
+                                      Foreground="#0F172A"/>
                         </Border>
                     </StackPanel>
                 </Grid>
