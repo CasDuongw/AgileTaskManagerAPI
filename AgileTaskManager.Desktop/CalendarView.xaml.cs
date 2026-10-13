@@ -442,8 +442,9 @@ namespace AgileTaskManager.Desktop
             {
                 cell.Tasks.Clear();
             }
+            _viewModel.UnscheduledTasks.Clear();
 
-            // Gán các thẻ có DueDate vào cell phù hợp
+            // Gán các thẻ có DueDate vào cell phù hợp, các thẻ không có DueDate (hoặc ngoài view) vào Unscheduled
             foreach (var column in _boardVm.Columns)
             {
                 // 1. Quét các công việc cụ thể (Tasks) bên trong cột
@@ -457,9 +458,26 @@ namespace AgileTaskManager.Desktop
                             : rawDue;
 
                         var cell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == due.Date && c.SlotTime.Hour == due.Hour);
-                        if (cell != null && !cell.Tasks.Contains(task))
+                        if (cell != null)
                         {
-                            cell.Tasks.Add(task);
+                            if (!cell.Tasks.Contains(task))
+                            {
+                                cell.Tasks.Add(task);
+                            }
+                        }
+                        else
+                        {
+                            if (!_viewModel.UnscheduledTasks.Contains(task))
+                            {
+                                _viewModel.UnscheduledTasks.Add(task);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (!_viewModel.UnscheduledTasks.Contains(task))
+                        {
+                            _viewModel.UnscheduledTasks.Add(task);
                         }
                     }
                 }
@@ -605,36 +623,61 @@ namespace AgileTaskManager.Desktop
             if (item == null) return;
 
             CalendarCellViewModel? targetCell = null;
+            System.Collections.ObjectModel.ObservableCollection<ViewModelBase>? targetList = null;
 
-            // 1. Phân giải targetCell qua cây VisualTree
+            // 1. Phân giải targetCell hoặc Unscheduled qua cây VisualTree
             DependencyObject? current = dropInfo.VisualTarget as DependencyObject;
             while (current != null)
             {
                 if (current is FrameworkElement fe)
                 {
+                    if (fe.Tag as string == "Unscheduled" || fe == txtUnscheduledHeader || fe == icUnscheduledTasks)
+                    {
+                        targetList = _viewModel.UnscheduledTasks;
+                        break;
+                    }
+
                     if (fe.Tag is CalendarCellViewModel cell)
                     {
                         targetCell = cell;
+                        targetList = cell.Tasks;
                         break;
                     }
 
                     if (fe is ItemsControl ic && ic.ItemsSource is System.Collections.ObjectModel.ObservableCollection<ViewModelBase> colList)
                     {
+                        if (colList == _viewModel.UnscheduledTasks)
+                        {
+                            targetList = _viewModel.UnscheduledTasks;
+                            break;
+                        }
                         targetCell = _viewModel.Cells.FirstOrDefault(c => c.Tasks == colList);
-                        if (targetCell != null) break;
+                        if (targetCell != null)
+                        {
+                            targetList = targetCell.Tasks;
+                            break;
+                        }
                     }
                 }
                 current = VisualTreeHelper.GetParent(current);
             }
 
             // 2. Dự phòng: dropInfo.TargetCollection
-            if (targetCell == null && dropInfo.TargetCollection is System.Collections.ObjectModel.ObservableCollection<ViewModelBase> targetCol)
+            if (targetList == null)
             {
-                targetCell = _viewModel.Cells.FirstOrDefault(c => c.Tasks == targetCol);
+                if (dropInfo.TargetCollection == _viewModel.UnscheduledTasks)
+                {
+                    targetList = _viewModel.UnscheduledTasks;
+                }
+                else if (dropInfo.TargetCollection is System.Collections.ObjectModel.ObservableCollection<ViewModelBase> targetCol)
+                {
+                    targetCell = _viewModel.Cells.FirstOrDefault(c => c.Tasks == targetCol);
+                    if (targetCell != null) targetList = targetCell.Tasks;
+                }
             }
 
-            // 3. Dự phòng toạ độ bên trong CalendarGrid khi nhả chuột trúng vùng trống / viền ngoài
-            if (targetCell == null)
+            // 3. Dự phòng toạ độ bên trong CalendarGrid khi nhả chuột trúng vùng trống / viền ngoài của lưới lịch
+            if (targetCell == null && targetList == null)
             {
                 try
                 {
@@ -654,6 +697,7 @@ namespace AgileTaskManager.Desktop
                             if (bounds.Contains(dropPos))
                             {
                                 targetCell = cell;
+                                targetList = cell.Tasks;
                                 break;
                             }
                         }
@@ -671,6 +715,7 @@ namespace AgileTaskManager.Desktop
                             rowHour = Math.Clamp(rowHour, 7, 21);
 
                             targetCell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == _selectedDate.Date && c.SlotTime.Hour == rowHour);
+                            if (targetCell != null) targetList = targetCell.Tasks;
                         }
                         else
                         {
@@ -690,6 +735,7 @@ namespace AgileTaskManager.Desktop
 
                             DateTime targetDate = _viewModel.CurrentWeekStart.AddDays(dayCol).Date;
                             targetCell = _viewModel.Cells.FirstOrDefault(c => c.SlotTime.Date == targetDate && c.SlotTime.Hour == rowHour);
+                            if (targetCell != null) targetList = targetCell.Tasks;
                         }
                     }
                 }
@@ -699,20 +745,30 @@ namespace AgileTaskManager.Desktop
                 }
             }
 
-            if (targetCell == null) return;
+            if (targetList == null) return;
 
-            // 4. Di chuyển thẻ lập tức trên giao diện (cực mượt, không giật lag)
+            // 4. Tìm nguồn (sourceList)
             var sourceList = (dropInfo.DragInfo?.SourceCollection as System.Collections.ObjectModel.ObservableCollection<ViewModelBase>)
-                ?? _viewModel.Cells.FirstOrDefault(c => c.Tasks.Contains(item))?.Tasks;
+                ?? (_viewModel.UnscheduledTasks.Contains(item)
+                    ? _viewModel.UnscheduledTasks
+                    : _viewModel.Cells.FirstOrDefault(c => c.Tasks.Contains(item))?.Tasks);
 
             if (sourceList != null)
             {
-                if (sourceList != targetCell.Tasks)
+                if (sourceList != targetList)
                 {
                     sourceList.Remove(item);
-                    int insertIndex = Math.Min(Math.Max(0, dropInfo.InsertIndex), targetCell.Tasks.Count);
-                    targetCell.Tasks.Insert(insertIndex, item);
-                    SaveItemDueDate(item, targetCell.SlotTime);
+                    int insertIndex = Math.Min(Math.Max(0, dropInfo.InsertIndex), targetList.Count);
+                    targetList.Insert(insertIndex, item);
+
+                    if (targetCell != null)
+                    {
+                        SaveItemDueDate(item, targetCell.SlotTime);
+                    }
+                    else if (targetList == _viewModel.UnscheduledTasks)
+                    {
+                        ClearItemDueDate(item);
+                    }
                 }
                 else
                 {
@@ -728,17 +784,44 @@ namespace AgileTaskManager.Desktop
             {
                 foreach (var cell in _viewModel.Cells)
                 {
-                    if (cell != targetCell && cell.Tasks.Contains(item))
+                    if (cell.Tasks != targetList && cell.Tasks.Contains(item))
                     {
                         cell.Tasks.Remove(item);
                     }
                 }
-                if (!targetCell.Tasks.Contains(item))
+                if (_viewModel.UnscheduledTasks != targetList && _viewModel.UnscheduledTasks.Contains(item))
                 {
-                    int insertIndex = Math.Min(Math.Max(0, dropInfo.InsertIndex), targetCell.Tasks.Count);
-                    targetCell.Tasks.Insert(insertIndex, item);
+                    _viewModel.UnscheduledTasks.Remove(item);
                 }
-                SaveItemDueDate(item, targetCell.SlotTime);
+
+                if (!targetList.Contains(item))
+                {
+                    int insertIndex = Math.Min(Math.Max(0, dropInfo.InsertIndex), targetList.Count);
+                    targetList.Insert(insertIndex, item);
+                }
+
+                if (targetCell != null)
+                {
+                    SaveItemDueDate(item, targetCell.SlotTime);
+                }
+                else if (targetList == _viewModel.UnscheduledTasks)
+                {
+                    ClearItemDueDate(item);
+                }
+            }
+        }
+
+        private void ClearItemDueDate(ViewModelBase item)
+        {
+            if (item is KanbanTaskViewModel taskVm)
+            {
+                taskVm.DueDate = null;
+                _ = SaveTaskDueDateApiAsync(taskVm);
+            }
+            else if (item is KanbanColumnViewModel colVm)
+            {
+                colVm.DueDate = null;
+                _ = UpdateColumnApiAsync(colVm);
             }
         }
 

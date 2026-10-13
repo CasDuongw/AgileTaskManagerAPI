@@ -174,18 +174,79 @@
             </Grid>
         </Border>
 
-        <!-- LƯỚI LỊCH (HOÀN TOÀN KHÔNG CÒN CỘT CHƯA XẾP LỊCH, CHIẾM 100% DIỆN TÍCH) -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-                      AllowDrop="True"
-                      dd:DragDrop.IsDropTarget="True"
-                      dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
-            <Grid x:Name="CalendarGrid"
-                  Background="Transparent"
-                  AllowDrop="True"
-                  dd:DragDrop.IsDropTarget="True"
-                  dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
-                <!-- Được render động theo chế độ Ngày hoặc Tuần -->
-            </Grid>
-        </ScrollViewer>
+        <!-- NỘI DUNG LỊCH: LƯỚI LỊCH (BÊN TRÁI) + CỘT CHƯA XẾP LỊCH (BÊN PHẢI) -->
+        <Grid Grid.Row="1" Margin="12,10,12,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="280"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- LƯỚI LỊCH (CHIẾM PHẦN LỚN DIỆN TÍCH) -->
+            <Border Grid.Column="0" Background="White" CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,12,0">
+                <Border.Effect>
+                    <DropShadowEffect Color="#0F172A" BlurRadius="6" ShadowDepth="1" Opacity="0.03"/>
+                </Border.Effect>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                              AllowDrop="True"
+                              dd:DragDrop.IsDropTarget="True"
+                              dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
+                    <Grid x:Name="CalendarGrid"
+                          Background="Transparent"
+                          AllowDrop="True"
+                          dd:DragDrop.IsDropTarget="True"
+                          dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
+                        <!-- Được render động theo chế độ Ngày hoặc Tuần -->
+                    </Grid>
+                </ScrollViewer>
+            </Border>
+
+            <!-- CỘT CHƯA XẾP LỊCH (UNSCHEDULED TASKS) -->
+            <Border Grid.Column="1" Tag="Unscheduled" AllowDrop="True"
+                    dd:DragDrop.IsDropTarget="True"
+                    dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Background="White" CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1" Padding="14">
+                <Border.Effect>
+                    <DropShadowEffect Color="#0F172A" BlurRadius="6" ShadowDepth="1" Opacity="0.03"/>
+                </Border.Effect>
+                <Grid Tag="Unscheduled">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Tiêu đề cột Chưa xếp lịch -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,10" Tag="Unscheduled" AllowDrop="True"
+                                dd:DragDrop.IsDropTarget="True"
+                                dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="#EAF5FC" CornerRadius="6" Padding="6,3" Margin="0,0,8,0">
+                                <TextBlock Text="&#xE823;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12" Foreground="#425B9A" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock x:Name="txtUnscheduledHeader" Tag="Unscheduled" Text="Chưa xếp lịch" FontWeight="Bold" FontSize="14" Foreground="#0F172A" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="Kéo thẻ vào lịch để đặt giờ hoặc kéo về đây để hủy xếp lịch" FontSize="11" Foreground="#94A3B8" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <!-- Danh sách thẻ chưa xếp lịch với scroll -->
+                    <ScrollViewer Grid.Row="1" Tag="Unscheduled" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                  AllowDrop="True" dd:DragDrop.IsDropTarget="True"
+                                  dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
+                        <ItemsControl x:Name="icUnscheduledTasks" Tag="Unscheduled" ItemsSource="{Binding UnscheduledTasks}"
+                                      ItemTemplate="{StaticResource CalendarTaskTemplate}"
+                                      AllowDrop="True" Background="Transparent" MinHeight="350"
+                                      VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                                      dd:DragDrop.IsDragSource="True"
+                                      dd:DragDrop.IsDropTarget="True"
+                                      dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Vertical"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

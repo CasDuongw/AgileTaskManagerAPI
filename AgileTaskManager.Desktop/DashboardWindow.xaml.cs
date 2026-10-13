@@ -91,7 +91,7 @@ namespace AgileTaskManager.Desktop
                 timeSlots.Add($"{i:D2}:30");
             }
             cboCreateTaskTime.ItemsSource = timeSlots;
-            UpdateViewLayout();
+            SwitchToTab(ActiveTab.Dashboard);
 
             await Task.WhenAll(LoadProjectsAsync(), LoadUsersAsync());
         }
@@ -224,159 +224,65 @@ namespace AgileTaskManager.Desktop
             if (ucCalendarView != null) ucCalendarView.UpdateCalendarData();
         }
 
-        // === BOTTOM TAB NAVIGATION (TRELLO-STYLE TOGGLES) ===
-        private bool _isCalendarActive = false;
-        private bool _isDashboardActive = true;
-        private bool _isCreateActive = false;
-        private double _savedCalendarWidth = 360;
+        // === BOTTOM TAB NAVIGATION (SINGLE TAB SYSTEM) ===
+        private enum ActiveTab { Dashboard, Calendar, Create }
+        private ActiveTab _currentTab = ActiveTab.Dashboard;
+        private ActiveTab _previousTab = ActiveTab.Dashboard;
 
-        /// <summary>Cập nhật giao diện workspace theo trạng thái bật/tắt của Calendar và Dashboard.</summary>
-        private void UpdateViewLayout()
+        private void SwitchToTab(ActiveTab targetTab)
         {
-            if (_isCreateActive)
+            if (_currentTab != ActiveTab.Create)
             {
-                viewWorkspace.Visibility = Visibility.Collapsed;
-                viewCreate.Visibility = Visibility.Visible;
-                btnMenuCreate.Style = (Style)FindResource("BottomTabBtnActive");
-                btnMenuCalendar.Style = (Style)FindResource("BottomTabBtn");
-                btnMenuDashboard.Style = (Style)FindResource("BottomTabBtn");
-                return;
+                _previousTab = _currentTab;
             }
+            _currentTab = targetTab;
 
-            viewCreate.Visibility = Visibility.Collapsed;
-            viewWorkspace.Visibility = Visibility.Visible;
-            btnMenuCreate.Style = (Style)FindResource("BottomTabBtn");
+            // 1. Visibilities: Chỉ hiển thị DUY NHẤT 1 tab tại một thời điểm
+            panelDashboard.Visibility = (_currentTab == ActiveTab.Dashboard) ? Visibility.Visible : Visibility.Collapsed;
+            panelCalendar.Visibility = (_currentTab == ActiveTab.Calendar) ? Visibility.Visible : Visibility.Collapsed;
+            viewCreate.Visibility = (_currentTab == ActiveTab.Create) ? Visibility.Visible : Visibility.Collapsed;
 
-            // Cập nhật trạng thái sáng/tối của 2 nút tab
-            btnMenuCalendar.Style = _isCalendarActive 
+            // 2. Cập nhật giao diện nút tab phía dưới (chỉ tab được chọn sáng màu)
+            btnMenuDashboard.Style = (_currentTab == ActiveTab.Dashboard) 
                 ? (Style)FindResource("BottomTabBtnActive") 
                 : (Style)FindResource("BottomTabBtn");
 
-            btnMenuDashboard.Style = _isDashboardActive 
+            btnMenuCalendar.Style = (_currentTab == ActiveTab.Calendar) 
                 ? (Style)FindResource("BottomTabBtnActive") 
                 : (Style)FindResource("BottomTabBtn");
 
-            if (_isCalendarActive && _isDashboardActive)
+            btnMenuCreate.Style = (_currentTab == ActiveTab.Create) 
+                ? (Style)FindResource("BottomTabBtnActive") 
+                : (Style)FindResource("BottomTabBtn");
+
+            // 3. Nếu chuyển sang Calendar, đồng bộ và render lại dữ liệu lịch mới nhất
+            if (_currentTab == ActiveTab.Calendar && ucCalendarView != null)
             {
-                // Cả 2 cùng sáng: Hiện song song 2 bên (Trình lập kế hoạch bên trái, Bảng thông tin bên phải)
-                panelCalendar.Visibility = Visibility.Visible;
-                colCalendar.Width = new GridLength(Math.Max(280, _savedCalendarWidth), GridUnitType.Pixel);
-                colCalendar.MinWidth = 280;
-
-                splitterView.Visibility = Visibility.Visible;
-                colSplitter.Width = new GridLength(6, GridUnitType.Pixel);
-
-                panelDashboard.Visibility = Visibility.Visible;
-                colDashboard.Width = new GridLength(1, GridUnitType.Star);
-                colDashboard.MinWidth = 340;
-
-                if (ucCalendarView != null)
-                {
-                    ucCalendarView.SetSideBySideMode(true);
-                    ucCalendarView.RenderCalendar(_viewModel);
-                }
-            }
-            else if (_isCalendarActive && !_isDashboardActive)
-            {
-                // Chỉ có Trình lập kế hoạch sáng: Chiếm trọn toàn màn hình
-                if (colCalendar.Width.IsAbsolute && colCalendar.Width.Value > 0)
-                {
-                    _savedCalendarWidth = colCalendar.Width.Value;
-                }
-
-                panelCalendar.Visibility = Visibility.Visible;
-                colCalendar.Width = new GridLength(1, GridUnitType.Star);
-                colCalendar.MinWidth = 0;
-
-                splitterView.Visibility = Visibility.Collapsed;
-                colSplitter.Width = new GridLength(0);
-
-                panelDashboard.Visibility = Visibility.Collapsed;
-                colDashboard.Width = new GridLength(0);
-                colDashboard.MinWidth = 0;
-
-                if (ucCalendarView != null)
-                {
-                    ucCalendarView.SetSideBySideMode(false);
-                    ucCalendarView.RenderCalendar(_viewModel);
-                }
-            }
-            else // Chỉ có Bảng thông tin sáng: Chiếm trọn toàn màn hình
-            {
-                if (colCalendar.Width.IsAbsolute && colCalendar.Width.Value > 0)
-                {
-                    _savedCalendarWidth = colCalendar.Width.Value;
-                }
-
-                panelCalendar.Visibility = Visibility.Collapsed;
-                colCalendar.Width = new GridLength(0);
-                colCalendar.MinWidth = 0;
-
-                splitterView.Visibility = Visibility.Collapsed;
-                colSplitter.Width = new GridLength(0);
-
-                panelDashboard.Visibility = Visibility.Visible;
-                colDashboard.Width = new GridLength(1, GridUnitType.Star);
-                colDashboard.MinWidth = 0;
+                ucCalendarView.RenderCalendar(_viewModel);
             }
         }
 
         private void btnMenuCalendar_Click(object sender, RoutedEventArgs e)
         {
-            if (_isCreateActive)
-            {
-                _isCreateActive = false;
-                _isCalendarActive = true;
-            }
-            else
-            {
-                if (_isCalendarActive)
-                {
-                    // Nếu dashboard đang bật thì cho phép tắt calendar
-                    if (_isDashboardActive)
-                    {
-                        _isCalendarActive = false;
-                    }
-                }
-                else
-                {
-                    _isCalendarActive = true;
-                }
-            }
-
-            UpdateViewLayout();
+            SwitchToTab(ActiveTab.Calendar);
         }
 
         private void btnMenuDashboard_Click(object sender, RoutedEventArgs e)
         {
-            if (_isCreateActive)
-            {
-                _isCreateActive = false;
-                _isDashboardActive = true;
-            }
-            else
-            {
-                if (_isDashboardActive)
-                {
-                    // Nếu calendar đang bật thì cho phép tắt dashboard
-                    if (_isCalendarActive)
-                    {
-                        _isDashboardActive = false;
-                    }
-                }
-                else
-                {
-                    _isDashboardActive = true;
-                }
-            }
-
-            UpdateViewLayout();
+            SwitchToTab(ActiveTab.Dashboard);
         }
 
         private void btnMenuCreate_Click(object sender, RoutedEventArgs e)
         {
-            _isCreateActive = !_isCreateActive;
-            UpdateViewLayout();
+            if (_currentTab == ActiveTab.Create)
+            {
+                // Nếu đang ở tab Create và bấm lại nút Tạo mới -> Quay về tab trước đó
+                SwitchToTab(_previousTab);
+            }
+            else
+            {
+                SwitchToTab(ActiveTab.Create);
+            }
         }
 
         private async void BtnCreateUser_Click(object sender, RoutedEventArgs e)

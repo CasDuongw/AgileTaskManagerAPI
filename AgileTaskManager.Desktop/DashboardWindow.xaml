@@ -195,29 +195,8 @@
                     viewSplit sẽ dùng GridSplitter, các view đơn dùng full width
                 -->
 
-                <!-- UNIFIED WORKSPACE (CALENDAR + DASHBOARD, LIKE TRELLO) -->
-                <Grid x:Name="viewWorkspace" Visibility="Visible">
-                    <Grid.ColumnDefinitions>
-                        <!-- Cột 0: Trình lập kế hoạch (Calendar) -->
-                        <ColumnDefinition x:Name="colCalendar" Width="0" MinWidth="0"/>
-                        <!-- Cột 1: Vạch phân cách kéo thả (Splitter) -->
-                        <ColumnDefinition x:Name="colSplitter" Width="0"/>
-                        <!-- Cột 2: Bảng thông tin (Kanban Dashboard) -->
-                        <ColumnDefinition x:Name="colDashboard" Width="*" MinWidth="0"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- KHU VỰC 1: TRÌNH LẬP KẾ HOẠCH (CALENDAR) -->
-                    <Border x:Name="panelCalendar" Grid.Column="0" Visibility="Collapsed" Background="{StaticResource ColorBackground}" BorderBrush="{StaticResource ColorBorder}" BorderThickness="0,0,1,0">
-                        <local:CalendarView x:Name="ucCalendarView"/>
-                    </Border>
-
-                    <!-- VẠCH PHÂN CÁCH RESIZE KHI CẢ 2 CÙNG HIỂN THỊ -->
-                    <GridSplitter x:Name="splitterView" Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Visibility="Collapsed"
-                                  Background="{StaticResource ColorBorder}" Cursor="SizeWE"
-                                  ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"/>
-
-                    <!-- KHU VỰC 2: BẢNG THÔNG TIN (KANBAN DASHBOARD) -->
-                    <Grid x:Name="panelDashboard" Grid.Column="2" Visibility="Visible">
+                <!-- TAB 1: BẢNG THÔNG TIN (KANBAN DASHBOARD) -->
+                <Grid x:Name="panelDashboard" Visibility="Visible">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
@@ -317,9 +296,13 @@
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
-            </Grid>
 
-                <!-- VIEW 2: CREATE FORMS -->
+                <!-- TAB 2: TRÌNH LẬP KẾ HOẠCH (CALENDAR) -->
+                <Border x:Name="panelCalendar" Visibility="Collapsed" Background="{StaticResource ColorBackground}">
+                    <local:CalendarView x:Name="ucCalendarView"/>
+                </Border>
+
+                <!-- TAB 3: FORM TẠO MỚI (CREATE) -->
                 <Grid x:Name="viewCreate" Visibility="Collapsed" Margin="28,24" Background="{StaticResource ColorBackground}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
