@@ -102,11 +102,31 @@ namespace AgileTaskManager.Desktop.ViewModels
             set { _isEditingTitle = value; OnPropertyChanged(); }
         }
 
+        private bool _isCompleted;
+        public bool IsCompleted
+        {
+            get => _isCompleted || _status == "Hoàn thành";
+            set
+            {
+                _isCompleted = value;
+                if (value) _status = "Hoàn thành";
+                else if (_status == "Hoàn thành") _status = "Đang làm";
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(Status));
+            }
+        }
+
         private string _status = "Vừa giao";
         public string Status
         {
             get => _status;
-            set { _status = value; OnPropertyChanged(); }
+            set
+            {
+                _status = value;
+                _isCompleted = (_status == "Hoàn thành");
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsCompleted));
+            }
         }
 
         public ObservableCollection<string> Statuses { get; } = new ObservableCollection<string> { "Vừa giao", "Đang làm", "Hoàn thành", "Trễ hạn" };

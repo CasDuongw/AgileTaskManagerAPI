@@ -7,9 +7,9 @@
     <UserControl.Resources>
         <!-- Task Card Template in Calendar Slot -->
         <DataTemplate x:Key="CalendarTaskTemplate">
-            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,3" Cursor="Hand">
+            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="9,6" Margin="0,2" Cursor="Hand">
                 <Border.Effect>
-                    <DropShadowEffect Color="#425B9A" Opacity="0.06" BlurRadius="6" ShadowDepth="1"/>
+                    <DropShadowEffect Color="#425B9A" Opacity="0.06" BlurRadius="5" ShadowDepth="1"/>
                 </Border.Effect>
                 <StackPanel>
                     <Grid Margin="0,0,0,4">
