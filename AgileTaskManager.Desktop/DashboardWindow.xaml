@@ -315,13 +315,15 @@
                         </Border>
 
                         <!-- KHU VỰC BẢNG KANBAN -->
-                        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
-                                  FocusVisualStyle="{x:Null}" Padding="24,20" Background="{StaticResource ColorBackground}">
-                        <StackPanel Orientation="Horizontal">
-                            <ItemsControl x:Name="icBoard" ItemsSource="{Binding Columns}" Focusable="False" FocusVisualStyle="{x:Null}">
+                        <ScrollViewer x:Name="svBoard" Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                                      FocusVisualStyle="{x:Null}" Padding="24,20" Background="{StaticResource ColorBackground}"
+                                      AllowDrop="True" DragOver="Board_DragOver" Drop="Board_Drop">
+                        <StackPanel Orientation="Horizontal" Background="Transparent" AllowDrop="True" DragOver="Board_DragOver" Drop="Board_Drop">
+                            <ItemsControl x:Name="icBoard" ItemsSource="{Binding Columns}" Focusable="False" FocusVisualStyle="{x:Null}"
+                                          Background="Transparent" AllowDrop="True" DragOver="Board_DragOver" Drop="Board_Drop">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" />
+                                        <StackPanel Orientation="Horizontal" Background="Transparent" AllowDrop="True" DragOver="Board_DragOver" Drop="Board_Drop"/>
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>

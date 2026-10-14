@@ -582,6 +582,167 @@ namespace AgileTaskManager.Desktop
                 }
             }
         }
+
+        private void Board_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(typeof(KanbanTaskViewModel)) || e.Data.GetDataPresent(typeof(KanbanColumnViewModel)))
+            {
+                e.Effects = DragDropEffects.Move;
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None;
+            }
+            e.Handled = true;
+        }
+
+        private async void Board_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Handled) return;
+
+            if (e.Data.GetDataPresent(typeof(KanbanTaskViewModel)))
+            {
+                var droppedTask = e.Data.GetData(typeof(KanbanTaskViewModel)) as KanbanTaskViewModel;
+                if (droppedTask != null && _viewModel != null && _viewModel.Columns.Count > 0)
+                {
+                    Point mousePos = e.GetPosition(icBoard);
+                    KanbanColumnViewModel? targetColumn = null;
+
+                    // Tìm cột theo tọa độ X của chuột
+                    double closestDistance = double.MaxValue;
+                    for (int i = 0; i < _viewModel.Columns.Count; i++)
+                    {
+                        var container = icBoard.ItemContainerGenerator.ContainerFromIndex(i) as FrameworkElement;
+                        if (container != null)
+                        {
+                            Point p = e.GetPosition(container);
+                            if (p.X >= 0 && p.X <= container.ActualWidth + 16)
+                            {
+                                targetColumn = _viewModel.Columns[i];
+                                break;
+                            }
+
+                            Point centerPoint = container.TranslatePoint(new Point(container.ActualWidth / 2, 0), icBoard);
+                            double dist = Math.Abs(mousePos.X - centerPoint.X);
+                            if (dist < closestDistance)
+                            {
+                                closestDistance = dist;
+                                targetColumn = _viewModel.Columns[i];
+                            }
+                        }
+                    }
+
+                    if (targetColumn == null)
+                    {
+                        targetColumn = _viewModel.Columns.LastOrDefault();
+                    }
+
+                    if (targetColumn != null)
+                    {
+                        var sourceColumn = _viewModel.Columns.FirstOrDefault(c => c.Tasks.Contains(droppedTask));
+                        if (sourceColumn != null)
+                        {
+                            int oldIndex = sourceColumn.Tasks.IndexOf(droppedTask);
+                            if (sourceColumn == targetColumn)
+                            {
+                                if (oldIndex != targetColumn.Tasks.Count - 1)
+                                {
+                                    sourceColumn.Tasks.Remove(droppedTask);
+                                    targetColumn.Tasks.Add(droppedTask);
+                                    await SyncBoardTaskOrderAsync(targetColumn);
+                                }
+                            }
+                            else
+                            {
+                                sourceColumn.Tasks.Remove(droppedTask);
+                                droppedTask.ColumnId = targetColumn.ColumnId;
+                                targetColumn.Tasks.Add(droppedTask);
+
+                                try
+                                {
+                                    var response = await _apiService.UpdateTaskColumnAsync(droppedTask.TaskId, targetColumn.ColumnId);
+                                    if (response.IsSuccessStatusCode)
+                                    {
+                                        await SyncBoardTaskOrderAsync(targetColumn);
+                                    }
+                                    else
+                                    {
+                                        targetColumn.Tasks.Remove(droppedTask);
+                                        droppedTask.ColumnId = sourceColumn.ColumnId;
+                                        sourceColumn.Tasks.Insert(oldIndex, droppedTask);
+                                    }
+                                }
+                                catch
+                                {
+                                    targetColumn.Tasks.Remove(droppedTask);
+                                    droppedTask.ColumnId = sourceColumn.ColumnId;
+                                    sourceColumn.Tasks.Insert(oldIndex, droppedTask);
+                                }
+                            }
+                        }
+                    }
+                }
+                e.Handled = true;
+            }
+            else if (e.Data.GetDataPresent(typeof(KanbanColumnViewModel)))
+            {
+                var droppedCol = e.Data.GetData(typeof(KanbanColumnViewModel)) as KanbanColumnViewModel;
+                if (droppedCol != null && _viewModel != null && _viewModel.Columns.Count > 1)
+                {
+                    Point mousePos = e.GetPosition(icBoard);
+                    int targetIndex = _viewModel.Columns.Count - 1;
+
+                    for (int i = 0; i < _viewModel.Columns.Count; i++)
+                    {
+                        var container = icBoard.ItemContainerGenerator.ContainerFromIndex(i) as FrameworkElement;
+                        if (container != null)
+                        {
+                            Point p = e.GetPosition(container);
+                            if (p.X < container.ActualWidth / 2)
+                            {
+                                targetIndex = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (targetIndex >= 0 && targetIndex < _viewModel.Columns.Count && _viewModel.Columns[targetIndex] != droppedCol)
+                    {
+                        _viewModel.Columns.Remove(droppedCol);
+                        _viewModel.Columns.Insert(targetIndex, droppedCol);
+                        for (int i = 0; i < _viewModel.Columns.Count; i++)
+                        {
+                            _viewModel.Columns[i].OrderIndex = i;
+                        }
+                        var reorderList = _viewModel.Columns.Select((col, index) => new { ColumnId = col.ColumnId, OrderIndex = index }).ToList();
+                        try
+                        {
+                            await _apiService.ReorderColumnsAsync(reorderList);
+                        }
+                        catch
+                        {
+                        }
+                    }
+                }
+                e.Handled = true;
+            }
+        }
+
+        private async Task SyncBoardTaskOrderAsync(KanbanColumnViewModel col)
+        {
+            for (int i = 0; i < col.Tasks.Count; i++)
+            {
+                col.Tasks[i].OrderIndex = i;
+            }
+            var reorderList = col.Tasks.Select((t, index) => new { TaskId = t.TaskId, OrderIndex = index }).ToList();
+            try
+            {
+                await _apiService.ReorderTasksAsync(reorderList);
+            }
+            catch
+            {
+            }
+        }
     }
 }
 

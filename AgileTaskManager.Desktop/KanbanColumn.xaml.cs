@@ -433,7 +433,11 @@ namespace AgileTaskManager.Desktop
                             if (sourceColumn == targetColumn)
                             {
                                 if (oldIndex < newIndex) newIndex--;
-                                if (oldIndex == newIndex) return; // No change
+                                if (oldIndex == newIndex)
+                                {
+                                    e.Handled = true;
+                                    return; // No change
+                                }
                             }
 
                             sourceColumn.Tasks.Remove(droppedTask);
